@@ -12,8 +12,34 @@
     <link rel="icon" href="data:,">
 </head>
 <body class="bg-gray-100 min-h-screen">
-    <div class="container mx-auto px-4 py-8">
-        <h1 class="text-3xl font-bold text-center mb-8">Inventario de Computadoras</h1>
+    <div class="bg-blue-900 text-white p-4 shadow-md">
+        <h1 class="text-3xl font-bold text-center">Sistema de Control de Inventario de Computadoras</h1>
+    </div>
+    
+    <div class="container mx-auto px-4 py-6">
+        <!-- Panel de estadísticas -->
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+            <div class="bg-white p-4 rounded-lg shadow-md text-center">
+                <h3 class="text-lg text-gray-700">Total</h3>
+                <p id="total-count" class="text-4xl font-bold text-gray-800">0</p>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow-md text-center">
+                <h3 class="text-lg text-gray-700">Buena</h3>
+                <p id="buena-count" class="text-4xl font-bold text-green-600">0</p>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow-md text-center">
+                <h3 class="text-lg text-gray-700">No funciona</h3>
+                <p id="no-funciona-count" class="text-4xl font-bold text-red-600">0</p>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow-md text-center">
+                <h3 class="text-lg text-gray-700">Muy poco rendimiento</h3>
+                <p id="poco-rendimiento-count" class="text-4xl font-bold text-yellow-600">0</p>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow-md text-center">
+                <h3 class="text-lg text-gray-700">Excelente rendimiento</h3>
+                <p id="excelente-count" class="text-4xl font-bold text-blue-600">0</p>
+            </div>
+        </div>
         
         <!-- Formulario para agregar computadora -->
         <div class="bg-white p-6 rounded-lg shadow-md mb-8">
@@ -54,10 +80,10 @@
                         <label class="block text-gray-700">Estado:</label>
                         <select id="estado" class="w-full p-2 border rounded" required>
                             <option value="">-- Seleccionar Estado --</option>
-                            <option value="Nuevo">Nuevo</option>
-                            <option value="En uso">En uso</option>
-                            <option value="En reparación">En reparación</option>
-                            <option value="Obsoleto">Obsoleto</option>
+                            <option value="Buena">Buena</option>
+                            <option value="No funciona">No funciona</option>
+                            <option value="Muy poco rendimiento">Muy poco rendimiento</option>
+                            <option value="Excelente rendimiento">Excelente rendimiento</option>
                         </select>
                     </div>
                     <div>
@@ -107,6 +133,10 @@
                     <input type="checkbox" id="searchByProcesador" class="form-checkbox">
                     <span class="ml-2">Procesador</span>
                 </label>
+                <label class="inline-flex items-center">
+                    <input type="checkbox" id="searchByEstado" class="form-checkbox">
+                    <span class="ml-2">Estado</span>
+                </label>
             </div>
         </div>
         
@@ -141,17 +171,15 @@
 
     <script>
         // Configuración de Firebase
-        // IMPORTANTE: Reemplaza estos valores con tus credenciales reales de Firebase
-        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-    apiKey: "AIzaSyDycWG4lcgCk8KnIO6HLpUyabs3zqxUtFg",
-    authDomain: "controlinventarioit-2c8fc.firebaseapp.com",
-    projectId: "controlinventarioit-2c8fc",
-    storageBucket: "controlinventarioit-2c8fc.firebasestorage.app",
-    messagingSenderId: "621661032303",
-    appId: "1:621661032303:web:468a47222d01805e7de29a",
-    measurementId: "G-N6F1RQTW6B"
-  };
+        const firebaseConfig = {
+            apiKey: "AIzaSyDycWG4lcgCk8KnIO6HLpUyabs3zqxUtFg",
+            authDomain: "controlinventarioit-2c8fc.firebaseapp.com",
+            projectId: "controlinventarioit-2c8fc",
+            storageBucket: "controlinventarioit-2c8fc.firebasestorage.app",
+            messagingSenderId: "621661032303",
+            appId: "1:621661032303:web:468a47222d01805e7de29a",
+            measurementId: "G-N6F1RQTW6B"
+        };
         
         // Inicializar Firebase
         firebase.initializeApp(firebaseConfig);
@@ -177,7 +205,15 @@ const firebaseConfig = {
         const searchByMarca = document.getElementById('searchByMarca');
         const searchByModelo = document.getElementById('searchByModelo');
         const searchByProcesador = document.getElementById('searchByProcesador');
+        const searchByEstado = document.getElementById('searchByEstado');
         const resultsDiv = document.getElementById('results');
+        
+        // Elementos del contador
+        const totalCount = document.getElementById('total-count');
+        const buenaCount = document.getElementById('buena-count');
+        const noFuncionaCount = document.getElementById('no-funciona-count');
+        const pocoRendimientoCount = document.getElementById('poco-rendimiento-count');
+        const excelenteCount = document.getElementById('excelente-count');
         
         // Agregar nueva computadora a Firebase
         addForm.addEventListener('submit', async (e) => {
@@ -254,8 +290,10 @@ const firebaseConfig = {
                                      computer.modelo.toLowerCase().includes(searchTerm);
                     const procesadorMatch = searchByProcesador.checked && 
                                      computer.procesador.toLowerCase().includes(searchTerm);
+                    const estadoMatch = searchByEstado.checked && 
+                                     computer.estado.toLowerCase().includes(searchTerm);
                     
-                    return codigoMatch || marcaMatch || modeloMatch || procesadorMatch;
+                    return codigoMatch || marcaMatch || modeloMatch || procesadorMatch || estadoMatch;
                 });
                 
                 displayResults(filteredComputers);
@@ -266,10 +304,59 @@ const firebaseConfig = {
             }
         }
         
+        // Actualizar los contadores de estadísticas
+        function updateStatistics(computers) {
+            let total = computers.length;
+            let buena = 0;
+            let noFunciona = 0;
+            let pocoRendimiento = 0;
+            let excelente = 0;
+            
+            computers.forEach(computer => {
+                switch(computer.estado) {
+                    case 'Buena':
+                        buena++;
+                        break;
+                    case 'No funciona':
+                        noFunciona++;
+                        break;
+                    case 'Muy poco rendimiento':
+                        pocoRendimiento++;
+                        break;
+                    case 'Excelente rendimiento':
+                        excelente++;
+                        break;
+                }
+            });
+            
+            totalCount.textContent = total;
+            buenaCount.textContent = buena;
+            noFuncionaCount.textContent = noFunciona;
+            pocoRendimientoCount.textContent = pocoRendimiento;
+            excelenteCount.textContent = excelente;
+        }
+        
+        // Obtener color de estado
+        function getEstadoColor(estado) {
+            switch(estado) {
+                case 'Buena':
+                    return 'bg-green-100 text-green-800';
+                case 'No funciona':
+                    return 'bg-red-100 text-red-800';
+                case 'Muy poco rendimiento':
+                    return 'bg-yellow-100 text-yellow-800';
+                case 'Excelente rendimiento':
+                    return 'bg-blue-100 text-blue-800';
+                default:
+                    return '';
+            }
+        }
+        
         // Mostrar resultados
         function displayResults(computers) {
             if (computers.length === 0) {
                 resultsDiv.innerHTML = '<tr><td colspan="10" class="py-4 px-6 border-b text-gray-500 italic text-center">No se encontraron resultados</td></tr>';
+                updateStatistics([]);
                 return;
             }
             
@@ -284,6 +371,9 @@ const firebaseConfig = {
                     }
                 }
                 
+                // Obtener la clase de color basada en el estado
+                const estadoColorClass = getEstadoColor(computer.estado);
+                
                 html += `
                 <tr>
                     <td class="py-2 px-2 border-b">${computer.codigo}</td>
@@ -292,7 +382,11 @@ const firebaseConfig = {
                     <td class="py-2 px-2 border-b">${computer.procesador}</td>
                     <td class="py-2 px-2 border-b">${computer.ram} GB</td>
                     <td class="py-2 px-2 border-b">${computer.almacenamiento} GB</td>
-                    <td class="py-2 px-2 border-b">${computer.estado}</td>
+                    <td class="py-2 px-2 border-b">
+                        <span class="px-2 py-1 rounded-full text-xs font-medium ${estadoColorClass}">
+                            ${computer.estado}
+                        </span>
+                    </td>
                     <td class="py-2 px-2 border-b">${computer.ubicacion}</td>
                     <td class="py-2 px-2 border-b">${formattedDate}</td>
                     <td class="py-2 px-2 border-b">
@@ -304,6 +398,7 @@ const firebaseConfig = {
             });
             
             resultsDiv.innerHTML = html;
+            updateStatistics(computers);
             
             // Agregar event listeners para eliminar
             document.querySelectorAll('.delete-btn').forEach(btn => {
@@ -366,5 +461,4 @@ const firebaseConfig = {
         loadAllComputers();
     </script>
 </body>
-
 </html>
