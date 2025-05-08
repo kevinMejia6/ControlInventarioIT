@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Inventario de Computadoras COMO</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+        .form-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        .btn-danger {
+            background-color: #e74c3c;
+        }
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+        .btn-success {
+            background-color: #2ecc71;
+        }
+        .btn-success:hover {
+            background-color: #27ae60;
+        }
+        .btn-export {
+            background-color: #f39c12;
+        }
+        .btn-export:hover {
+            background-color: #d35400;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #34495e;
+            color: white;
+        }
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+        .status-buena {
+            color: #2ecc71;
+            font-weight: bold;
+        }
+        .status-no-funciona {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .status-poco-rendimiento {
+            color: #f39c12;
+            font-weight: bold;
+        }
+        .status-excelente {
+            color: #3498db;
+            font-weight: bold;
+        }
+        .actions {
+            display: flex;
+            gap: 5px;
+        }
+        .actions button {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+        .search-container {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        .search-container input {
+            flex: 1;
+        }
+        .search-container button {
+            width: auto;
+        }
+        .summary {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        .summary-item {
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            flex: 1;
+            min-width: 150px;
+            margin: 5px;
+            text-align: center;
+        }
+        .summary-item h3 {
+            margin-top: 0;
+        }
+        .summary-count {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        @media (max-width: 768px) {
+            .actions {
+                flex-direction: column;
+            }
+            .summary-item {
+                min-width: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Sistema de Control de Inventario de Computadoras COMO</h1>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="summary">
+            <div class="summary-item">
+                <h3>Total</h3>
+                <div id="count-total" class="summary-count">0</div>
+            </div>
+            <div class="summary-item">
+                <h3>Buena</h3>
+                <div id="count-buena" class="summary-count">0</div>
+            </div>
+            <div class="summary-item">
+                <h3>No Funciona</h3>
+                <div id="count-no-funciona" class="summary-count">0</div>
+            </div>
+            <div class="summary-item">
+                <h3>Poco Rendimiento</h3>
+                <div id="count-poco-rendimiento" class="summary-count">0</div>
+            </div>
+            <div class="summary-item">
+                <h3>Excelente</h3>
+                <div id="count-excelente" class="summary-count">0</div>
+            </div>
+        </div>
+
+        <div class="search-container">
+            <input type="text" id="search-input" placeholder="Buscar por código, marca, modelo o ubicación...">
+            <button class="btn" onclick="searchInventory()">Buscar</button>
+            <button class="btn" onclick="clearSearch()">Limpiar</button>
+        </div>
+
+        <div class="form-container">
+            <h2>Agregar Nueva Computadora</h2>
+            <form id="inventory-form">
+                <div class="form-group">
+                    <label for="codigo">Código de Inventario:</label>
+                    <input type="text" id="codigo" required>
+                </div>
+                <div class="form-group">
+                    <label for="marca">Marca:</label>
+                    <input type="text" id="marca" required>
+                </div>
+                <div class="form-group">
+                    <label for="modelo">Modelo:</label>
+                    <input type="text" id="modelo" required>
+                </div>
+                <div class="form-group">
+                    <label for="procesador">Procesador:</label>
+                    <input type="text" id="procesador" required>
+                </div>
+                <div class="form-group">
+                    <label for="ram">RAM (GB):</label>
+                    <input type="number" id="ram" required>
+                </div>
+                <div class="form-group">
+                    <label for="almacenamiento">Almacenamiento (GB):</label>
+                    <input type="number" id="almacenamiento" required>
+                </div>
+                <div class="form-group">
+                    <label for="estado">Estado:</label>
+                    <select id="estado" required>
+                        <option value="">-- Seleccionar Estado --</option>
+                        <option value="Buena">Buena</option>
+                        <option value="No funciona">No funciona</option>
+                        <option value="Muy poco rendimiento">Muy poco rendimiento</option>
+                        <option value="Excelente rendimiento">Excelente rendimiento</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="ubicacion">Ubicación en Bodega:</label>
+                    <input type="text" id="ubicacion" required>
+                </div>
+                <div class="form-group">
+                    <label for="notas">Notas adicionales:</label>
+                    <textarea id="notas" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="fecha">Fecha de ingreso:</label>
+                    <input type="date" id="fecha" required>
+                </div>
+                <button type="submit" class="btn">Guardar Computadora</button>
+            </form>
+        </div>
+
+        <div style="margin-bottom: 20px">
+            <button class="btn btn-export" onclick="exportToCSV()">Exportar a CSV</button>
+            <button class="btn btn-export" onclick="exportToJSON()">Exportar a JSON</button>
+            <button class="btn btn-export" onclick="exportToPDF()">Exportar a PDF</button>
+        </div>
+
+        <table id="inventory-table">
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Marca</th>
+                    <th>Modelo</th>
+                    <th>Procesador</th>
+                    <th>RAM</th>
+                    <th>Almacenamiento</th>
+                    <th>Estado</th>
+                    <th>Ubicación</th>
+                    <th>Fecha</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="inventory-body">
+                <!-- Los datos del inventario se cargarán aquí dinámicamente -->
+            </tbody>
+        </table>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        // Inicializar el array de inventario
+        let inventario = JSON.parse(localStorage.getItem('inventarioComputadoras')) || [];
+        let editingId = null;
+
+        // Cargar los datos cuando la página se cargue
+        document.addEventListener('DOMContentLoaded', function() {
+            renderInventoryTable();
+            document.getElementById('inventory-form').addEventListener('submit', handleFormSubmit);
+            updateSummary();
+        });
+
+        // Manejar el envío del formulario
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            
+            // Obtener valores del formulario
+            const codigo = document.getElementById('codigo').value;
+            const marca = document.getElementById('marca').value;
+            const modelo = document.getElementById('modelo').value;
+            const procesador = document.getElementById('procesador').value;
+            const ram = document.getElementById('ram').value;
+            const almacenamiento = document.getElementById('almacenamiento').value;
+            const estado = document.getElementById('estado').value;
+            const ubicacion = document.getElementById('ubicacion').value;
+            const notas = document.getElementById('notas').value;
+            const fecha = document.getElementById('fecha').value;
+            
+            // Validar que el código no esté duplicado cuando es un nuevo registro
+            if (!editingId && inventario.some(item => item.codigo === codigo)) {
+                alert('¡El código de inventario ya existe! Por favor use otro código.');
+                return;
+            }
+
+            // Crear el objeto computadora
+            const computadora = {
+                id: editingId || Date.now().toString(),
+                codigo,
+                marca,
+                modelo,
+                procesador,
+                ram,
+                almacenamiento,
+                estado,
+                ubicacion,
+                notas,
+                fecha
+            };
+
+            // Si estamos editando, actualizar el elemento existente
+            if (editingId) {
+                const index = inventario.findIndex(item => item.id === editingId);
+                if (index !== -1) {
+                    inventario[index] = computadora;
+                }
+                editingId = null;
+            } else {
+                // Agregar al array de inventario
+                inventario.push(computadora);
+            }
+
+            // Guardar en localStorage
+            localStorage.setItem('inventarioComputadoras', JSON.stringify(inventario));
+            
+            // Renderizar la tabla actualizada
+            renderInventoryTable();
+            updateSummary();
+            
+            // Limpiar el formulario
+            document.getElementById('inventory-form').reset();
+        }
+
+        // Renderizar la tabla de inventario
+        function renderInventoryTable(items = inventario) {
+            const tbody = document.getElementById('inventory-body');
+            tbody.innerHTML = '';
+            
+            if (items.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="10" style="text-align: center;">No hay computadoras en el inventario</td></tr>';
+                return;
+            }
+
+            items.forEach(item => {
+                const tr = document.createElement('tr');
+                
+                // Determinar la clase CSS basada en el estado
+                let statusClass = '';
+                if (item.estado === 'Buena') statusClass = 'status-buena';
+                else if (item.estado === 'No funciona') statusClass = 'status-no-funciona';
+                else if (item.estado === 'Muy poco rendimiento') statusClass = 'status-poco-rendimiento';
+                else if (item.estado === 'Excelente rendimiento') statusClass = 'status-excelente';
+                
+                tr.innerHTML = `
+                    <td>${item.codigo}</td>
+                    <td>${item.marca}</td>
+                    <td>${item.modelo}</td>
+                    <td>${item.procesador}</td>
+                    <td>${item.ram} GB</td>
+                    <td>${item.almacenamiento} GB</td>
+                    <td class="${statusClass}">${item.estado}</td>
+                    <td>${item.ubicacion}</td>
+                    <td>${formatDate(item.fecha)}</td>
+                    <td class="actions">
+                        <button class="btn" onclick="editItem('${item.id}')">Editar</button>
+                        <button class="btn btn-danger" onclick="deleteItem('${item.id}')">Eliminar</button>
+                    </td>
+                `;
+                
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Formatear fecha para mostrar
+        function formatDate(dateString) {
+            const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
+            return new Date(dateString).toLocaleDateString('es-ES', options);
+        }
+
+        // Editar un elemento
+        function editItem(id) {
+            const item = inventario.find(pc => pc.id === id);
+            if (!item) return;
+            
+            document.getElementById('codigo').value = item.codigo;
+            document.getElementById('marca').value = item.marca;
+            document.getElementById('modelo').value = item.modelo;
+            document.getElementById('procesador').value = item.procesador;
+            document.getElementById('ram').value = item.ram;
+            document.getElementById('almacenamiento').value = item.almacenamiento;
+            document.getElementById('estado').value = item.estado;
+            document.getElementById('ubicacion').value = item.ubicacion;
+            document.getElementById('notas').value = item.notas;
+            document.getElementById('fecha').value = item.fecha;
+            
+            editingId = id;
+            
+            // Hacer scroll hasta el formulario
+            document.querySelector('.form-container').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Eliminar un elemento
+        function deleteItem(id) {
+            if (confirm('¿Está seguro que desea eliminar esta computadora del inventario?')) {
+                inventario = inventario.filter(item => item.id !== id);
+                localStorage.setItem('inventarioComputadoras', JSON.stringify(inventario));
+                renderInventoryTable();
+                updateSummary();
+            }
+        }
+
+        // Buscar en el inventario
+        function searchInventory() {
+            const searchTerm = document.getElementById('search-input').value.toLowerCase();
+            if (!searchTerm) {
+                renderInventoryTable();
+                return;
+            }
+            
+            const filteredItems = inventario.filter(item => 
+                item.codigo.toLowerCase().includes(searchTerm) ||
+                item.marca.toLowerCase().includes(searchTerm) ||
+                item.modelo.toLowerCase().includes(searchTerm) ||
+                item.ubicacion.toLowerCase().includes(searchTerm) ||
+                item.procesador.toLowerCase().includes(searchTerm) ||
+                item.estado.toLowerCase().includes(searchTerm)
+            );
+            
+            renderInventoryTable(filteredItems);
+        }
+
+        // Limpiar búsqueda
+        function clearSearch() {
+            document.getElementById('search-input').value = '';
+            renderInventoryTable();
+        }
+
+        // Actualizar el resumen de conteos
+        function updateSummary() {
+            document.getElementById('count-total').textContent = inventario.length;
+            document.getElementById('count-buena').textContent = 
+                inventario.filter(item => item.estado === 'Buena').length;
+            document.getElementById('count-no-funciona').textContent = 
+                inventario.filter(item => item.estado === 'No funciona').length;
+            document.getElementById('count-poco-rendimiento').textContent = 
+                inventario.filter(item => item.estado === 'Muy poco rendimiento').length;
+            document.getElementById('count-excelente').textContent = 
+                inventario.filter(item => item.estado === 'Excelente rendimiento').length;
+        }
+
+        // Exportar a CSV
+        function exportToCSV() {
+            if (inventario.length === 0) {
+                alert('No hay datos para exportar');
+                return;
+            }
+            
+            const headers = ['Código', 'Marca', 'Modelo', 'Procesador', 'RAM (GB)', 'Almacenamiento (GB)', 'Estado', 'Ubicación', 'Notas', 'Fecha'];
+            const csvContent = [
+                headers.join(','),
+                ...inventario.map(item => [
+                    item.codigo,
+                    item.marca,
+                    item.modelo,
+                    item.procesador,
+                    item.ram,
+                    item.almacenamiento,
+                    item.estado,
+                    item.ubicacion,
+                    item.notas ? `"${item.notas.replace(/"/g, '""')}"` : '',
+                    item.fecha
+                ].join(','))
+            ].join('\n');
+            
+            downloadFile(csvContent, 'inventario-computadoras.csv', 'text/csv');
+        }
+
+        // Exportar a JSON
+        function exportToJSON() {
+            if (inventario.length === 0) {
+                alert('No hay datos para exportar');
+                return;
+            }
+            
+            const jsonContent = JSON.stringify(inventario, null, 2);
+            downloadFile(jsonContent, 'inventario-computadoras.json', 'application/json');
+        }
+
+        // Exportar a PDF
+        function exportToPDF() {
+            if (inventario.length === 0) {
+                alert('No hay datos para exportar');
+                return;
+            }
+            
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Título
+            doc.setFontSize(18);
+            doc.text('Inventario de Computadoras', 14, 20);
+            
+            // Fecha de generación
+            doc.setFontSize(10);
+            doc.text(`Generado el: ${new Date().toLocaleDateString('es-ES')}`, 14, 30);
+            
+            // Resumen
+            doc.setFontSize(12);
+            doc.text('Resumen:', 14, 40);
+            doc.setFontSize(10);
+            doc.text(`Total: ${inventario.length}`, 14, 50);
+            doc.text(`Buena: ${inventario.filter(item => item.estado === 'Buena').length}`, 14, 55);
+            doc.text(`No funciona: ${inventario.filter(item => item.estado === 'No funciona').length}`, 14, 60);
+            doc.text(`Poco rendimiento: ${inventario.filter(item => item.estado === 'Muy poco rendimiento').length}`, 14, 65);
+            doc.text(`Excelente: ${inventario.filter(item => item.estado === 'Excelente rendimiento').length}`, 14, 70);
+            
+            // Tabla
+            const headers = ['Código', 'Marca', 'Modelo', 'Estado', 'Ubicación'];
+            const rows = inventario.map(item => [
+                item.codigo,
+                item.marca,
+                item.modelo,
+                item.estado,
+                item.ubicacion
+            ]);
+            
+            doc.autoTable({
+                startY: 80,
+                head: [headers],
+                body: rows,
+                theme: 'striped',
+                styles: { fontSize: 8 }
+            });
+            
+            doc.save('inventario-computadoras.pdf');
+        }
+
+        // Función genérica para descargar archivos
+        function downloadFile(content, fileName, contentType) {
+            const blob = new Blob([content], { type: contentType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
