@@ -3,513 +3,368 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Inventario de Computadoras</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <title>Inventario de Computadoras</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <!-- Firebase SDK -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.2/firebase-app-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.2/firebase-firestore-compat.min.js"></script>
+    <!-- Agrega un favicon para evitar errores 404 en la consola -->
+    <link rel="icon" href="data:,">
 </head>
-<body class="bg-gray-100 text-gray-800 font-sans">
-    <header class="bg-slate-800 text-white py-6">
-        <div class="container mx-auto px-4">
-            <h1 class="text-2xl md:text-3xl font-bold text-center">Sistema de Control de Inventario de Computadoras</h1>
-        </div>
-    </header>
-
-    <div class="container mx-auto px-4 py-6">
-        <!-- Resumen/Estadísticas -->
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
-            <div class="bg-white p-4 rounded-lg shadow text-center">
-                <h3 class="font-semibold text-gray-600">Total</h3>
-                <div id="count-total" class="text-2xl font-bold">0</div>
-            </div>
-            <div class="bg-white p-4 rounded-lg shadow text-center">
-                <h3 class="font-semibold text-gray-600">Buena</h3>
-                <div id="count-buena" class="text-2xl font-bold text-green-600">0</div>
-            </div>
-            <div class="bg-white p-4 rounded-lg shadow text-center">
-                <h3 class="font-semibold text-gray-600">No Funciona</h3>
-                <div id="count-no-funciona" class="text-2xl font-bold text-red-600">0</div>
-            </div>
-            <div class="bg-white p-4 rounded-lg shadow text-center">
-                <h3 class="font-semibold text-gray-600">Poco Rendimiento</h3>
-                <div id="count-poco-rendimiento" class="text-2xl font-bold text-yellow-600">0</div>
-            </div>
-            <div class="bg-white p-4 rounded-lg shadow text-center">
-                <h3 class="font-semibold text-gray-600">Excelente</h3>
-                <div id="count-excelente" class="text-2xl font-bold text-blue-600">0</div>
-            </div>
-        </div>
-
-        <!-- Barra de búsqueda -->
-        <div class="flex flex-col md:flex-row gap-2 mb-6">
-            <input type="text" id="search-input" placeholder="Buscar por código, marca, modelo o ubicación..." 
-                   class="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
-            <div class="flex gap-2">
-                <button class="bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg transition-colors" onclick="searchInventory()">
-                    Buscar
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold text-center mb-8">Inventario de Computadoras</h1>
+        
+        <!-- Formulario para agregar computadora -->
+        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h2 class="text-xl font-semibold mb-4">Agregar Nueva Computadora</h2>
+            <form id="addForm" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-gray-700">Código de Inventario:</label>
+                        <input type="text" id="codigo" class="w-full p-2 border rounded" required>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700">Marca:</label>
+                        <input type="text" id="marca" class="w-full p-2 border rounded" required>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700">Modelo:</label>
+                        <input type="text" id="modelo" class="w-full p-2 border rounded" required>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-gray-700">Procesador:</label>
+                        <input type="text" id="procesador" class="w-full p-2 border rounded" required>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700">RAM (GB):</label>
+                        <input type="number" id="ram" class="w-full p-2 border rounded" required>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700">Almacenamiento (GB):</label>
+                        <input type="number" id="almacenamiento" class="w-full p-2 border rounded" required>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-gray-700">Estado:</label>
+                        <select id="estado" class="w-full p-2 border rounded" required>
+                            <option value="">-- Seleccionar Estado --</option>
+                            <option value="Nuevo">Nuevo</option>
+                            <option value="En uso">En uso</option>
+                            <option value="En reparación">En reparación</option>
+                            <option value="Obsoleto">Obsoleto</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700">Ubicación en Bodega:</label>
+                        <input type="text" id="ubicacion" class="w-full p-2 border rounded" required>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700">Fecha de ingreso:</label>
+                        <input type="date" id="fecha" class="w-full p-2 border rounded" required>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-gray-700">Notas adicionales:</label>
+                    <textarea id="notas" class="w-full p-2 border rounded" rows="3"></textarea>
+                </div>
+                
+                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                    Guardar Computadora
                 </button>
-                <button class="bg-gray-500 hover:bg-gray-600 text-white py-3 px-4 rounded-lg transition-colors" onclick="clearSearch()">
-                    Limpiar
-                </button>
-            </div>
-        </div>
-
-        <!-- Formulario -->
-        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h2 class="text-xl font-bold mb-4">Agregar Nueva Computadora</h2>
-            <form id="inventory-form" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div>
-                    <label for="codigo" class="block font-medium mb-1">Código de Inventario:</label>
-                    <input type="text" id="codigo" required 
-                           class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                </div>
-                <div>
-                    <label for="marca" class="block font-medium mb-1">Marca:</label>
-                    <input type="text" id="marca" required 
-                           class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                </div>
-                <div>
-                    <label for="modelo" class="block font-medium mb-1">Modelo:</label>
-                    <input type="text" id="modelo" required 
-                           class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                </div>
-                <div>
-                    <label for="procesador" class="block font-medium mb-1">Procesador:</label>
-                    <input type="text" id="procesador" required 
-                           class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                </div>
-                <div>
-                    <label for="ram" class="block font-medium mb-1">RAM (GB):</label>
-                    <input type="number" id="ram" required 
-                           class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                </div>
-                <div>
-                    <label for="almacenamiento" class="block font-medium mb-1">Almacenamiento (GB):</label>
-                    <input type="number" id="almacenamiento" required 
-                           class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                </div>
-                <div>
-                    <label for="estado" class="block font-medium mb-1">Estado:</label>
-                    <select id="estado" required 
-                            class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                        <option value="">-- Seleccionar Estado --</option>
-                        <option value="Buena">Buena</option>
-                        <option value="No funciona">No funciona</option>
-                        <option value="Muy poco rendimiento">Muy poco rendimiento</option>
-                        <option value="Excelente rendimiento">Excelente rendimiento</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="ubicacion" class="block font-medium mb-1">Ubicación en Bodega:</label>
-                    <input type="text" id="ubicacion" required 
-                           class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                </div>
-                <div>
-                    <label for="fecha" class="block font-medium mb-1">Fecha de ingreso:</label>
-                    <input type="date" id="fecha" required 
-                           class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                </div>
-                <div class="md:col-span-2 lg:col-span-3">
-                    <label for="notas" class="block font-medium mb-1">Notas adicionales:</label>
-                    <textarea id="notas" rows="3" 
-                              class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
-                </div>
-                <div class="md:col-span-2 lg:col-span-3">
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded transition-colors">
-                        Guardar Computadora
-                    </button>
-                </div>
             </form>
         </div>
-
-        <!-- Botones de exportación -->
-        <div class="flex flex-wrap gap-2 mb-6">
-            <button class="bg-amber-500 hover:bg-amber-600 text-white py-2 px-4 rounded transition-colors" onclick="exportToCSV()">
-                Exportar a CSV
-            </button>
-            <button class="bg-amber-500 hover:bg-amber-600 text-white py-2 px-4 rounded transition-colors" onclick="exportToJSON()">
-                Exportar a JSON
-            </button>
-            <button class="bg-amber-500 hover:bg-amber-600 text-white py-2 px-4 rounded transition-colors" onclick="exportToPDF()">
-                Exportar a PDF
-            </button>
-        </div>
-
-        <!-- Tabla responsiva -->
-        <div class="overflow-x-auto bg-white rounded-lg shadow">
-            <table id="inventory-table" class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-800 text-white">
-                    <tr>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Código</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Marca</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Modelo</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider hidden md:table-cell">Procesador</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider hidden md:table-cell">RAM</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider hidden lg:table-cell">Almac.</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Estado</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider hidden md:table-cell">Ubicación</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider hidden lg:table-cell">Fecha</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody id="inventory-body" class="divide-y divide-gray-200">
-                    <!-- Los datos del inventario se cargarán aquí dinámicamente -->
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- Modal para ver detalles en dispositivos móviles -->
-    <div id="details-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
-        <div class="bg-white rounded-lg shadow-lg p-6 m-4 max-w-xl w-full max-h-full overflow-y-auto">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-bold" id="modal-title">Detalles de Computadora</h3>
-                <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
+        
+        <!-- Buscador -->
+        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h2 class="text-xl font-semibold mb-4">Buscar Computadoras</h2>
+            <div class="flex space-x-4 mb-4">
+                <input type="text" id="searchInput" class="flex-1 p-2 border rounded" placeholder="Buscar por código, marca o modelo...">
+                <button id="searchBtn" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                    Buscar
                 </button>
             </div>
-            <div id="modal-content" class="space-y-3">
-                <!-- Contenido del modal se cargará dinámicamente -->
+            <div class="mt-2 flex flex-wrap gap-4">
+                <label class="inline-flex items-center">
+                    <input type="checkbox" id="searchByCodigo" checked class="form-checkbox">
+                    <span class="ml-2">Código</span>
+                </label>
+                <label class="inline-flex items-center">
+                    <input type="checkbox" id="searchByMarca" checked class="form-checkbox">
+                    <span class="ml-2">Marca</span>
+                </label>
+                <label class="inline-flex items-center">
+                    <input type="checkbox" id="searchByModelo" checked class="form-checkbox">
+                    <span class="ml-2">Modelo</span>
+                </label>
+                <label class="inline-flex items-center">
+                    <input type="checkbox" id="searchByProcesador" class="form-checkbox">
+                    <span class="ml-2">Procesador</span>
+                </label>
             </div>
-            <div class="mt-6 flex justify-end gap-2">
-                <button onclick="closeModal()" class="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded">
-                    Cerrar
-                </button>
+        </div>
+        
+        <!-- Resultados -->
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-xl font-semibold mb-4">Inventario de Computadoras</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white">
+                    <thead>
+                        <tr>
+                            <th class="py-2 px-2 border-b border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Código</th>
+                            <th class="py-2 px-2 border-b border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Marca</th>
+                            <th class="py-2 px-2 border-b border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Modelo</th>
+                            <th class="py-2 px-2 border-b border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Procesador</th>
+                            <th class="py-2 px-2 border-b border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">RAM</th>
+                            <th class="py-2 px-2 border-b border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Almacen.</th>
+                            <th class="py-2 px-2 border-b border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Estado</th>
+                            <th class="py-2 px-2 border-b border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Ubicación</th>
+                            <th class="py-2 px-2 border-b border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Fecha</th>
+                            <th class="py-2 px-2 border-b border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="results">
+                        <tr>
+                            <td colspan="10" class="py-4 px-6 border-b text-gray-500 italic text-center">Los resultados aparecerán aquí...</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 
     <script>
-        // Inicializar el array de inventario
-        let inventario = JSON.parse(localStorage.getItem('inventarioComputadoras')) || [];
-        let editingId = null;
-
-        // Cargar los datos cuando la página se cargue
-        document.addEventListener('DOMContentLoaded', function() {
-            renderInventoryTable();
-            document.getElementById('inventory-form').addEventListener('submit', handleFormSubmit);
-            updateSummary();
-        });
-
-        // Manejar el envío del formulario
-        function handleFormSubmit(e) {
+        // Configuración de Firebase
+        // IMPORTANTE: Reemplaza estos valores con tus credenciales reales de Firebase
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+    apiKey: "AIzaSyDycWG4lcgCk8KnIO6HLpUyabs3zqxUtFg",
+    authDomain: "controlinventarioit-2c8fc.firebaseapp.com",
+    projectId: "controlinventarioit-2c8fc",
+    storageBucket: "controlinventarioit-2c8fc.firebasestorage.app",
+    messagingSenderId: "621661032303",
+    appId: "1:621661032303:web:468a47222d01805e7de29a",
+    measurementId: "G-N6F1RQTW6B"
+  };
+        
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const computadorasCollection = db.collection('computadoras');
+        
+        // Elementos del DOM
+        const addForm = document.getElementById('addForm');
+        const codigoInput = document.getElementById('codigo');
+        const marcaInput = document.getElementById('marca');
+        const modeloInput = document.getElementById('modelo');
+        const procesadorInput = document.getElementById('procesador');
+        const ramInput = document.getElementById('ram');
+        const almacenamientoInput = document.getElementById('almacenamiento');
+        const estadoInput = document.getElementById('estado');
+        const ubicacionInput = document.getElementById('ubicacion');
+        const fechaInput = document.getElementById('fecha');
+        const notasInput = document.getElementById('notas');
+        
+        const searchInput = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const searchByCodigo = document.getElementById('searchByCodigo');
+        const searchByMarca = document.getElementById('searchByMarca');
+        const searchByModelo = document.getElementById('searchByModelo');
+        const searchByProcesador = document.getElementById('searchByProcesador');
+        const resultsDiv = document.getElementById('results');
+        
+        // Agregar nueva computadora a Firebase
+        addForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            // Obtener valores del formulario
-            const codigo = document.getElementById('codigo').value;
-            const marca = document.getElementById('marca').value;
-            const modelo = document.getElementById('modelo').value;
-            const procesador = document.getElementById('procesador').value;
-            const ram = document.getElementById('ram').value;
-            const almacenamiento = document.getElementById('almacenamiento').value;
-            const estado = document.getElementById('estado').value;
-            const ubicacion = document.getElementById('ubicacion').value;
-            const notas = document.getElementById('notas').value;
-            const fecha = document.getElementById('fecha').value;
+            // Verificar si el código ya existe
+            const codigoValue = codigoInput.value.trim();
+            const codigoSnapshot = await computadorasCollection.where('codigo', '==', codigoValue).get();
             
-            // Validar que el código no esté duplicado cuando es un nuevo registro
-            if (!editingId && inventario.some(item => item.codigo === codigo)) {
-                alert('¡El código de inventario ya existe! Por favor use otro código.');
+            if (!codigoSnapshot.empty) {
+                alert('Este código de inventario ya existe. Por favor use otro.');
                 return;
             }
-
-            // Crear el objeto computadora
-            const computadora = {
-                id: editingId || Date.now().toString(),
-                codigo,
-                marca,
-                modelo,
-                procesador,
-                ram,
-                almacenamiento,
-                estado,
-                ubicacion,
-                notas,
-                fecha
+            
+            const newComputer = {
+                codigo: codigoValue,
+                marca: marcaInput.value.trim(),
+                modelo: modeloInput.value.trim(),
+                procesador: procesadorInput.value.trim(),
+                ram: parseInt(ramInput.value),
+                almacenamiento: parseInt(almacenamientoInput.value),
+                estado: estadoInput.value,
+                ubicacion: ubicacionInput.value.trim(),
+                fecha: fechaInput.value,
+                notas: notasInput.value.trim(),
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
             };
-
-            // Si estamos editando, actualizar el elemento existente
-            if (editingId) {
-                const index = inventario.findIndex(item => item.id === editingId);
-                if (index !== -1) {
-                    inventario[index] = computadora;
-                }
-                editingId = null;
-            } else {
-                // Agregar al array de inventario
-                inventario.push(computadora);
+            
+            try {
+                await computadorasCollection.add(newComputer);
+                alert('¡Computadora guardada correctamente!');
+                addForm.reset();
+                loadAllComputers(); // Recargar todas las computadoras después de agregar una nueva
+            } catch (error) {
+                console.error('Error al guardar:', error);
+                alert('Error al guardar la computadora: ' + error.message);
             }
-
-            // Guardar en localStorage
-            localStorage.setItem('inventarioComputadoras', JSON.stringify(inventario));
+        });
+        
+        // Función de búsqueda
+        searchBtn.addEventListener('click', performSearch);
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') performSearch();
+        });
+        
+        async function performSearch() {
+            const searchTerm = searchInput.value.trim().toLowerCase();
             
-            // Renderizar la tabla actualizada
-            renderInventoryTable();
-            updateSummary();
-            
-            // Limpiar el formulario
-            document.getElementById('inventory-form').reset();
-        }
-
-        // Renderizar la tabla de inventario
-        function renderInventoryTable(items = inventario) {
-            const tbody = document.getElementById('inventory-body');
-            tbody.innerHTML = '';
-            
-            if (items.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="10" class="text-center py-4">No hay computadoras en el inventario</td></tr>';
-                return;
-            }
-
-            items.forEach(item => {
-                const tr = document.createElement('tr');
-                tr.className = 'hover:bg-gray-50';
-                
-                // Determinar la clase CSS basada en el estado
-                let statusClass = '';
-                if (item.estado === 'Buena') statusClass = 'text-green-600 font-medium';
-                else if (item.estado === 'No funciona') statusClass = 'text-red-600 font-medium';
-                else if (item.estado === 'Muy poco rendimiento') statusClass = 'text-yellow-600 font-medium';
-                else if (item.estado === 'Excelente rendimiento') statusClass = 'text-blue-600 font-medium';
-                
-                tr.innerHTML = `
-                    <td class="px-4 py-3 whitespace-nowrap">${item.codigo}</td>
-                    <td class="px-4 py-3 whitespace-nowrap">${item.marca}</td>
-                    <td class="px-4 py-3 whitespace-nowrap">${item.modelo}</td>
-                    <td class="px-4 py-3 whitespace-nowrap hidden md:table-cell">${item.procesador}</td>
-                    <td class="px-4 py-3 whitespace-nowrap hidden md:table-cell">${item.ram} GB</td>
-                    <td class="px-4 py-3 whitespace-nowrap hidden lg:table-cell">${item.almacenamiento} GB</td>
-                    <td class="px-4 py-3 whitespace-nowrap ${statusClass}">${item.estado}</td>
-                    <td class="px-4 py-3 whitespace-nowrap hidden md:table-cell">${item.ubicacion}</td>
-                    <td class="px-4 py-3 whitespace-nowrap hidden lg:table-cell">${formatDate(item.fecha)}</td>
-                    <td class="px-4 py-3 whitespace-nowrap">
-                        <div class="flex flex-col md:flex-row gap-2">
-                            <button class="bg-blue-600 hover:bg-blue-700 text-white py-1 px-2 rounded text-xs md:text-sm" onclick="editItem('${item.id}')">
-                                Editar
-                            </button>
-                            <button class="bg-red-600 hover:bg-red-700 text-white py-1 px-2 rounded text-xs md:text-sm" onclick="deleteItem('${item.id}')">
-                                Eliminar
-                            </button>
-                            <button class="md:hidden bg-gray-600 hover:bg-gray-700 text-white py-1 px-2 rounded text-xs" onclick="showDetails('${item.id}')">
-                                Detalles
-                            </button>
-                        </div>
-                    </td>
-                `;
-                
-                tbody.appendChild(tr);
-            });
-        }
-
-        // Mostrar detalles en modal para dispositivos móviles
-        function showDetails(id) {
-            const item = inventario.find(pc => pc.id === id);
-            if (!item) return;
-            
-            const modal = document.getElementById('details-modal');
-            const content = document.getElementById('modal-content');
-            
-            content.innerHTML = `
-                <div class="grid grid-cols-1 gap-2">
-                    <div><span class="font-medium">Código:</span> ${item.codigo}</div>
-                    <div><span class="font-medium">Marca:</span> ${item.marca}</div>
-                    <div><span class="font-medium">Modelo:</span> ${item.modelo}</div>
-                    <div><span class="font-medium">Procesador:</span> ${item.procesador}</div>
-                    <div><span class="font-medium">RAM:</span> ${item.ram} GB</div>
-                    <div><span class="font-medium">Almacenamiento:</span> ${item.almacenamiento} GB</div>
-                    <div><span class="font-medium">Estado:</span> ${item.estado}</div>
-                    <div><span class="font-medium">Ubicación:</span> ${item.ubicacion}</div>
-                    <div><span class="font-medium">Fecha:</span> ${formatDate(item.fecha)}</div>
-                    <div><span class="font-medium">Notas:</span> ${item.notas || 'No hay notas adicionales'}</div>
-                </div>
-            `;
-            
-            modal.classList.remove('hidden');
-        }
-
-        // Cerrar modal
-        function closeModal() {
-            document.getElementById('details-modal').classList.add('hidden');
-        }
-
-        // Formatear fecha para mostrar
-        function formatDate(dateString) {
-            const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
-            return new Date(dateString).toLocaleDateString('es-ES', options);
-        }
-
-        // Editar un elemento
-        function editItem(id) {
-            const item = inventario.find(pc => pc.id === id);
-            if (!item) return;
-            
-            document.getElementById('codigo').value = item.codigo;
-            document.getElementById('marca').value = item.marca;
-            document.getElementById('modelo').value = item.modelo;
-            document.getElementById('procesador').value = item.procesador;
-            document.getElementById('ram').value = item.ram;
-            document.getElementById('almacenamiento').value = item.almacenamiento;
-            document.getElementById('estado').value = item.estado;
-            document.getElementById('ubicacion').value = item.ubicacion;
-            document.getElementById('notas').value = item.notas;
-            document.getElementById('fecha').value = item.fecha;
-            
-            editingId = id;
-            
-            // Hacer scroll hasta el formulario
-            document.querySelector('form').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        // Eliminar un elemento
-        function deleteItem(id) {
-            if (confirm('¿Está seguro que desea eliminar esta computadora del inventario?')) {
-                inventario = inventario.filter(item => item.id !== id);
-                localStorage.setItem('inventarioComputadoras', JSON.stringify(inventario));
-                renderInventoryTable();
-                updateSummary();
-            }
-        }
-
-        // Buscar en el inventario
-        function searchInventory() {
-            const searchTerm = document.getElementById('search-input').value.toLowerCase();
             if (!searchTerm) {
-                renderInventoryTable();
+                loadAllComputers();
                 return;
             }
             
-            const filteredItems = inventario.filter(item => 
-                item.codigo.toLowerCase().includes(searchTerm) ||
-                item.marca.toLowerCase().includes(searchTerm) ||
-                item.modelo.toLowerCase().includes(searchTerm) ||
-                item.ubicacion.toLowerCase().includes(searchTerm) ||
-                item.procesador.toLowerCase().includes(searchTerm) ||
-                item.estado.toLowerCase().includes(searchTerm)
-            );
-            
-            renderInventoryTable(filteredItems);
+            try {
+                resultsDiv.innerHTML = '<tr><td colspan="10" class="py-4 px-6 border-b text-gray-500 text-center">Buscando...</td></tr>';
+                
+                // Obtener todas las computadoras
+                const snapshot = await computadorasCollection.orderBy('createdAt', 'desc').get();
+                const computers = [];
+                
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    data.id = doc.id;
+                    computers.push(data);
+                });
+                
+                // Filtrar según criterios de búsqueda
+                const filteredComputers = computers.filter(computer => {
+                    const codigoMatch = searchByCodigo.checked && 
+                                     computer.codigo.toLowerCase().includes(searchTerm);
+                    const marcaMatch = searchByMarca.checked && 
+                                     computer.marca.toLowerCase().includes(searchTerm);
+                    const modeloMatch = searchByModelo.checked && 
+                                     computer.modelo.toLowerCase().includes(searchTerm);
+                    const procesadorMatch = searchByProcesador.checked && 
+                                     computer.procesador.toLowerCase().includes(searchTerm);
+                    
+                    return codigoMatch || marcaMatch || modeloMatch || procesadorMatch;
+                });
+                
+                displayResults(filteredComputers);
+                
+            } catch (error) {
+                console.error('Error al buscar:', error);
+                resultsDiv.innerHTML = `<tr><td colspan="10" class="py-4 px-6 border-b text-red-500 text-center">Error al buscar: ${error.message}</td></tr>`;
+            }
         }
-
-        // Limpiar búsqueda
-        function clearSearch() {
-            document.getElementById('search-input').value = '';
-            renderInventoryTable();
-        }
-
-        // Actualizar el resumen de conteos
-        function updateSummary() {
-            document.getElementById('count-total').textContent = inventario.length;
-            document.getElementById('count-buena').textContent = 
-                inventario.filter(item => item.estado === 'Buena').length;
-            document.getElementById('count-no-funciona').textContent = 
-                inventario.filter(item => item.estado === 'No funciona').length;
-            document.getElementById('count-poco-rendimiento').textContent = 
-                inventario.filter(item => item.estado === 'Muy poco rendimiento').length;
-            document.getElementById('count-excelente').textContent = 
-                inventario.filter(item => item.estado === 'Excelente rendimiento').length;
-        }
-
-        // Exportar a CSV
-        function exportToCSV() {
-            if (inventario.length === 0) {
-                alert('No hay datos para exportar');
+        
+        // Mostrar resultados
+        function displayResults(computers) {
+            if (computers.length === 0) {
+                resultsDiv.innerHTML = '<tr><td colspan="10" class="py-4 px-6 border-b text-gray-500 italic text-center">No se encontraron resultados</td></tr>';
                 return;
             }
             
-            const headers = ['Código', 'Marca', 'Modelo', 'Procesador', 'RAM (GB)', 'Almacenamiento (GB)', 'Estado', 'Ubicación', 'Notas', 'Fecha'];
-            const csvContent = [
-                headers.join(','),
-                ...inventario.map(item => [
-                    item.codigo,
-                    item.marca,
-                    item.modelo,
-                    item.procesador,
-                    item.ram,
-                    item.almacenamiento,
-                    item.estado,
-                    item.ubicacion,
-                    item.notas ? `"${item.notas.replace(/"/g, '""')}"` : '',
-                    item.fecha
-                ].join(','))
-            ].join('\n');
-            
-            downloadFile(csvContent, 'inventario-computadoras.csv', 'text/csv');
-        }
-
-        // Exportar a JSON
-        function exportToJSON() {
-            if (inventario.length === 0) {
-                alert('No hay datos para exportar');
-                return;
-            }
-            
-            const jsonContent = JSON.stringify(inventario, null, 2);
-            downloadFile(jsonContent, 'inventario-computadoras.json', 'application/json');
-        }
-
-        // Exportar a PDF
-        function exportToPDF() {
-            if (inventario.length === 0) {
-                alert('No hay datos para exportar');
-                return;
-            }
-            
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            // Título
-            doc.setFontSize(18);
-            doc.text('Inventario de Computadoras', 14, 20);
-            
-            // Fecha de generación
-            doc.setFontSize(10);
-            doc.text(`Generado el: ${new Date().toLocaleDateString('es-ES')}`, 14, 30);
-            
-            // Resumen
-            doc.setFontSize(12);
-            doc.text('Resumen:', 14, 40);
-            doc.setFontSize(10);
-            doc.text(`Total: ${inventario.length}`, 14, 50);
-            doc.text(`Buena: ${inventario.filter(item => item.estado === 'Buena').length}`, 14, 55);
-            doc.text(`No funciona: ${inventario.filter(item => item.estado === 'No funciona').length}`, 14, 60);
-            doc.text(`Poco rendimiento: ${inventario.filter(item => item.estado === 'Muy poco rendimiento').length}`, 14, 65);
-            doc.text(`Excelente: ${inventario.filter(item => item.estado === 'Excelente rendimiento').length}`, 14, 70);
-            
-            // Tabla
-            const headers = ['Código', 'Marca', 'Modelo', 'Estado', 'Ubicación'];
-            const rows = inventario.map(item => [
-                item.codigo,
-                item.marca,
-                item.modelo,
-                item.estado,
-                item.ubicacion
-            ]);
-            
-            doc.autoTable({
-                startY: 80,
-                head: [headers],
-                body: rows,
-                theme: 'striped',
-                styles: { fontSize: 8 }
+            let html = '';
+            computers.forEach(computer => {
+                // Formatear la fecha para mostrarla en formato DD/MM/AAAA
+                let formattedDate = computer.fecha;
+                if (computer.fecha) {
+                    const dateParts = computer.fecha.split('-');
+                    if (dateParts.length === 3) {
+                        formattedDate = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
+                    }
+                }
+                
+                html += `
+                <tr>
+                    <td class="py-2 px-2 border-b">${computer.codigo}</td>
+                    <td class="py-2 px-2 border-b">${computer.marca}</td>
+                    <td class="py-2 px-2 border-b">${computer.modelo}</td>
+                    <td class="py-2 px-2 border-b">${computer.procesador}</td>
+                    <td class="py-2 px-2 border-b">${computer.ram} GB</td>
+                    <td class="py-2 px-2 border-b">${computer.almacenamiento} GB</td>
+                    <td class="py-2 px-2 border-b">${computer.estado}</td>
+                    <td class="py-2 px-2 border-b">${computer.ubicacion}</td>
+                    <td class="py-2 px-2 border-b">${formattedDate}</td>
+                    <td class="py-2 px-2 border-b">
+                        <button class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 delete-btn" data-id="${computer.id}">
+                            Eliminar
+                        </button>
+                    </td>
+                </tr>`;
             });
             
-            doc.save('inventario-computadoras.pdf');
+            resultsDiv.innerHTML = html;
+            
+            // Agregar event listeners para eliminar
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const id = e.target.getAttribute('data-id');
+                    if (confirm('¿Estás seguro de eliminar esta computadora?')) {
+                        try {
+                            await computadorasCollection.doc(id).delete();
+                            alert('Computadora eliminada correctamente');
+                            loadAllComputers(); // Recargar todas las computadoras
+                        } catch (error) {
+                            console.error('Error al eliminar:', error);
+                            alert('Error al eliminar: ' + error.message);
+                        }
+                    }
+                });
+            });
         }
-
-        // Función genérica para descargar archivos
-        function downloadFile(content, fileName, contentType) {
-            const blob = new Blob([content], { type: contentType });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = fileName;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+        
+        // Cargar todas las computadoras
+        async function loadAllComputers() {
+            try {
+                resultsDiv.innerHTML = '<tr><td colspan="10" class="py-4 px-6 border-b text-gray-500 text-center">Cargando...</td></tr>';
+                
+                // Configurar un listener en tiempo real para actualizar automáticamente cuando haya cambios
+                if (!window.realTimeListener) {
+                    window.realTimeListener = computadorasCollection.orderBy('createdAt', 'desc')
+                        .onSnapshot((snapshot) => {
+                            const computers = [];
+                            snapshot.forEach(doc => {
+                                const data = doc.data();
+                                data.id = doc.id;
+                                computers.push(data);
+                            });
+                            displayResults(computers);
+                        }, (error) => {
+                            console.error("Error en tiempo real:", error);
+                            resultsDiv.innerHTML = `<tr><td colspan="10" class="py-4 px-6 border-b text-red-500 text-center">Error al actualizar: ${error.message}</td></tr>`;
+                        });
+                } else {
+                    // Si ya existe el listener, solo obtener los datos una vez
+                    const snapshot = await computadorasCollection.orderBy('createdAt', 'desc').get();
+                    const computers = [];
+                    
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        data.id = doc.id;
+                        computers.push(data);
+                    });
+                    
+                    displayResults(computers);
+                }
+            } catch (error) {
+                console.error('Error al cargar computadoras:', error);
+                resultsDiv.innerHTML = `<tr><td colspan="10" class="py-4 px-6 border-b text-red-500 text-center">Error al cargar computadoras: ${error.message}</td></tr>`;
+            }
         }
+        
+        // Cargar todas las computadoras al iniciar
+        loadAllComputers();
     </script>
 </body>
+
 </html>
