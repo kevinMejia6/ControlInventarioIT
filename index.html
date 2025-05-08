@@ -3,239 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Inventario de Computadoras COMO</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f5f5f5;
-            color: #333;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        header {
-            background-color: #2c3e50;
-            color: white;
-            padding: 20px 0;
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        h1 {
-            margin: 0;
-            font-size: 28px;
-        }
-        .form-container {
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            padding: 25px;
-            margin-bottom: 30px;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 600;
-        }
-        input, select, textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        .btn {
-            background-color: #3498db;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.3s;
-        }
-        .btn:hover {
-            background-color: #2980b9;
-        }
-        .btn-danger {
-            background-color: #e74c3c;
-        }
-        .btn-danger:hover {
-            background-color: #c0392b;
-        }
-        .btn-success {
-            background-color: #2ecc71;
-        }
-        .btn-success:hover {
-            background-color: #27ae60;
-        }
-        .btn-export {
-            background-color: #f39c12;
-        }
-        .btn-export:hover {
-            background-color: #d35400;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background-color: white;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        th, td {
-            padding: 15px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-        th {
-            background-color: #34495e;
-            color: white;
-        }
-        tr:hover {
-            background-color: #f9f9f9;
-        }
-        .status-buena {
-            color: #2ecc71;
-            font-weight: bold;
-        }
-        .status-no-funciona {
-            color: #e74c3c;
-            font-weight: bold;
-        }
-        .status-poco-rendimiento {
-            color: #f39c12;
-            font-weight: bold;
-        }
-        .status-excelente {
-            color: #3498db;
-            font-weight: bold;
-        }
-        .actions {
-            display: flex;
-            gap: 5px;
-        }
-        .actions button {
-            padding: 5px 10px;
-            font-size: 12px;
-        }
-        .search-container {
-            margin-bottom: 20px;
-            display: flex;
-            gap: 10px;
-        }
-        .search-container input {
-            flex: 1;
-        }
-        .search-container button {
-            width: auto;
-        }
-        .summary {
-            display: flex;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
-        }
-        .summary-item {
-            background-color: white;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            flex: 1;
-            min-width: 150px;
-            margin: 5px;
-            text-align: center;
-        }
-        .summary-item h3 {
-            margin-top: 0;
-        }
-        .summary-count {
-            font-size: 24px;
-            font-weight: bold;
-        }
-        @media (max-width: 768px) {
-            .actions {
-                flex-direction: column;
-            }
-            .summary-item {
-                min-width: 120px;
-            }
-        }
-    </style>
+    <title>Control de Inventario de Computadoras</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 </head>
-<body>
-    <header>
-        <div class="container">
-            <h1>Sistema de Control de Inventario de Computadoras COMO</h1>
+<body class="bg-gray-100 text-gray-800 font-sans">
+    <header class="bg-slate-800 text-white py-6">
+        <div class="container mx-auto px-4">
+            <h1 class="text-2xl md:text-3xl font-bold text-center">Sistema de Control de Inventario de Computadoras</h1>
         </div>
     </header>
 
-    <div class="container">
-        <div class="summary">
-            <div class="summary-item">
-                <h3>Total</h3>
-                <div id="count-total" class="summary-count">0</div>
+    <div class="container mx-auto px-4 py-6">
+        <!-- Resumen/Estadísticas -->
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+            <div class="bg-white p-4 rounded-lg shadow text-center">
+                <h3 class="font-semibold text-gray-600">Total</h3>
+                <div id="count-total" class="text-2xl font-bold">0</div>
             </div>
-            <div class="summary-item">
-                <h3>Buena</h3>
-                <div id="count-buena" class="summary-count">0</div>
+            <div class="bg-white p-4 rounded-lg shadow text-center">
+                <h3 class="font-semibold text-gray-600">Buena</h3>
+                <div id="count-buena" class="text-2xl font-bold text-green-600">0</div>
             </div>
-            <div class="summary-item">
-                <h3>No Funciona</h3>
-                <div id="count-no-funciona" class="summary-count">0</div>
+            <div class="bg-white p-4 rounded-lg shadow text-center">
+                <h3 class="font-semibold text-gray-600">No Funciona</h3>
+                <div id="count-no-funciona" class="text-2xl font-bold text-red-600">0</div>
             </div>
-            <div class="summary-item">
-                <h3>Poco Rendimiento</h3>
-                <div id="count-poco-rendimiento" class="summary-count">0</div>
+            <div class="bg-white p-4 rounded-lg shadow text-center">
+                <h3 class="font-semibold text-gray-600">Poco Rendimiento</h3>
+                <div id="count-poco-rendimiento" class="text-2xl font-bold text-yellow-600">0</div>
             </div>
-            <div class="summary-item">
-                <h3>Excelente</h3>
-                <div id="count-excelente" class="summary-count">0</div>
+            <div class="bg-white p-4 rounded-lg shadow text-center">
+                <h3 class="font-semibold text-gray-600">Excelente</h3>
+                <div id="count-excelente" class="text-2xl font-bold text-blue-600">0</div>
             </div>
         </div>
 
-        <div class="search-container">
-            <input type="text" id="search-input" placeholder="Buscar por código, marca, modelo o ubicación...">
-            <button class="btn" onclick="searchInventory()">Buscar</button>
-            <button class="btn" onclick="clearSearch()">Limpiar</button>
+        <!-- Barra de búsqueda -->
+        <div class="flex flex-col md:flex-row gap-2 mb-6">
+            <input type="text" id="search-input" placeholder="Buscar por código, marca, modelo o ubicación..." 
+                   class="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            <div class="flex gap-2">
+                <button class="bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg transition-colors" onclick="searchInventory()">
+                    Buscar
+                </button>
+                <button class="bg-gray-500 hover:bg-gray-600 text-white py-3 px-4 rounded-lg transition-colors" onclick="clearSearch()">
+                    Limpiar
+                </button>
+            </div>
         </div>
 
-        <div class="form-container">
-            <h2>Agregar Nueva Computadora</h2>
-            <form id="inventory-form">
-                <div class="form-group">
-                    <label for="codigo">Código de Inventario:</label>
-                    <input type="text" id="codigo" required>
+        <!-- Formulario -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-bold mb-4">Agregar Nueva Computadora</h2>
+            <form id="inventory-form" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                    <label for="codigo" class="block font-medium mb-1">Código de Inventario:</label>
+                    <input type="text" id="codigo" required 
+                           class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none">
                 </div>
-                <div class="form-group">
-                    <label for="marca">Marca:</label>
-                    <input type="text" id="marca" required>
+                <div>
+                    <label for="marca" class="block font-medium mb-1">Marca:</label>
+                    <input type="text" id="marca" required 
+                           class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none">
                 </div>
-                <div class="form-group">
-                    <label for="modelo">Modelo:</label>
-                    <input type="text" id="modelo" required>
+                <div>
+                    <label for="modelo" class="block font-medium mb-1">Modelo:</label>
+                    <input type="text" id="modelo" required 
+                           class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none">
                 </div>
-                <div class="form-group">
-                    <label for="procesador">Procesador:</label>
-                    <input type="text" id="procesador" required>
+                <div>
+                    <label for="procesador" class="block font-medium mb-1">Procesador:</label>
+                    <input type="text" id="procesador" required 
+                           class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none">
                 </div>
-                <div class="form-group">
-                    <label for="ram">RAM (GB):</label>
-                    <input type="number" id="ram" required>
+                <div>
+                    <label for="ram" class="block font-medium mb-1">RAM (GB):</label>
+                    <input type="number" id="ram" required 
+                           class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none">
                 </div>
-                <div class="form-group">
-                    <label for="almacenamiento">Almacenamiento (GB):</label>
-                    <input type="number" id="almacenamiento" required>
+                <div>
+                    <label for="almacenamiento" class="block font-medium mb-1">Almacenamiento (GB):</label>
+                    <input type="number" id="almacenamiento" required 
+                           class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none">
                 </div>
-                <div class="form-group">
-                    <label for="estado">Estado:</label>
-                    <select id="estado" required>
+                <div>
+                    <label for="estado" class="block font-medium mb-1">Estado:</label>
+                    <select id="estado" required 
+                            class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none">
                         <option value="">-- Seleccionar Estado --</option>
                         <option value="Buena">Buena</option>
                         <option value="No funciona">No funciona</option>
@@ -243,50 +99,88 @@
                         <option value="Excelente rendimiento">Excelente rendimiento</option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label for="ubicacion">Ubicación en Bodega:</label>
-                    <input type="text" id="ubicacion" required>
+                <div>
+                    <label for="ubicacion" class="block font-medium mb-1">Ubicación en Bodega:</label>
+                    <input type="text" id="ubicacion" required 
+                           class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none">
                 </div>
-                <div class="form-group">
-                    <label for="notas">Notas adicionales:</label>
-                    <textarea id="notas" rows="3"></textarea>
+                <div>
+                    <label for="fecha" class="block font-medium mb-1">Fecha de ingreso:</label>
+                    <input type="date" id="fecha" required 
+                           class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none">
                 </div>
-                <div class="form-group">
-                    <label for="fecha">Fecha de ingreso:</label>
-                    <input type="date" id="fecha" required>
+                <div class="md:col-span-2 lg:col-span-3">
+                    <label for="notas" class="block font-medium mb-1">Notas adicionales:</label>
+                    <textarea id="notas" rows="3" 
+                              class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
                 </div>
-                <button type="submit" class="btn">Guardar Computadora</button>
+                <div class="md:col-span-2 lg:col-span-3">
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded transition-colors">
+                        Guardar Computadora
+                    </button>
+                </div>
             </form>
         </div>
 
-        <div style="margin-bottom: 20px">
-            <button class="btn btn-export" onclick="exportToCSV()">Exportar a CSV</button>
-            <button class="btn btn-export" onclick="exportToJSON()">Exportar a JSON</button>
-            <button class="btn btn-export" onclick="exportToPDF()">Exportar a PDF</button>
+        <!-- Botones de exportación -->
+        <div class="flex flex-wrap gap-2 mb-6">
+            <button class="bg-amber-500 hover:bg-amber-600 text-white py-2 px-4 rounded transition-colors" onclick="exportToCSV()">
+                Exportar a CSV
+            </button>
+            <button class="bg-amber-500 hover:bg-amber-600 text-white py-2 px-4 rounded transition-colors" onclick="exportToJSON()">
+                Exportar a JSON
+            </button>
+            <button class="bg-amber-500 hover:bg-amber-600 text-white py-2 px-4 rounded transition-colors" onclick="exportToPDF()">
+                Exportar a PDF
+            </button>
         </div>
 
-        <table id="inventory-table">
-            <thead>
-                <tr>
-                    <th>Código</th>
-                    <th>Marca</th>
-                    <th>Modelo</th>
-                    <th>Procesador</th>
-                    <th>RAM</th>
-                    <th>Almacenamiento</th>
-                    <th>Estado</th>
-                    <th>Ubicación</th>
-                    <th>Fecha</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody id="inventory-body">
-                <!-- Los datos del inventario se cargarán aquí dinámicamente -->
-            </tbody>
-        </table>
+        <!-- Tabla responsiva -->
+        <div class="overflow-x-auto bg-white rounded-lg shadow">
+            <table id="inventory-table" class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-800 text-white">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Código</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Marca</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Modelo</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider hidden md:table-cell">Procesador</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider hidden md:table-cell">RAM</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider hidden lg:table-cell">Almac.</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Estado</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider hidden md:table-cell">Ubicación</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider hidden lg:table-cell">Fecha</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="inventory-body" class="divide-y divide-gray-200">
+                    <!-- Los datos del inventario se cargarán aquí dinámicamente -->
+                </tbody>
+            </table>
+        </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Modal para ver detalles en dispositivos móviles -->
+    <div id="details-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-lg p-6 m-4 max-w-xl w-full max-h-full overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold" id="modal-title">Detalles de Computadora</h3>
+                <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div id="modal-content" class="space-y-3">
+                <!-- Contenido del modal se cargará dinámicamente -->
+            </div>
+            <div class="mt-6 flex justify-end gap-2">
+                <button onclick="closeModal()" class="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Inicializar el array de inventario
         let inventario = JSON.parse(localStorage.getItem('inventarioComputadoras')) || [];
@@ -365,38 +259,79 @@
             tbody.innerHTML = '';
             
             if (items.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="10" style="text-align: center;">No hay computadoras en el inventario</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="10" class="text-center py-4">No hay computadoras en el inventario</td></tr>';
                 return;
             }
 
             items.forEach(item => {
                 const tr = document.createElement('tr');
+                tr.className = 'hover:bg-gray-50';
                 
                 // Determinar la clase CSS basada en el estado
                 let statusClass = '';
-                if (item.estado === 'Buena') statusClass = 'status-buena';
-                else if (item.estado === 'No funciona') statusClass = 'status-no-funciona';
-                else if (item.estado === 'Muy poco rendimiento') statusClass = 'status-poco-rendimiento';
-                else if (item.estado === 'Excelente rendimiento') statusClass = 'status-excelente';
+                if (item.estado === 'Buena') statusClass = 'text-green-600 font-medium';
+                else if (item.estado === 'No funciona') statusClass = 'text-red-600 font-medium';
+                else if (item.estado === 'Muy poco rendimiento') statusClass = 'text-yellow-600 font-medium';
+                else if (item.estado === 'Excelente rendimiento') statusClass = 'text-blue-600 font-medium';
                 
                 tr.innerHTML = `
-                    <td>${item.codigo}</td>
-                    <td>${item.marca}</td>
-                    <td>${item.modelo}</td>
-                    <td>${item.procesador}</td>
-                    <td>${item.ram} GB</td>
-                    <td>${item.almacenamiento} GB</td>
-                    <td class="${statusClass}">${item.estado}</td>
-                    <td>${item.ubicacion}</td>
-                    <td>${formatDate(item.fecha)}</td>
-                    <td class="actions">
-                        <button class="btn" onclick="editItem('${item.id}')">Editar</button>
-                        <button class="btn btn-danger" onclick="deleteItem('${item.id}')">Eliminar</button>
+                    <td class="px-4 py-3 whitespace-nowrap">${item.codigo}</td>
+                    <td class="px-4 py-3 whitespace-nowrap">${item.marca}</td>
+                    <td class="px-4 py-3 whitespace-nowrap">${item.modelo}</td>
+                    <td class="px-4 py-3 whitespace-nowrap hidden md:table-cell">${item.procesador}</td>
+                    <td class="px-4 py-3 whitespace-nowrap hidden md:table-cell">${item.ram} GB</td>
+                    <td class="px-4 py-3 whitespace-nowrap hidden lg:table-cell">${item.almacenamiento} GB</td>
+                    <td class="px-4 py-3 whitespace-nowrap ${statusClass}">${item.estado}</td>
+                    <td class="px-4 py-3 whitespace-nowrap hidden md:table-cell">${item.ubicacion}</td>
+                    <td class="px-4 py-3 whitespace-nowrap hidden lg:table-cell">${formatDate(item.fecha)}</td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <div class="flex flex-col md:flex-row gap-2">
+                            <button class="bg-blue-600 hover:bg-blue-700 text-white py-1 px-2 rounded text-xs md:text-sm" onclick="editItem('${item.id}')">
+                                Editar
+                            </button>
+                            <button class="bg-red-600 hover:bg-red-700 text-white py-1 px-2 rounded text-xs md:text-sm" onclick="deleteItem('${item.id}')">
+                                Eliminar
+                            </button>
+                            <button class="md:hidden bg-gray-600 hover:bg-gray-700 text-white py-1 px-2 rounded text-xs" onclick="showDetails('${item.id}')">
+                                Detalles
+                            </button>
+                        </div>
                     </td>
                 `;
                 
                 tbody.appendChild(tr);
             });
+        }
+
+        // Mostrar detalles en modal para dispositivos móviles
+        function showDetails(id) {
+            const item = inventario.find(pc => pc.id === id);
+            if (!item) return;
+            
+            const modal = document.getElementById('details-modal');
+            const content = document.getElementById('modal-content');
+            
+            content.innerHTML = `
+                <div class="grid grid-cols-1 gap-2">
+                    <div><span class="font-medium">Código:</span> ${item.codigo}</div>
+                    <div><span class="font-medium">Marca:</span> ${item.marca}</div>
+                    <div><span class="font-medium">Modelo:</span> ${item.modelo}</div>
+                    <div><span class="font-medium">Procesador:</span> ${item.procesador}</div>
+                    <div><span class="font-medium">RAM:</span> ${item.ram} GB</div>
+                    <div><span class="font-medium">Almacenamiento:</span> ${item.almacenamiento} GB</div>
+                    <div><span class="font-medium">Estado:</span> ${item.estado}</div>
+                    <div><span class="font-medium">Ubicación:</span> ${item.ubicacion}</div>
+                    <div><span class="font-medium">Fecha:</span> ${formatDate(item.fecha)}</div>
+                    <div><span class="font-medium">Notas:</span> ${item.notas || 'No hay notas adicionales'}</div>
+                </div>
+            `;
+            
+            modal.classList.remove('hidden');
+        }
+
+        // Cerrar modal
+        function closeModal() {
+            document.getElementById('details-modal').classList.add('hidden');
         }
 
         // Formatear fecha para mostrar
@@ -424,7 +359,7 @@
             editingId = id;
             
             // Hacer scroll hasta el formulario
-            document.querySelector('.form-container').scrollIntoView({ behavior: 'smooth' });
+            document.querySelector('form').scrollIntoView({ behavior: 'smooth' });
         }
 
         // Eliminar un elemento
