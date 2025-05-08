@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inventario de Computadoras COMO IT</title>
+    <title>Inventario de Computadoras</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
     <!-- Firebase SDK -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.2/firebase-app-compat.min.js"></script>
@@ -13,7 +13,7 @@
 </head>
 <body class="bg-gray-100 min-h-screen">
     <div class="bg-blue-900 text-white p-4 shadow-md">
-        <h1 class="text-3xl font-bold text-center">Sistema de Control de Inventario de Computadoras COMO IT</h1>
+        <h1 class="text-3xl font-bold text-center">Sistema de Control de Inventario de Computadoras</h1>
     </div>
     
     <div class="container mx-auto px-4 py-6">
@@ -40,6 +40,30 @@
                 <p id="excelente-count" class="text-4xl font-bold text-blue-600">0</p>
             </div>
         </div>
+
+        <!-- Importar JSON -->
+<div class="bg-white p-6 rounded-lg shadow-md mb-8">
+    <h2 class="text-xl font-semibold mb-4">Importar Datos desde JSON</h2>
+    <div class="space-y-4">
+        <div>
+            <label class="block text-gray-700 mb-2">Archivo JSON:</label>
+            <input type="file" id="jsonFileInput" accept=".json" class="w-full p-2 border rounded">
+        </div>
+        <div>
+            <textarea id="jsonPreview" class="w-full p-2 border rounded h-32" placeholder="Vista previa del JSON..." readonly></textarea>
+        </div>
+        <div class="flex space-x-4">
+            <button id="importJsonBtn" class="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600 disabled:bg-gray-400" disabled>
+                Importar a Base de Datos
+            </button>
+            <div id="importStatus" class="hidden items-center">
+                <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-purple-700 mr-2"></div>
+                <span id="importStatusText">Importando...</span>
+            </div>
+        </div>
+        <div id="importResults" class="mt-2 text-sm"></div>
+    </div>
+</div>
         
         <!-- Formulario para agregar computadora -->
         <div class="bg-white p-6 rounded-lg shadow-md mb-8">
@@ -418,6 +442,145 @@
             });
         }
         
+        // Funcionalidad para importar JSON
+const jsonFileInput = document.getElementById('jsonFileInput');
+const jsonPreview = document.getElementById('jsonPreview');
+const importJsonBtn = document.getElementById('importJsonBtn');
+const importStatus = document.getElementById('importStatus');
+const importResults = document.getElementById('importResults');
+
+// Manejar la selección de archivo JSON
+jsonFileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) {
+        importJsonBtn.disabled = true;
+        jsonPreview.value = '';
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(event) {
+        try {
+            const jsonData = JSON.parse(event.target.result);
+            jsonPreview.value = JSON.stringify(jsonData, null, 2).substring(0, 1000) + 
+                               (JSON.stringify(jsonData, null, 2).length > 1000 ? '...' : '');
+            importJsonBtn.disabled = false;
+        } catch (error) {
+            console.error("Error al parsear JSON:", error);
+            jsonPreview.value = 'Error: Formato JSON inválido';
+            importJsonBtn.disabled = true;
+        }
+    };
+    reader.readAsText(file);
+});
+
+// Importar datos a Firebase
+importJsonBtn.addEventListener('click', async () => {
+    try {
+        const file = jsonFileInput.files[0];
+        if (!file) return;
+        
+        importJsonBtn.disabled = true;
+        importStatus.classList.remove('hidden');
+        importStatus.classList.add('flex');
+        importResults.innerHTML = '';
+        
+        const reader = new FileReader();
+        reader.onload = async function(event) {
+            try {
+                const jsonData = JSON.parse(event.target.result);
+                if (!Array.isArray(jsonData)) {
+                    throw new Error('El JSON debe ser un array de objetos');
+                }
+                
+                let importCount = 0;
+                let skipCount = 0;
+                let errorCount = 0;
+                
+                // Usar un lote (batch) para operaciones masivas
+                const batch = db.batch();
+                const promises = [];
+                
+                for (const item of jsonData) {
+                    try {
+                        // Verificar si el código ya existe
+                        const codigoSnapshot = await computadorasCollection.where('codigo', '==', item.codigo).get();
+                        
+                        if (!codigoSnapshot.empty) {
+                            skipCount++;
+                            continue; // Saltar si ya existe
+                        }
+                        
+                        // Preparar el objeto para guardar
+                        const computerData = {
+                            codigo: item.codigo || '',
+                            marca: item.marca || '',
+                            modelo: item.modelo || '',
+                            procesador: item.procesador || '',
+                            ram: parseInt(item.ram) || 0,
+                            almacenamiento: parseInt(item.almacenamiento) || 0,
+                            estado: item.estado || '',
+                            ubicacion: item.ubicacion || '',
+                            fecha: item.fecha || new Date().toISOString().split('T')[0],
+                            notas: item.notas || '',
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        };
+                        
+                        // Para grandes volúmenes es mejor usar operaciones por lotes
+                        const docRef = computadorasCollection.doc();
+                        batch.set(docRef, computerData);
+                        importCount++;
+                        
+                        // Cada 500 elementos, ejecutar el lote y crear uno nuevo
+                        if (importCount % 500 === 0) {
+                            promises.push(batch.commit());
+                            batch = db.batch();
+                        }
+                    } catch (error) {
+                        console.error('Error al procesar elemento:', error, item);
+                        errorCount++;
+                    }
+                }
+                
+                // Ejecutar el último lote si hay pendientes
+                if (importCount % 500 !== 0) {
+                    promises.push(batch.commit());
+                }
+                
+                // Esperar que todas las operaciones terminen
+                await Promise.all(promises);
+                
+                importResults.innerHTML = `
+                    <div class="text-green-600">Importación completada:</div>
+                    <ul class="list-disc pl-5">
+                        <li>${importCount} elementos importados</li>
+                        <li>${skipCount} elementos omitidos (códigos duplicados)</li>
+                        <li>${errorCount} errores</li>
+                    </ul>
+                `;
+                
+                // Recargar computadoras para mostrar las importadas
+                loadAllComputers();
+                
+            } catch (error) {
+                console.error("Error al importar JSON:", error);
+                importResults.innerHTML = `<div class="text-red-600">Error: ${error.message}</div>`;
+            } finally {
+                importStatus.classList.remove('flex');
+                importStatus.classList.add('hidden');
+                importJsonBtn.disabled = false;
+            }
+        };
+        reader.readAsText(file);
+        
+    } catch (error) {
+        console.error("Error al procesar archivo:", error);
+        importResults.innerHTML = `<div class="text-red-600">Error: ${error.message}</div>`;
+        importStatus.classList.remove('flex');
+        importStatus.classList.add('hidden');
+        importJsonBtn.disabled = false;
+    }
+});
         // Cargar todas las computadoras
         async function loadAllComputers() {
             try {
