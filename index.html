@@ -1,336 +1,483 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Inventario de Computadoras</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet" />
-    <!-- Firebase SDK -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.2/firebase-app-compat.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.2/firebase-firestore-compat.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Sistema de Inventario</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.7.12/sweetalert2.min.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.7.12/sweetalert2.all.min.js"></script>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #14407b 0%, rgb(62, 48, 116) 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
 
-    <!-- Agrega un favicon para evitar errores 404 en la consola -->
-    <link rel="icon" href="data:," />
+        /* Contenedor de partículas */
+        #particles-js {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        .login-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            width: 100%;
+            max-width: 400px;
+            position: relative;
+            overflow: hidden;
+            z-index: 2;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .login-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo p {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e1e1;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: rgba(248, 249, 250, 0.8);
+            backdrop-filter: blur(5px);
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-group input::placeholder {
+            color: #999;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .login-btn:hover::before {
+            left: 100%;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        .login-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .error-message {
+            background: rgba(254, 238, 238, 0.9);
+            color: #c53030;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #c53030;
+            display: none;
+            backdrop-filter: blur(5px);
+        }
+
+        .success-message {
+            background: rgba(240, 255, 244, 0.9);
+            color: #38a169;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #38a169;
+            display: none;
+            backdrop-filter: blur(5px);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: #666;
+            margin-top: 10px;
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+
+        /* Loading de pantalla completa */
+        .fullscreen-loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .fullscreen-loading.show {
+            display: flex;
+        }
+
+        .loading-content {
+            text-align: center;
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        .loading-text {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .loading-subtext {
+            font-size: 14px;
+            opacity: 0.8;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        /* Animación de aparición del loading */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .fullscreen-loading.show {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .footer {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                margin: 20px;
+                padding: 30px 20px;
+            }
+            
+            .loading-content {
+                margin: 20px;
+                padding: 30px 20px;
+            }
+        }
+
+        /* Animaciones adicionales para el contenedor */
+        @keyframes slideInUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .login-container {
+            animation: slideInUp 0.6s ease-out;
+        }
+
+        /* Efecto de hover mejorado para los inputs */
+        .form-group input:hover {
+            border-color: #b8c6f0;
+            background: rgba(255, 255, 255, 0.7);
+        }
+    </style>
 </head>
+<body>
+    <!-- Contenedor de partículas -->
+    <div id="particles-js"></div>
 
-<body class="bg-gray-100 min-h-screen">
-    <div class="bg-blue-900 text-white p-4 shadow-md">
-        <h1 class="text-3xl font-bold text-center">
-            Sistema de Control de Inventario de Computadoras
-        </h1>
-    </div>
-
-    <div class="container mx-auto px-4 py-6">
-        <!-- Panel de estadísticas -->
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
-            <div class="bg-white p-4 rounded-lg shadow-md text-center">
-                <h3 class="text-lg text-gray-700">Total</h3>
-                <p id="total-count" class="text-4xl font-bold text-gray-800">0</p>
-            </div>
-            <div class="bg-white p-4 rounded-lg shadow-md text-center">
-                <h3 class="text-lg text-gray-700">Buena</h3>
-                <p id="buena-count" class="text-4xl font-bold text-green-600">0</p>
-            </div>
-            <div class="bg-white p-4 rounded-lg shadow-md text-center">
-                <h3 class="text-lg text-gray-700">No funciona</h3>
-                <p id="no-funciona-count" class="text-4xl font-bold text-red-600">
-                    0
-                </p>
-            </div>
-            <div class="bg-white p-4 rounded-lg shadow-md text-center">
-                <h3 class="text-lg text-gray-700">Muy poco rendimiento</h3>
-                <p id="poco-rendimiento-count" class="text-4xl font-bold text-yellow-600">
-                    0
-                </p>
-            </div>
-            <div class="bg-white p-4 rounded-lg shadow-md text-center">
-                <h3 class="text-lg text-gray-700">Excelente rendimiento</h3>
-                <p id="excelente-count" class="text-4xl font-bold text-blue-600">0</p>
-            </div>
-        </div>
-
-        <!-- Importar JSON -->
-        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
-            <h2 class="text-xl font-semibold mb-4">Importar Datos desde JSON</h2>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-gray-700 mb-2">Archivo JSON:</label>
-                    <input type="file" id="jsonFileInput" accept=".json" class="w-full p-2 border rounded" />
-                </div>
-                <div>
-                    <textarea id="jsonPreview" class="w-full p-2 border rounded h-32"
-                        placeholder="Vista previa del JSON..." readonly></textarea>
-                </div>
-                <div class="flex space-x-4">
-                    <button id="importJsonBtn"
-                        class="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600 disabled:bg-gray-400"
-                        disabled>
-                        Importar a Base de Datos
-                    </button>
-                    <div id="importStatus" class="hidden items-center">
-                        <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-purple-700 mr-2"></div>
-                        <span id="importStatusText">Importando...</span>
-                    </div>
-                </div>
-                <div id="importResults" class="mt-2 text-sm"></div>
-            </div>
-        </div>
-
-        <!-- Formulario para agregar computadora -->
-        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
-            <h2 class="text-xl font-semibold mb-4">Agregar Nueva Computadora</h2>
-            <form id="addForm" class="space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div>
-                        <label class="block text-gray-700">Código de Inventario:</label>
-                        <input type="text" id="codigo" class="w-full p-2 border rounded" required />
-                    </div>
-                    <div>
-                        <label class="block text-gray-700">Tipo de Equipo:</label>
-                        <select id="tipoEquipo" class="w-full p-2 border rounded" required>
-                            <option value="">-- Seleccionar Tipo --</option>
-                            <option value="CPU">CPU</option>
-                            <option value="Laptop">Laptop</option>
-                            <option value="Monitor">Monitor</option>
-                            <option value="UPS">UPS</option>
-                            <option value="Impresora">Impresora</option>
-                            <option value="Escáner">Escáner</option>
-                            <option value="Servidor">Servidor</option>
-                            <option value="Accesorios">Accesorios</option>
-                            <option value="Otros">Otros</option>
-                            <option value="Telefono">Telefono</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-gray-700">Marca:</label>
-                        <input type="text" id="marca" class="w-full p-2 border rounded" required />
-                    </div>
-                    <div>
-                        <label class="block text-gray-700">Modelo:</label>
-                        <input type="text" id="modelo" class="w-full p-2 border rounded" required />
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label class="block text-gray-700">Procesador:</label>
-                        <input type="text" id="procesador" class="w-full p-2 border rounded" required />
-                    </div>
-                    <div>
-                        <label class="block text-gray-700">RAM (GB):</label>
-                        <input type="number" id="ram" class="w-full p-2 border rounded" required />
-                    </div>
-                    <div>
-                        <label class="block text-gray-700">Almacenamiento (GB):</label>
-                        <input type="number" id="almacenamiento" class="w-full p-2 border rounded" required />
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label class="block text-gray-700">Estado:</label>
-                        <select id="estado" class="w-full p-2 border rounded" required>
-                            <option value="">-- Seleccionar Estado --</option>
-                            <option value="Buena">Buena</option>
-                            <option value="No funciona">No funciona</option>
-                            <option value="Muy poco rendimiento">
-                                Muy poco rendimiento
-                            </option>
-                            <option value="Excelente rendimiento">
-                                Excelente rendimiento
-                            </option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-gray-700">Ubicación en Bodega:</label>
-                        <select id="ubicacion"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                            required>
-                            <option value="">Seleccione una ubicación</option>
-                            <option value="Bodega Central">Bodega Central</option>
-                            <option value="Bodega Sonsonate">Bodega Sonsonate</option>
-                            <option value="Bodega Santa Ana">Bodega Santa Ana</option>
-                            <option value="Bodega Soyapango">Bodega Soyapango</option>
-                            <option value="Bodega Ahuachapán">Bodega Ahuachapán</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-gray-700">Fecha de ingreso:</label>
-                        <input type="date" id="fecha" class="w-full p-2 border rounded" required />
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-gray-700">Notas adicionales:</label>
-                    <textarea id="notas" class="w-full p-2 border rounded" rows="3"></textarea>
-                </div>
-
-                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-                    Guardar Computadora
-                </button>
-            </form>
-        </div>
-
-        <!-- Buscador -->
-        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
-            <h2 class="text-xl font-semibold mb-4">Buscar Computadoras</h2>
-            <div class="flex space-x-4 mb-4">
-                <input type="text" id="searchInput" class="flex-1 p-2 border rounded"
-                    placeholder="Buscar por código, marca o modelo..." />
-                <button id="searchBtn" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
-                    Buscar
-                </button>
-            </div>
-            <div class="mt-2 flex flex-wrap gap-4">
-                <label class="inline-flex items-center">
-                    <input type="checkbox" id="searchByCodigo" checked class="form-checkbox" />
-                    <span class="ml-2">Código</span>
-                </label>
-                <label class="inline-flex items-center">
-                    <input type="checkbox" id="searchByMarca" checked class="form-checkbox" />
-                    <span class="ml-2">Marca</span>
-                </label>
-                <label class="inline-flex items-center">
-                    <input type="checkbox" id="searchByModelo" checked class="form-checkbox" />
-                    <span class="ml-2">Modelo</span>
-                </label>
-                <label class="inline-flex items-center">
-                    <input type="checkbox" id="searchByProcesador" class="form-checkbox" />
-                    <span class="ml-2">Procesador</span>
-                </label>
-                <label class="inline-flex items-center">
-                    <input type="checkbox" id="searchByEstado" class="form-checkbox" />
-                    <span class="ml-2">Estado</span>
-                </label>
-            </div>
-        </div>
-
-        <!-- Resultados -->
-        <div class="bg-white p-6 rounded-lg shadow-md">
-            <h2 class="text-xl font-semibold mb-4">Inventario de Computadoras</h2>
-            <div class="overflow-x-auto">
-                <table class="min-w-full bg-white">
-                    <thead>
-                        <tr>
-                            <th
-                                class="py-2 px-2 border-b border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                Código
-                            </th>
-                            <th
-                                class="py-2 px-2 border-b border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                Tipo
-                            </th>
-                            <th
-                                class="py-2 px-2 border-b border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                Marca
-                            </th>
-                            <th
-                                class="py-2 px-2 border-b border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                Modelo
-                            </th>
-                            <th
-                                class="py-2 px-2 border-b border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                Procesador
-                            </th>
-                            <th
-                                class="py-2 px-2 border-b border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                RAM
-                            </th>
-                            <th
-                                class="py-2 px-2 border-b border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                Almacen.
-                            </th>
-                            <th
-                                class="py-2 px-2 border-b border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                Estado
-                            </th>
-                            <th
-                                class="py-2 px-2 border-b border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                Ubicación
-                            </th>
-                            <th
-                                class="py-2 px-2 border-b border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                Fecha
-                            </th>
-                            <th
-                                class="py-2 px-2 border-b border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                Descripción
-                            </th>
-                            <th
-                                class="py-2 px-2 border-b border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                Acciones
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody id="results">
-                        <tr>
-                            <td colspan="10" class="py-4 px-6 border-b text-gray-500 italic text-center">
-                                Los resultados aparecerán aquí...
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-                <!-- Controles de Paginación -->
-                <div class="mt-6 flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
-                    <!-- Selector de elementos por página -->
-                    <div class="flex items-center space-x-2">
-                        <label for="itemsPerPage" class="text-sm text-gray-700">Mostrar:</label>
-                        <select id="itemsPerPage" class="border border-gray-300 rounded px-2 py-1 text-sm">
-                            <option value="10" selected>10</option>
-                            <option value="25">25</option>
-                            <option value="50">50</option>
-                            <option value="100">100</option>
-                        </select>
-                        <span class="text-sm text-gray-700">por página</span>
-                    </div>
-
-                    <!-- Información de paginación -->
-                    <div class="text-sm text-gray-700">
-                        Mostrando <span id="showingStart">0</span> a
-                        <span id="showingEnd">0</span> de
-                        <span id="totalItems">0</span> registros
-                    </div>
-
-                    <!-- Botones de navegación -->
-                    <div class="flex items-center space-x-1">
-                        <button id="firstPage"
-                            class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-100 disabled:opacity-50"
-                            disabled>
-                            Primero
-                        </button>
-                        <button id="prevPage"
-                            class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-100 disabled:opacity-50"
-                            disabled>
-                            Anterior
-                        </button>
-
-                        <!-- Números de página -->
-                        <div id="pageNumbers" class="flex space-x-1"></div>
-
-                        <button id="nextPage"
-                            class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-100 disabled:opacity-50">
-                            Siguiente
-                        </button>
-                        <button id="lastPage"
-                            class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-100 disabled:opacity-50">
-                            Último
-                        </button>
-                    </div>
-                </div>
-            </div>
+    <!-- Loading de pantalla completa -->
+    <div id="fullscreen-loading" class="fullscreen-loading">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Iniciando Sesión</div>
+            <div class="loading-subtext">Verificando credenciales...</div>
         </div>
     </div>
+
+    <div class="login-container">
+        <div class="logo">
+            <h1>📦 Inventario</h1>
+            <p>Sistema de Control</p>
+        </div>
+
+        <div id="error-message" class="error-message"></div>
+        <div id="success-message" class="success-message"></div>
+
+        <form id="login-form">
+            <div class="form-group">
+                <label for="email">Correo Electrónico</label>
+                <input type="email" id="email" name="email" placeholder="Ingresa tu correo" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Contraseña</label>
+                <input type="password" id="password" name="password" placeholder="Ingresa tu contraseña" required>
+            </div>
+
+            <button type="submit" class="login-btn" id="login-btn">
+                Iniciar Sesión
+            </button>
+        </form>
+
+        <div id="loading" class="loading">
+            Verificando credenciales...
+        </div>
+
+        <div class="footer">
+            <p>&copy; <span id="current-year"></span> Sistema de Inventario</p>
+        </div>
+    </div>
+
+    <!-- Particles.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/particles.js/2.0.0/particles.min.js"></script>
+    
+    <!-- Firebase SDK -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-app-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-firestore-compat.min.js"></script>
+
     <script>
-        // Variables de paginación
-        let currentPage = 1;
-        let itemsPerPage = 10;
-        let totalComputers = [];
-        let filteredComputers = [];
+        // Configuración de partículas
+        particlesJS('particles-js', {
+            "particles": {
+                "number": {
+                    "value": 80,
+                    "density": {
+                        "enable": true,
+                        "value_area": 800
+                    }
+                },
+                "color": {
+                    "value": ["#ffffff", "#667eea", "#764ba2"]
+                },
+                "shape": {
+                    "type": "circle",
+                    "stroke": {
+                        "width": 0,
+                        "color": "#000000"
+                    }
+                },
+                "opacity": {
+                    "value": 0.6,
+                    "random": true,
+                    "anim": {
+                        "enable": true,
+                        "speed": 1,
+                        "opacity_min": 0.1,
+                        "sync": false
+                    }
+                },
+                "size": {
+                    "value": 3,
+                    "random": true,
+                    "anim": {
+                        "enable": true,
+                        "speed": 2,
+                        "size_min": 0.1,
+                        "sync": false
+                    }
+                },
+                "line_linked": {
+                    "enable": true,
+                    "distance": 150,
+                    "color": "#ffffff",
+                    "opacity": 0.4,
+                    "width": 1
+                },
+                "move": {
+                    "enable": true,
+                    "speed": 2,
+                    "direction": "none",
+                    "random": true,
+                    "straight": false,
+                    "out_mode": "out",
+                    "bounce": false,
+                    "attract": {
+                        "enable": false,
+                        "rotateX": 600,
+                        "rotateY": 1200
+                    }
+                }
+            },
+            "interactivity": {
+                "detect_on": "canvas",
+                "events": {
+                    "onhover": {
+                        "enable": true,
+                        "mode": "repulse"
+                    },
+                    "onclick": {
+                        "enable": true,
+                        "mode": "push"
+                    },
+                    "resize": true
+                },
+                "modes": {
+                    "grab": {
+                        "distance": 400,
+                        "line_linked": {
+                            "opacity": 1
+                        }
+                    },
+                    "bubble": {
+                        "distance": 400,
+                        "size": 40,
+                        "duration": 2,
+                        "opacity": 8,
+                        "speed": 3
+                    },
+                    "repulse": {
+                        "distance": 100,
+                        "duration": 0.4
+                    },
+                    "push": {
+                        "particles_nb": 4
+                    },
+                    "remove": {
+                        "particles_nb": 2
+                    }
+                }
+            },
+            "retina_detect": true
+        });
+
+        // Función para actualizar el año dinámicamente
+        function updateYear() {
+            const currentYear = new Date().getFullYear();
+            document.getElementById('current-year').textContent = currentYear;
+        }
+        
+        // Ejecutar cuando se carga la página
+        document.addEventListener('DOMContentLoaded', updateYear);
+        
+        // Opcional: Actualizar el año cada minuto (por si la página permanece abierta durante el cambio de año)
+        setInterval(updateYear, 60000);
 
         // Configuración de Firebase
         const firebaseConfig = {
@@ -340,1155 +487,247 @@
             storageBucket: "controlinventarioit-2c8fc.firebasestorage.app",
             messagingSenderId: "621661032303",
             appId: "1:621661032303:web:468a47222d01805e7de29a",
-            measurementId: "G-N6F1RQTW6B",
+            measurementId: "G-N6F1RQTW6B"
         };
 
         // Inicializar Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        const computadorasCollection = db.collection("computadoras");
 
         // Elementos del DOM
-        const addForm = document.getElementById("addForm");
-        const codigoInput = document.getElementById("codigo");
-        const tipoEquipoInput = document.getElementById("tipoEquipo");
-        const marcaInput = document.getElementById("marca");
-        const modeloInput = document.getElementById("modelo");
-        const procesadorInput = document.getElementById("procesador");
-        const ramInput = document.getElementById("ram");
-        const almacenamientoInput = document.getElementById("almacenamiento");
-        const estadoInput = document.getElementById("estado");
-        const ubicacionInput = document.getElementById("ubicacion");
-        const fechaInput = document.getElementById("fecha");
-        const notasInput = document.getElementById("notas");
+        const loginForm = document.getElementById('login-form');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const loginBtn = document.getElementById('login-btn');
+        const errorMessage = document.getElementById('error-message');
+        const successMessage = document.getElementById('success-message');
+        const loading = document.getElementById('loading');
+        const fullscreenLoading = document.getElementById('fullscreen-loading');
 
-        const searchInput = document.getElementById("searchInput");
-        const searchBtn = document.getElementById("searchBtn");
-        const searchByCodigo = document.getElementById("searchByCodigo");
-        const searchByMarca = document.getElementById("searchByMarca");
-        const searchByModelo = document.getElementById("searchByModelo");
-        const searchByProcesador = document.getElementById("searchByProcesador");
-        const searchByEstado = document.getElementById("searchByEstado");
-        const resultsDiv = document.getElementById("results");
+        // Función para mostrar/ocultar loading de pantalla completa
+        function showFullscreenLoading() {
+            fullscreenLoading.classList.add('show');
+            document.body.style.overflow = 'hidden'; // Bloquear scroll
+        }
 
-        // Elementos del contador
-        const totalCount = document.getElementById("total-count");
-        const buenaCount = document.getElementById("buena-count");
-        const noFuncionaCount = document.getElementById("no-funciona-count");
-        const pocoRendimientoCount = document.getElementById(
-            "poco-rendimiento-count"
-        );
-        const excelenteCount = document.getElementById("excelente-count");
+        function hideFullscreenLoading() {
+            fullscreenLoading.classList.remove('show');
+            document.body.style.overflow = 'auto'; // Restaurar scroll
+        }
 
-        // Función para integrar el modal de edición responsivo
-        function integrarModalEdicion() {
-            // Verificar si el modal ya existe
-            if (!document.getElementById("editModal")) {
-                // Agregar el HTML del modal al final del body
-                const modalHTML = `
-    <!-- Modal de Edición Responsivo -->
-    <div id="editModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 p-4 hidden">
-        <!-- Contenedor del Modal -->
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl modal-content">
-            <!-- Encabezado del Modal -->
-            <div class="flex items-start justify-between p-5 border-b border-gray-200">
-                <h3 class="text-xl font-semibold text-gray-900">
-                    Editar Computadora
-                </h3>
-                <button id="closeModalBtn" class="text-gray-400 hover:text-gray-500 focus:outline-none">
-                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
-            </div>
+        // Función para actualizar el texto del loading
+        function updateLoadingText(mainText, subText) {
+            const loadingTextEl = fullscreenLoading.querySelector('.loading-text');
+            const loadingSubtextEl = fullscreenLoading.querySelector('.loading-subtext');
             
-            <!-- Cuerpo del Modal -->
-            <div class="p-6">
-                <form id="editForm" class="space-y-4">
-                    <input type="hidden" id="editId">
-                    
-                    <!-- Fila 1: Código y Tipo -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label for="editCodigo" class="block text-sm font-medium text-gray-700 mb-1">
-                                Código de Inventario
-                            </label>
-                            <input type="text" id="editCodigo" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500" required>
-                        </div>
-                        
-                        <div>
-                            <label for="editTipoEquipo" class="block text-sm font-medium text-gray-700 mb-1">
-                                Tipo de Equipo
-                            </label>
-                            <select id="editTipoEquipo" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500">
-                                <option value="CPU">CPU</option>
-                                <option value="Laptop">Laptop</option>
-                                <option value="Monitor">Monitor</option>
-                                <option value="UPS">UPS</option>
-                                <option value="Impresora">Impresora</option>
-                                <option value="Escáner">Escáner</option>
-                                <option value="Servidor">Servidor</option>
-                                <option value="Accesorios">Accesorios</option>
-                                <option value="Otros">Otros</option>
-                                                <option value="Telefono">Telefono</option>
-
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <!-- Fila 2: Marca y Modelo -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label for="editMarca" class="block text-sm font-medium text-gray-700 mb-1">
-                                Marca
-                            </label>
-                            <input type="text" id="editMarca" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500" required>
-                        </div>
-                        
-                        <div>
-                            <label for="editModelo" class="block text-sm font-medium text-gray-700 mb-1">
-                                Modelo
-                            </label>
-                            <input type="text" id="editModelo" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500" required>
-                        </div>
-                    </div>
-                    
-                    <!-- Fila 3: Procesador y RAM -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label for="editProcesador" class="block text-sm font-medium text-gray-700 mb-1">
-                                Procesador
-                            </label>
-                            <input type="text" id="editProcesador" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500" required>
-                        </div>
-                        
-                        <div>
-                            <label for="editRam" class="block text-sm font-medium text-gray-700 mb-1">
-                                RAM (GB)
-                            </label>
-                            <input type="number" id="editRam" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500" required>
-                        </div>
-                    </div>
-                    
-                    <!-- Fila 4: Almacenamiento y Estado -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label for="editAlmacenamiento" class="block text-sm font-medium text-gray-700 mb-1">
-                                Almacenamiento (GB)
-                            </label>
-                            <input type="number" id="editAlmacenamiento" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500" required>
-                        </div>
-                        
-                        <div>
-                            <label for="editEstado" class="block text-sm font-medium text-gray-700 mb-1">
-                                Estado
-                            </label>
-                            <select id="editEstado" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500" required>
-                                <option value="Excelente rendimiento">Excelente rendimiento</option>
-                                <option value="Buena">Buena</option>
-                                <option value="Muy poco rendimiento">Muy poco rendimiento</option>
-                                <option value="No funciona">No funciona</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <!-- Fila 5: Ubicación y Fecha -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label for="editUbicacion" class="block text-sm font-medium text-gray-700 mb-1">
-                                Ubicación en Bodega
-                            </label>
-                            <select id="editUbicacion" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500" required>
-                                <option value="">Seleccione una ubicación</option>
-                                <option value="Bodega Central">Bodega Central</option>
-                                <option value="Bodega Sonsonate">Bodega Sonsonate</option>
-                                <option value="Bodega Santa Ana">Bodega Santa Ana</option>
-                                <option value="Bodega Soyapango">Bodega Soyapango</option>
-                                <option value="Bodega Ahuachapán">Bodega Ahuachapán</option>
-                            </select>
-                        </div>
-                        
-                        <div>
-                            <label for="editFecha" class="block text-sm font-medium text-gray-700 mb-1">
-                                Fecha de ingreso
-                            </label>
-                            <input type="date" id="editFecha" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500" required>
-                        </div>
-                    </div>
-                    
-                    <!-- Notas Adicionales -->
-                    <div>
-                        <label for="editNotas" class="block text-sm font-medium text-gray-700 mb-1">
-                            Notas adicionales
-                        </label>
-                        <textarea id="editNotas" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"></textarea>
-                    </div>
-                </form>
-            </div>
-            
-            <!-- Pie del Modal con Botones -->
-            <div class="px-6 py-4 border-t border-gray-200 flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-3 space-y-3 space-y-reverse sm:space-y-0">
-                <button id="cancelEdit" class="w-full sm:w-auto px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 transition-colors">
-                    Cancelar
-                </button>
-                <button id="saveEdit" type="submit" form="editForm" class="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
-                    Guardar Cambios
-                </button>
-            </div>
-        </div>
-    </div>
-    
-    <style>
-        /* Estilos adicionales para el modal responsivo */
-        @media (max-width: 640px) {
-            .modal-content {
-                max-height: 85vh;
-                overflow-y: auto;
-            }
-        }
-    </style>
-    `;
-
-                document.body.insertAdjacentHTML("beforeend", modalHTML);
-
-                // Configurar los event listeners del modal
-                configurarEventListenersModal();
-            }
+            if (loadingTextEl) loadingTextEl.textContent = mainText;
+            if (loadingSubtextEl) loadingSubtextEl.textContent = subText;
         }
 
-        // Configurar los event listeners del modal de edición
-        function configurarEventListenersModal() {
-            // Cerrar modal con el botón X
-            document
-                .getElementById("closeModalBtn")
-                .addEventListener("click", () => {
-                    document.getElementById("editModal").classList.add("hidden");
-                });
-
-            // Cerrar modal con el botón Cancelar
-            document.getElementById("cancelEdit").addEventListener("click", () => {
-                document.getElementById("editModal").classList.add("hidden");
-            });
-
-            // Cerrar modal al hacer clic fuera del contenido
-            document.getElementById("editModal").addEventListener("click", (e) => {
-                if (e.target === document.getElementById("editModal")) {
-                    document.getElementById("editModal").classList.add("hidden");
-                }
-            });
-
-            // Manejar la actualización de la computadora
-            document
-                .getElementById("editForm")
-                .addEventListener("submit", async (e) => {
-                    e.preventDefault();
-
-                    const id = document.getElementById("editId").value;
-                    const codigoValue = document
-                        .getElementById("editCodigo")
-                        .value.trim();
-
-                    try {
-                        // Verificar si el código ya existe y pertenece a otra computadora
-                        const codigoSnapshot = await computadorasCollection
-                            .where("codigo", "==", codigoValue)
-                            .get();
-
-                        if (!codigoSnapshot.empty && codigoSnapshot.docs[0].id !== id) {
-                            Swal.fire({
-                                icon: "warning",
-                                title: "Código duplicado",
-                                text: "Este código de inventario ya existe en otra computadora. Por favor use otro.",
-                            });
-                            return;
-                        }
-
-                        const updatedComputer = {
-                            codigo: codigoValue,
-                            tipoEquipo: document.getElementById("editTipoEquipo").value,
-                            marca: document.getElementById("editMarca").value.trim(),
-                            modelo: document.getElementById("editModelo").value.trim(),
-                            procesador: document
-                                .getElementById("editProcesador")
-                                .value.trim(),
-                            ram: parseInt(document.getElementById("editRam").value),
-                            almacenamiento: parseInt(
-                                document.getElementById("editAlmacenamiento").value
-                            ),
-                            estado: document.getElementById("editEstado").value,
-                            ubicacion: document
-                                .getElementById("editUbicacion")
-                                .value.trim(),
-                            fecha: document.getElementById("editFecha").value,
-                            notas: document.getElementById("editNotas").value.trim(),
-                            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        };
-
-                        // Actualizar en Firebase
-                        await computadorasCollection.doc(id).update(updatedComputer);
-
-                        // Cerrar el modal y mostrar mensaje de éxito
-                        document.getElementById("editModal").classList.add("hidden");
-                        // Mostrar notificación con SweetAlert2 (Versión Toast simple)
-                        Swal.fire({
-                            toast: true,
-                            icon: "success",
-                            title: "¡Computadora actualizada correctamente!",
-                            position: "top-end",
-                            showConfirmButton: false,
-                            timer: 3000,
-                            timerProgressBar: true,
-                            didOpen: (toast) => {
-                                toast.addEventListener("mouseenter", Swal.stopTimer);
-                                toast.addEventListener("mouseleave", Swal.resumeTimer);
-                            },
-                        });
-
-                        // Recargar las computadoras
-                        loadAllComputers();
-                    } catch (error) {
-                        console.error("Error al actualizar:", error);
-                        // SweetAlert2 toast notification
-                        Swal.fire({
-                            toast: true,
-                            position: "top-end",
-                            icon: "error",
-                            title: "Error al actualizar",
-                            text: error.message,
-                            showConfirmButton: false,
-                            timer: 3000,
-                            timerProgressBar: true,
-                        });
-                    }
-                });
-        }
-        // Configurar los event listeners del modal de edición
-        function configurarEventListenersModal() {
-            // Manejar el cierre del modal al hacer clic en Cancelar
-            document.getElementById("cancelEdit").addEventListener("click", () => {
-                document.getElementById("editModal").classList.add("hidden");
-            });
-
-            // Manejar la actualización de la computadora
-            document
-                .getElementById("editForm")
-                .addEventListener("submit", async (e) => {
-                    e.preventDefault();
-
-                    const id = document.getElementById("editId").value;
-                    const codigoValue = document
-                        .getElementById("editCodigo")
-                        .value.trim();
-
-                    try {
-                        // Verificar si el código ya existe y pertenece a otra computadora
-                        const codigoSnapshot = await computadorasCollection
-                            .where("codigo", "==", codigoValue)
-                            .get();
-
-                        if (!codigoSnapshot.empty && codigoSnapshot.docs[0].id !== id) {
-                            alert(
-                                "Este código de inventario ya existe en otra computadora. Por favor use otro."
-                            );
-                            return;
-                        }
-
-                        const updatedComputer = {
-                            codigo: codigoValue,
-                            tipoEquipo: document.getElementById("editTipoEquipo").value,
-                            marca: document.getElementById("editMarca").value.trim(),
-                            modelo: document.getElementById("editModelo").value.trim(),
-                            procesador: document
-                                .getElementById("editProcesador")
-                                .value.trim(),
-                            ram: parseInt(document.getElementById("editRam").value),
-                            almacenamiento: parseInt(
-                                document.getElementById("editAlmacenamiento").value
-                            ),
-                            estado: document.getElementById("editEstado").value,
-                            ubicacion: document
-                                .getElementById("editUbicacion")
-                                .value.trim(),
-                            fecha: document.getElementById("editFecha").value,
-                            notas: document.getElementById("editNotas").value.trim(),
-                            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        };
-
-                        // Actualizar en Firebase
-                        await computadorasCollection.doc(id).update(updatedComputer);
-
-                        // Cerrar el modal y mostrar mensaje de éxito
-                        document.getElementById("editModal").classList.add("hidden");
-                        // Mostrar notificación con SweetAlert2 (Versión Toast simple)
-                        Swal.fire({
-                            toast: true,
-                            icon: "success",
-                            title: "¡Computadora actualizada correctamente!",
-                            position: "top-end",
-                            showConfirmButton: false,
-                            timer: 3000,
-                            timerProgressBar: true,
-                            didOpen: (toast) => {
-                                toast.addEventListener("mouseenter", Swal.stopTimer);
-                                toast.addEventListener("mouseleave", Swal.resumeTimer);
-                            },
-                        });
-
-                        // Recargar las computadoras
-                        loadAllComputers();
-                    } catch (error) {
-                        console.error("Error al actualizar:", error);
-                        // SweetAlert2 toast notification
-                        Swal.fire({
-                            toast: true,
-                            position: "top-end",
-                            icon: "error",
-                            title: "Error al actualizar la computadora",
-                            text: error.message,
-                            showConfirmButton: false,
-                            timer: 3000,
-                            timerProgressBar: true,
-                        });
-                    }
-                });
+        // Función para mostrar mensajes
+        function showMessage(element, message) {
+            element.textContent = message;
+            element.style.display = 'block';
+            setTimeout(() => {
+                element.style.display = 'none';
+            }, 5000);
         }
 
-        // Agregar nueva computadora a Firebase
-        addForm.addEventListener("submit", async (e) => {
-            e.preventDefault();
+        function hideMessages() {
+            errorMessage.style.display = 'none';
+            successMessage.style.display = 'none';
+        }
 
-            // Verificar si el código ya existe
-            const codigoValue = codigoInput.value.trim();
-            const codigoSnapshot = await computadorasCollection
-                .where("codigo", "==", codigoValue)
-                .get();
-
-            if (!codigoSnapshot.empty) {
-                alert("Este código de inventario ya existe. Por favor use otro.");
-                return;
-            }
-
-            const newComputer = {
-                codigo: codigoValue,
-                tipoEquipo: tipoEquipoInput.value,
-                marca: marcaInput.value.trim(),
-                modelo: modeloInput.value.trim(),
-                procesador: procesadorInput.value.trim(),
-                ram: parseInt(ramInput.value),
-                almacenamiento: parseInt(almacenamientoInput.value),
-                estado: estadoInput.value,
-                ubicacion: ubicacionInput.value.trim(),
-                fecha: fechaInput.value,
-                notas: notasInput.value.trim(),
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            };
-
+        // Función para validar credenciales
+        async function validateCredentials(email, password) {
             try {
-                await computadorasCollection.add(newComputer);
-                alert("¡Computadora guardada correctamente!");
-                addForm.reset();
-                loadAllComputers(); // Recargar todas las computadoras después de agregar una nueva
-            } catch (error) {
-                // SweetAlert2 toast notification
-                Swal.fire({
-                    toast: true,
-                    position: "top-end",
-                    icon: "error",
-                    title: "Error al guardar la computadora:",
-                    text: error.message,
-                    showConfirmButton: false,
-                    timer: 3000,
-                    timerProgressBar: true,
-                });
-            }
-        });
-
-        // Función de búsqueda
-        searchBtn.addEventListener("click", performSearch);
-        searchInput.addEventListener("keypress", (e) => {
-            if (e.key === "Enter") performSearch();
-        });
-
-        async function performSearch() {
-            const searchTerm = searchInput.value.trim().toLowerCase();
-
-            if (!searchTerm) {
-                loadAllComputers();
-                return;
-            }
-
-            try {
-                resultsDiv.innerHTML =
-                    '<tr><td colspan="12" class="py-4 px-6 border-b text-gray-500 text-center">Buscando...</td></tr>';
-
-                // Obtener todas las computadoras
-                const snapshot = await computadorasCollection
-                    .orderBy("createdAt", "desc")
+                // Consultar la colección 'Usuario'
+                const querySnapshot = await db.collection('Usuario')
+                    .where('correo', '==', email)
+                    .limit(1)
                     .get();
-                const computers = [];
 
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-                    data.id = doc.id;
-                    computers.push(data);
-                });
-
-                // Filtrar según criterios de búsqueda
-                const filteredComputers = computers.filter((computer) => {
-                    const codigoMatch =
-                        searchByCodigo &&
-                        searchByCodigo.checked &&
-                        computer.codigo.toLowerCase().includes(searchTerm);
-                    const marcaMatch =
-                        searchByMarca &&
-                        searchByMarca.checked &&
-                        computer.marca.toLowerCase().includes(searchTerm);
-                    const modeloMatch =
-                        searchByModelo &&
-                        searchByModelo.checked &&
-                        computer.modelo.toLowerCase().includes(searchTerm);
-                    const procesadorMatch =
-                        searchByProcesador &&
-                        searchByProcesador.checked &&
-                        computer.procesador.toLowerCase().includes(searchTerm);
-                    const estadoMatch =
-                        searchByEstado &&
-                        searchByEstado.checked &&
-                        computer.estado.toLowerCase().includes(searchTerm);
-                    // Agregamos verificación para tipoEquipo, pero solo si existe
-                    const tipoMatch =
-                        computer.tipoEquipo &&
-                        computer.tipoEquipo.toLowerCase().includes(searchTerm);
-
-                    return (
-                        codigoMatch ||
-                        marcaMatch ||
-                        modeloMatch ||
-                        procesadorMatch ||
-                        estadoMatch ||
-                        tipoMatch
-                    );
-                });
-
-                displayResults(filteredComputers);
-            } catch (error) {
-                console.error("Error al buscar:", error);
-                resultsDiv.innerHTML = `<tr><td colspan="12" class="py-4 px-6 border-b text-red-500 text-center">Error al buscar: ${error.message}</td></tr>`;
-            }
-        }
-
-        // Actualizar los contadores de estadísticas
-        function updateStatistics(computers) {
-            let total = computers.length;
-            let buena = 0;
-            let noFunciona = 0;
-            let pocoRendimiento = 0;
-            let excelente = 0;
-
-            computers.forEach((computer) => {
-                switch (computer.estado) {
-                    case "Buena":
-                        buena++;
-                        break;
-                    case "No funciona":
-                        noFunciona++;
-                        break;
-                    case "Muy poco rendimiento":
-                        pocoRendimiento++;
-                        break;
-                    case "Excelente rendimiento":
-                        excelente++;
-                        break;
-                }
-            });
-
-            totalCount.textContent = total;
-            buenaCount.textContent = buena;
-            noFuncionaCount.textContent = noFunciona;
-            pocoRendimientoCount.textContent = pocoRendimiento;
-            excelenteCount.textContent = excelente;
-        }
-
-        // Obtener color de estado
-        function getEstadoColor(estado) {
-            switch (estado) {
-                case "Buena":
-                    return "bg-green-100 text-green-800";
-                case "No funciona":
-                    return "bg-red-100 text-red-800";
-                case "Muy poco rendimiento":
-                    return "bg-yellow-100 text-yellow-800";
-                case "Excelente rendimiento":
-                    return "bg-blue-100 text-blue-800";
-                default:
-                    return "";
-            }
-        }
-
-        // Mostrar resultados
-        function displayResults(computers) {
-            // Asegurar que el modal de edición está integrado
-            integrarModalEdicion();
-
-            // Guardar los datos para paginación
-            filteredComputers = computers;
-
-            if (computers.length === 0) {
-                resultsDiv.innerHTML =
-                    '<tr><td colspan="12" class="py-4 px-6 border-b text-gray-500 italic text-center">No se encontraron resultados</td></tr>';
-                updateStatistics([]);
-                updatePaginationInfo(0, 0, 0);
-                return;
-            }
-            // Función para actualizar la información de paginación
-            function updatePaginationInfo(start, end, total) {
-                document.getElementById("showingStart").textContent = start;
-                document.getElementById("showingEnd").textContent = end;
-                document.getElementById("totalItems").textContent = total;
-            }
-
-            // Calcular paginación
-            const totalPages = Math.ceil(computers.length / itemsPerPage);
-            const startIndex = (currentPage - 1) * itemsPerPage;
-            const endIndex = Math.min(startIndex + itemsPerPage, computers.length);
-            const paginatedComputers = computers.slice(startIndex, endIndex);
-
-            // Mostrar computadoras de la página actual
-            let html = "";
-            paginatedComputers.forEach((computer) => {
-                // Formatear la fecha para mostrarla en formato DD/MM/AAAA
-                let formattedDate = computer.fecha;
-                if (computer.fecha) {
-                    const dateParts = computer.fecha.split("-");
-                    if (dateParts.length === 3) {
-                        formattedDate = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
-                    }
+                if (querySnapshot.empty) {
+                    throw new Error('Usuario no encontrado');
                 }
 
-                // Obtener la clase de color basada en el estado
-                const estadoColorClass = getEstadoColor(computer.estado);
+                const userDoc = querySnapshot.docs[0];
+                const userData = userDoc.data();
 
-                html += `
-        <tr>
-            <td class="py-2 px-2 border-b">${computer.codigo}</td>
-            <td class="py-2 px-2 border-b">${computer.tipoEquipo || "No especificado"
-                    }</td>
-            <td class="py-2 px-2 border-b">${computer.marca}</td>
-            <td class="py-2 px-2 border-b">${computer.modelo}</td>
-            <td class="py-2 px-2 border-b">${computer.procesador}</td>
-            <td class="py-2 px-2 border-b">${computer.ram} GB</td>
-            <td class="py-2 px-2 border-b">${computer.almacenamiento} GB</td>
-            <td class="py-2 px-2 border-b">
-                <span class="px-2 py-1 rounded-full text-xs font-medium ${estadoColorClass}">
-                    ${computer.estado}
-                </span>
-            </td>
-            <td class="py-2 px-2 border-b">${computer.ubicacion}</td>
-            <td class="py-2 px-2 border-b">${formattedDate}</td>
-            <td class="py-2 px-2 border-b">${computer.notas || ""}</td>
-            <td class="py-2 px-2 border-b flex space-x-1">
-                <button class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 edit-btn text-xs" data-id="${computer.id
-                    }">
-                    Editar
-                </button>
-                <button class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 delete-btn text-xs" data-id="${computer.id
-                    }">
-                    Eliminar
-                </button>
-            </td>
-        </tr>`;
-            });
-
-            resultsDiv.innerHTML = html;
-            updateStatistics(computers);
-            updatePaginationControls(totalPages);
-            updatePaginationInfo(startIndex + 1, endIndex, computers.length);
-
-            // Agregar event listeners para eliminar y editar
-            addActionEventListeners();
-        }
-
-        // Función para mover event listeners a función separada
-        function addActionEventListeners() {
-            // Agregar event listeners para eliminar
-            document.querySelectorAll(".delete-btn").forEach((btn) => {
-                btn.addEventListener("click", async (e) => {
-                    const id = e.target.getAttribute("data-id");
-
-                    const result = await Swal.fire({
-                        title: "¿Estás seguro?",
-                        text: "Esta acción no se puede deshacer",
-                        icon: "warning",
-                        showCancelButton: true,
-                        confirmButtonColor: "#d33",
-                        cancelButtonColor: "#3085d6",
-                        confirmButtonText: "Sí, eliminar",
-                        cancelButtonText: "Cancelar",
-                    });
-
-                    if (result.isConfirmed) {
-                        try {
-                            await computadorasCollection.doc(id).delete();
-                            Swal.fire({
-                                toast: true,
-                                icon: "success",
-                                title: "Computadora eliminada correctamente",
-                                position: "top-end",
-                                showConfirmButton: false,
-                                timer: 3000,
-                                timerProgressBar: true,
-                            });
-                            loadAllComputers();
-                        } catch (error) {
-                            console.error("Error al eliminar:", error);
-                            Swal.fire({
-                                toast: true,
-                                icon: "error",
-                                title: "Error al eliminar",
-                                text: error.message,
-                                position: "top-end",
-                                showConfirmButton: false,
-                                timer: 3000,
-                                timerProgressBar: true,
-                            });
-                        }
-                    }
-                });
-            });
-            // Agregar event listeners para editar
-            document.querySelectorAll(".edit-btn").forEach((btn) => {
-                btn.addEventListener("click", async (e) => {
-                    const id = e.target.getAttribute("data-id");
-                    try {
-                        const doc = await computadorasCollection.doc(id).get();
-                        if (doc.exists) {
-                            const computer = doc.data();
-
-                            // Llenar el formulario con los datos existentes
-                            document.getElementById("editId").value = id;
-                            document.getElementById("editCodigo").value =
-                                computer.codigo || "";
-                            document.getElementById("editTipoEquipo").value =
-                                computer.tipoEquipo || "";
-                            document.getElementById("editMarca").value =
-                                computer.marca || "";
-                            document.getElementById("editModelo").value =
-                                computer.modelo || "";
-                            document.getElementById("editProcesador").value =
-                                computer.procesador || "";
-                            document.getElementById("editRam").value = computer.ram || "";
-                            document.getElementById("editAlmacenamiento").value =
-                                computer.almacenamiento || "";
-                            document.getElementById("editEstado").value =
-                                computer.estado || "";
-                            document.getElementById("editUbicacion").value =
-                                computer.ubicacion || "";
-                            document.getElementById("editFecha").value =
-                                computer.fecha || "";
-                            document.getElementById("editNotas").value =
-                                computer.notas || "";
-
-                            // Mostrar el modal
-                            document.getElementById("editModal").classList.remove("hidden");
-                        }
-                    } catch (error) {
-                        console.error("Error al obtener datos para editar:", error);
-                        Swal.fire({
-                            toast: true,
-                            icon: "error",
-                            title: "Error al cargar datos para editar",
-                            text: error.message,
-                            position: "top-end",
-                            showConfirmButton: false,
-                            timer: 3000,
-                            timerProgressBar: true,
-                        });
-                    }
-                });
-            });
-        }
-        // Event listeners para controles de paginación
-        document.addEventListener("DOMContentLoaded", function () {
-            // Event listener para cambiar elementos por página
-            document
-                .getElementById("itemsPerPage")
-                .addEventListener("change", (e) => {
-                    itemsPerPage = parseInt(e.target.value);
-                    currentPage = 1; // Resetear a primera página
-                    displayResults(filteredComputers);
-                });
-
-            // Event listeners para botones de navegación
-            document
-                .getElementById("firstPage")
-                .addEventListener("click", () => goToPage(1));
-            document
-                .getElementById("prevPage")
-                .addEventListener("click", () =>
-                    goToPage(Math.max(1, currentPage - 1))
-                );
-            document.getElementById("nextPage").addEventListener("click", () => {
-                const totalPages = Math.ceil(filteredComputers.length / itemsPerPage);
-                goToPage(Math.min(totalPages, currentPage + 1));
-            });
-            document.getElementById("lastPage").addEventListener("click", () => {
-                const totalPages = Math.ceil(filteredComputers.length / itemsPerPage);
-                goToPage(totalPages);
-            });
-        });
-
-        // 6. MODIFICAR LA FUNCIÓN performSearch PARA RESETEAR LA PÁGINA -->
-        // Reemplazar la función performSearch existente con esta versión:
-
-        async function performSearch() {
-            const searchTerm = searchInput.value.trim().toLowerCase();
-            currentPage = 1; // Resetear a primera página al buscar
-
-            if (!searchTerm) {
-                loadAllComputers();
-                return;
-            }
-
-            try {
-                resultsDiv.innerHTML =
-                    '<tr><td colspan="12" class="py-4 px-6 border-b text-gray-500 text-center">Buscando...</td></tr>';
-
-                // Obtener todas las computadoras
-                const snapshot = await computadorasCollection
-                    .orderBy("createdAt", "desc")
-                    .get();
-                const computers = [];
-
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-                    data.id = doc.id;
-                    computers.push(data);
-                });
-
-                // Filtrar según criterios de búsqueda
-                const filteredComputers = computers.filter((computer) => {
-                    const codigoMatch =
-                        searchByCodigo &&
-                        searchByCodigo.checked &&
-                        computer.codigo.toLowerCase().includes(searchTerm);
-                    const marcaMatch =
-                        searchByMarca &&
-                        searchByMarca.checked &&
-                        computer.marca.toLowerCase().includes(searchTerm);
-                    const modeloMatch =
-                        searchByModelo &&
-                        searchByModelo.checked &&
-                        computer.modelo.toLowerCase().includes(searchTerm);
-                    const procesadorMatch =
-                        searchByProcesador &&
-                        searchByProcesador.checked &&
-                        computer.procesador.toLowerCase().includes(searchTerm);
-                    const estadoMatch =
-                        searchByEstado &&
-                        searchByEstado.checked &&
-                        computer.estado.toLowerCase().includes(searchTerm);
-                    const tipoMatch =
-                        computer.tipoEquipo &&
-                        computer.tipoEquipo.toLowerCase().includes(searchTerm);
-
-                    return (
-                        codigoMatch ||
-                        marcaMatch ||
-                        modeloMatch ||
-                        procesadorMatch ||
-                        estadoMatch ||
-                        tipoMatch
-                    );
-                });
-
-                displayResults(filteredComputers);
-            } catch (error) {
-                console.error("Error al buscar:", error);
-                resultsDiv.innerHTML = `<tr><td colspan="12" class="py-4 px-6 border-b text-red-500 text-center">Error al buscar: ${error.message}</td></tr>`;
-            }
-        }
-        // Función para actualizar los controles de paginación
-        function updatePaginationControls(totalPages) {
-            const firstBtn = document.getElementById("firstPage");
-            const prevBtn = document.getElementById("prevPage");
-            const nextBtn = document.getElementById("nextPage");
-            const lastBtn = document.getElementById("lastPage");
-            const pageNumbersDiv = document.getElementById("pageNumbers");
-
-            // Habilitar/deshabilitar botones
-            firstBtn.disabled = currentPage === 1;
-            prevBtn.disabled = currentPage === 1;
-            nextBtn.disabled = currentPage === totalPages || totalPages === 0;
-            lastBtn.disabled = currentPage === totalPages || totalPages === 0;
-
-            // Generar números de página
-            pageNumbersDiv.innerHTML = "";
-
-            if (totalPages <= 7) {
-                // Mostrar todas las páginas si son pocas
-                for (let i = 1; i <= totalPages; i++) {
-                    const pageBtn = createPageButton(i, i === currentPage);
-                    pageNumbersDiv.appendChild(pageBtn);
-                }
-            } else {
-                // Mostrar páginas con elipsis
-                const startPage = Math.max(1, currentPage - 2);
-                const endPage = Math.min(totalPages, currentPage + 2);
-
-                if (startPage > 1) {
-                    pageNumbersDiv.appendChild(createPageButton(1, false));
-                    if (startPage > 2) {
-                        const ellipsis = document.createElement("span");
-                        ellipsis.className = "px-2 py-1 text-gray-500";
-                        ellipsis.textContent = "...";
-                        pageNumbersDiv.appendChild(ellipsis);
-                    }
+                // Verificar contraseña (en producción, usa hash)
+                if (userData.Contraseña !== password) {
+                    throw new Error('Contraseña incorrecta');
                 }
 
-                for (let i = startPage; i <= endPage; i++) {
-                    const pageBtn = createPageButton(i, i === currentPage);
-                    pageNumbersDiv.appendChild(pageBtn);
-                }
-
-                if (endPage < totalPages) {
-                    if (endPage < totalPages - 1) {
-                        const ellipsis = document.createElement("span");
-                        ellipsis.className = "px-2 py-1 text-gray-500";
-                        ellipsis.textContent = "...";
-                        pageNumbersDiv.appendChild(ellipsis);
-                    }
-                    pageNumbersDiv.appendChild(createPageButton(totalPages, false));
-                }
-            }
-        }
-
-        // Función para crear botón de página
-        function createPageButton(pageNum, isActive) {
-            const button = document.createElement("button");
-            button.className = `px-3 py-1 border rounded text-sm ${isActive
-                    ? "bg-blue-500 text-white border-blue-500"
-                    : "border-gray-300 hover:bg-gray-100"
-                }`;
-            button.textContent = pageNum;
-            button.addEventListener("click", () => goToPage(pageNum));
-            return button;
-        }
-
-        // Función para ir a una página específica
-        function goToPage(page) {
-            currentPage = page;
-            displayResults(filteredComputers);
-        }
-
-        // Funcionalidad para importar JSON
-        const jsonFileInput = document.getElementById("jsonFileInput");
-        const jsonPreview = document.getElementById("jsonPreview");
-        const importJsonBtn = document.getElementById("importJsonBtn");
-        const importStatus = document.getElementById("importStatus");
-        const importResults = document.getElementById("importResults");
-
-        // Manejar la selección de archivo JSON
-        jsonFileInput.addEventListener("change", (e) => {
-            const file = e.target.files[0];
-            if (!file) {
-                importJsonBtn.disabled = true;
-                jsonPreview.value = "";
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = function (event) {
-                try {
-                    const jsonData = JSON.parse(event.target.result);
-                    jsonPreview.value =
-                        JSON.stringify(jsonData, null, 2).substring(0, 1000) +
-                        (JSON.stringify(jsonData, null, 2).length > 1000 ? "..." : "");
-                    importJsonBtn.disabled = false;
-                } catch (error) {
-                    console.error("Error al parsear JSON:", error);
-                    jsonPreview.value = "Error: Formato JSON inválido";
-                    importJsonBtn.disabled = true;
-                }
-            };
-            reader.readAsText(file);
-        });
-
-        // Importar datos a Firebase
-        importJsonBtn.addEventListener("click", async () => {
-            try {
-                const file = jsonFileInput.files[0];
-                if (!file) return;
-
-                importJsonBtn.disabled = true;
-                importStatus.classList.remove("hidden");
-                importStatus.classList.add("flex");
-                importResults.innerHTML = "";
-
-                const reader = new FileReader();
-                reader.onload = async function (event) {
-                    try {
-                        const jsonData = JSON.parse(event.target.result);
-                        if (!Array.isArray(jsonData)) {
-                            throw new Error("El JSON debe ser un array de objetos");
-                        }
-
-                        let importCount = 0;
-                        let skipCount = 0;
-                        let errorCount = 0;
-
-                        // Usar un lote (batch) para operaciones masivas
-                        let batch = db.batch(); // Cambié de const a let para poder reinicializarlo
-                        const promises = [];
-
-                        for (const item of jsonData) {
-                            try {
-                                // Verificar si el código ya existe
-                                const codigoSnapshot = await computadorasCollection
-                                    .where("codigo", "==", item.codigo)
-                                    .get();
-
-                                if (!codigoSnapshot.empty) {
-                                    skipCount++;
-                                    continue; // Saltar si ya existe
-                                }
-
-                                // Preparar el objeto para guardar
-                                const computerData = {
-                                    codigo: item.codigo || "",
-                                    tipoEquipo: item.tipoEquipo || "",
-                                    marca: item.marca || "",
-                                    modelo: item.modelo || "",
-                                    procesador: item.procesador || "",
-                                    ram: parseInt(item.ram) || 0,
-                                    almacenamiento: parseInt(item.almacenamiento) || 0,
-                                    estado: item.estado || "",
-                                    ubicacion: item.ubicacion || "",
-                                    fecha: item.fecha || new Date().toISOString().split("T")[0],
-                                    notas: item.notas || "",
-                                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                                };
-
-                                // Para grandes volúmenes es mejor usar operaciones por lotes
-                                const docRef = computadorasCollection.doc();
-                                batch.set(docRef, computerData);
-                                importCount++;
-
-                                // Cada 500 elementos, ejecutar el lote y crear uno nuevo
-                                if (importCount % 500 === 0) {
-                                    promises.push(batch.commit());
-                                    batch = db.batch(); // Reinicializar el lote
-                                }
-                            } catch (error) {
-                                console.error("Error al procesar elemento:", error, item);
-                                errorCount++;
-                            }
-                        }
-
-                        // Ejecutar el último lote si hay pendientes
-                        if (importCount % 500 !== 0) {
-                            promises.push(batch.commit());
-                        }
-
-                        // Esperar que todas las operaciones terminen
-                        await Promise.all(promises);
-
-                        importResults.innerHTML = `
-        <div class="text-green-600">Importación completada:</div>
-        <ul class="list-disc pl-5">
-            <li>${importCount} elementos importados</li>
-            <li>${skipCount} elementos omitidos (códigos duplicados)</li>
-            <li>${errorCount} errores</li>
-        </ul>`;
-
-                        // Recargar computadoras para mostrar las importadas
-                        loadAllComputers();
-                    } catch (error) {
-                        console.error("Error al importar JSON:", error);
-                        importResults.innerHTML = `<div class="text-red-600">Error: ${error.message}</div>`;
-                    } finally {
-                        importStatus.classList.remove("flex");
-                        importStatus.classList.add("hidden");
-                        importJsonBtn.disabled = false;
+                return {
+                    success: true,
+                    user: {
+                        id: userDoc.id,
+                        name: userData.Nombre,
+                        email: userData.correo,
+                        hasPermission: true
                     }
                 };
-                reader.readAsText(file);
+
             } catch (error) {
-                console.error("Error al procesar archivo:", error);
-                importResults.innerHTML = `<div class="text-red-600">Error: ${error.message}</div>`;
-                importStatus.classList.remove("flex");
-                importStatus.classList.add("hidden");
-                importJsonBtn.disabled = false;
+                return {
+                    success: false,
+                    error: error.message
+                };
             }
-        });
+        }
 
-        // Cargar todas las computadoras
-        async function loadAllComputers() {
+        // Función para guardar sesión
+        function saveSession(user) {
+            const sessionData = {
+                userId: user.id,
+                userName: user.name,
+                userEmail: user.email,
+                hasPermission: user.hasPermission,
+                loginTime: new Date().toISOString()
+            };
+            
+            // Guardar en localStorage
+            localStorage.setItem('userSession', JSON.stringify(sessionData));
+            
+            // También guardar en cookies como respaldo
+            document.cookie = `session=${JSON.stringify(sessionData)}; path=/; max-age=3600`;
+        }
+
+        // Función para verificar permisos
+        function checkPermissions(user) {
+            return user.hasPermission === true;
+        }
+
+        // Manejar envío del formulario
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideMessages();
+
+            const email = emailInput.value.trim();
+            const password = passwordInput.value.trim();
+
+            if (!email || !password) {
+                showMessage(errorMessage, 'Por favor, completa todos los campos');
+                return;
+            }
+
+            // Mostrar loading de pantalla completa
+            showFullscreenLoading();
+            updateLoadingText('Iniciando Sesión', 'Verificando credenciales...');
+            
+            // Deshabilitar botón
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Verificando...';
+
             try {
-                resultsDiv.innerHTML =
-                    '<tr><td colspan="12" class="py-4 px-6 border-b text-gray-500 text-center">Cargando...</td></tr>';
+                // Simular un pequeño delay para que se vea el loading
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                const result = await validateCredentials(email, password);
 
-                // Configurar un listener en tiempo real para actualizar automáticamente cuando haya cambios
-                if (!window.realTimeListener) {
-                    window.realTimeListener = computadorasCollection
-                        .orderBy("createdAt", "desc")
-                        .onSnapshot(
-                            (snapshot) => {
-                                const computers = [];
-                                snapshot.forEach((doc) => {
-                                    const data = doc.data();
-                                    data.id = doc.id;
-                                    computers.push(data);
-                                });
-                                displayResults(computers);
-                            },
-                            (error) => {
-                                console.error("Error en tiempo real:", error);
-                                resultsDiv.innerHTML = `<tr><td colspan="12" class="py-4 px-6 border-b text-red-500 text-center">Error al actualizar: ${error.message}</td></tr>`;
-                            }
-                        );
+                if (result.success) {
+                    // Actualizar texto del loading
+                    updateLoadingText('¡Acceso Concedido!', 'Configurando tu sesión...');
+                    
+                    // Verificar permisos
+                    if (checkPermissions(result.user)) {
+                        // Guardar sesión
+                        saveSession(result.user);
+                        
+                        // Actualizar loading una vez más
+                        updateLoadingText('¡Bienvenido!', `Hola ${result.user.name}, redirigiendo...`);
+                        
+                        // Esperar un poco más para mostrar el mensaje de bienvenida
+                        await new Promise(resolve => setTimeout(resolve, 1500));
+                        
+                        // Redireccionar
+                        window.location.href = 'Inicio.html';
+                    } else {
+                        hideFullscreenLoading();
+                        showMessage(errorMessage, 'No tienes permisos para acceder al sistema');
+                    }
                 } else {
-                    // Si ya existe el listener, solo obtener los datos una vez
-                    const snapshot = await computadorasCollection
-                        .orderBy("createdAt", "desc")
-                        .get();
-                    const computers = [];
-
-                    snapshot.forEach((doc) => {
-                        const data = doc.data();
-                        data.id = doc.id;
-                        computers.push(data);
-                    });
-
-                    displayResults(computers);
+                    hideFullscreenLoading();
+                    showMessage(errorMessage, result.error);
                 }
             } catch (error) {
-                console.error("Error al cargar computadoras:", error);
-                resultsDiv.innerHTML = `<tr><td colspan="12" class="py-4 px-6 border-b text-red-500 text-center">Error al cargar computadoras: ${error.message}</td></tr>`;
+                hideFullscreenLoading();
+                showMessage(errorMessage, 'Error de conexión. Intenta nuevamente.');
+                console.error('Error:', error);
+            } finally {
+                // Restaurar botón si no se redirigió
+                if (!window.location.href.includes('Inicio.html')) {
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = 'Iniciar Sesión';
+                }
             }
-        }
-
-        // Agregar los eventos después de que el DOM esté completamente cargado
-        document.addEventListener("DOMContentLoaded", function () {
-            // Asegurar que el modal de edición está disponible
-            integrarModalEdicion();
-
-            // Cargar todas las computadoras al iniciar
-            loadAllComputers();
         });
 
-        // Si no estamos seguro de que el DOMContentLoaded ya ha ocurrido (por ejemplo, si este script se carga tarde)
-        // podemos verificar si el documento ya está "ready"
-        if (document.readyState === "loading") {
-            document.addEventListener("DOMContentLoaded", function () {
-                integrarModalEdicion();
-                loadAllComputers();
-            });
-        } else {
-            // DOMContentLoaded ya ha ocurrido
-            integrarModalEdicion();
-            loadAllComputers();
+        // Verificar si ya hay una sesión activa al cargar la página (SOLO EN LOGIN)
+        window.addEventListener('load', () => {
+            console.log('Verificando sesión existente en página de login...');
+            
+            // Verificar localStorage primero
+            const sessionData = localStorage.getItem('userSession');
+            if (sessionData) {
+                try {
+                    const userData = JSON.parse(sessionData);
+                    if (userData.hasPermission && userData.userId) {
+                        console.log('Sesión activa encontrada, redirigiendo...');
+                        
+                        // Mostrar loading de redirección
+                        showFullscreenLoading();
+                        updateLoadingText('Sesión Activa', 'Redirigiendo al panel principal...');
+                        
+                        // Redireccionar después de un momento
+                        setTimeout(() => {
+                            window.location.href = 'Inicio.html';
+                        }, 1000);
+                        return;
+                    }
+                } catch (error) {
+                    console.log('Sesión inválida en localStorage');
+                    localStorage.removeItem('userSession');
+                }
+            }
+
+            // Si no hay en localStorage, verificar cookies
+            const sessionCookie = document.cookie
+                .split('; ')
+                .find(row => row.startsWith('session='));
+            
+            if (sessionCookie) {
+                try {
+                    const sessionData = JSON.parse(sessionCookie.split('=')[1]);
+                    if (sessionData.hasPermission && sessionData.userId) {
+                        console.log('Sesión activa encontrada en cookies, redirigiendo...');
+                        
+                        // Mostrar loading de redirección
+                        showFullscreenLoading();
+                        updateLoadingText('Sesión Activa', 'Redirigiendo al panel principal...');
+                        
+                        // Redireccionar después de un momento
+                        setTimeout(() => {
+                            window.location.href = 'Inicio.html';
+                        }, 1000);
+                    }
+                } catch (error) {
+                    console.log('Sesión inválida en cookies');
+                }
+            }
+        });
+
+        // Función para logout (usar en otras páginas)
+        function logout() {
+            // Limpiar sesión
+            localStorage.removeItem('userSession');
+            document.cookie = 'session=; path=/; max-age=0';
+            window.location.href = 'Index.html';
         }
+
+        // Hacer logout accesible globalmente
+        window.logout = logout;
     </script>
 </body>
-
 </html>
