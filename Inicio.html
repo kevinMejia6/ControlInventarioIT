@@ -815,8 +815,22 @@
 
             try {
                 await computadorasCollection.add(newComputer);
-                alert("¡Computadora guardada correctamente!");
-                addForm.reset();
+                  Swal.fire({
+                    toast: true,
+                    position: "top-end",
+                    icon: "success",
+                    title: "Excelente",
+                    text: "Equipo Guardado con éxito",
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true,
+                    background: "#1e1e1e",        // fondo oscuro
+                    color: "#ffffff",             // texto blanco
+                    iconColor: "#00ff88",         // color del ícono de éxito (opcional)
+                    customClass: {
+                        popup: 'swal2-dark-toast'
+                    }
+                });                addForm.reset();
                 loadAllComputers(); // Recargar todas las computadoras después de agregar una nueva
             } catch (error) {
                 // SweetAlert2 toast notification
@@ -829,6 +843,12 @@
                     showConfirmButton: false,
                     timer: 3000,
                     timerProgressBar: true,
+                    background: "#1e1e1e",        // fondo oscuro
+                    color: "#ffffff",             // texto blanco
+                    iconColor: "#00ff88",         // color del ícono de éxito (opcional)
+                    customClass: {
+                        popup: 'swal2-dark-toast'
+                    }
                 });
             }
         });
