@@ -1,733 +1,837 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Login - Sistema de Inventario</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #14407b 0%, rgb(62, 48, 116) 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            overflow: hidden;
-        }
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #14407b 0%, rgb(62, 48, 116) 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+      }
 
-        /* Contenedor de partículas */
-        #particles-js {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            z-index: 1;
-        }
+      /* Contenedor de partículas */
+      #particles-js {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        z-index: 1;
+      }
 
+      .login-container {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        padding: 40px;
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        width: 100%;
+        max-width: 400px;
+        position: relative;
+        overflow: hidden;
+        z-index: 2;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .login-container::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #667eea, #764ba2);
+      }
+
+      .logo {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      .logo h1 {
+        color: #333;
+        font-size: 28px;
+        margin-bottom: 10px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .logo p {
+        color: #666;
+        font-size: 16px;
+      }
+
+      .form-group {
+        margin-bottom: 25px;
+        position: relative;
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: #333;
+        font-weight: 500;
+      }
+
+      .form-group input {
+        width: 100%;
+        padding: 15px;
+        border: 2px solid #e1e1e1;
+        border-radius: 10px;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        background: rgba(248, 249, 250, 0.8);
+        backdrop-filter: blur(5px);
+      }
+
+      .form-group input:focus {
+        outline: none;
+        border-color: #667eea;
+        background: rgba(255, 255, 255, 0.9);
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      }
+
+      .form-group input::placeholder {
+        color: #999;
+      }
+
+      .login-btn {
+        width: 100%;
+        padding: 15px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-bottom: 20px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .login-btn::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.2),
+          transparent
+        );
+        transition: left 0.5s;
+      }
+
+      .login-btn:hover::before {
+        left: 100%;
+      }
+
+      .login-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+      }
+
+      .login-btn:active {
+        transform: translateY(0);
+      }
+
+      .login-btn:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+      }
+
+      .error-message {
+        background: rgba(254, 238, 238, 0.9);
+        color: #c53030;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        border-left: 4px solid #c53030;
+        display: none;
+        backdrop-filter: blur(5px);
+      }
+
+      .success-message {
+        background: rgba(240, 255, 244, 0.9);
+        color: #38a169;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        border-left: 4px solid #38a169;
+        display: none;
+        backdrop-filter: blur(5px);
+      }
+
+      .loading {
+        display: none;
+        text-align: center;
+        color: #666;
+        margin-top: 10px;
+      }
+
+      .loading::after {
+        content: "";
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 2px solid #f3f3f3;
+        border-top: 2px solid #667eea;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-left: 10px;
+      }
+
+      /* Loading de pantalla completa */
+      .fullscreen-loading {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(10px);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+      }
+
+      .fullscreen-loading.show {
+        display: flex;
+      }
+
+      .loading-content {
+        text-align: center;
+        color: white;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 40px;
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+      }
+
+      .loading-spinner {
+        width: 60px;
+        height: 60px;
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        border-top: 4px solid #667eea;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 20px;
+      }
+
+      .loading-text {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 10px;
+      }
+
+      .loading-subtext {
+        font-size: 14px;
+        opacity: 0.8;
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 0.5;
+        }
+        50% {
+          opacity: 1;
+        }
+      }
+
+      /* Animación de aparición del loading */
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      .fullscreen-loading.show {
+        animation: fadeIn 0.3s ease-in-out;
+      }
+
+      .footer {
+        text-align: center;
+        color: #666;
+        font-size: 14px;
+        margin-top: 20px;
+      }
+
+      @media (max-width: 480px) {
         .login-container {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-            width: 100%;
-            max-width: 400px;
-            position: relative;
-            overflow: hidden;
-            z-index: 2;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .login-container::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #667eea, #764ba2);
-        }
-
-        .logo {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .logo h1 {
-            color: #333;
-            font-size: 28px;
-            margin-bottom: 10px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .logo p {
-            color: #666;
-            font-size: 16px;
-        }
-
-        .form-group {
-            margin-bottom: 25px;
-            position: relative;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #333;
-            font-weight: 500;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 15px;
-            border: 2px solid #e1e1e1;
-            border-radius: 10px;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            background: rgba(248, 249, 250, 0.8);
-            backdrop-filter: blur(5px);
-        }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: #667eea;
-            background: rgba(255, 255, 255, 0.9);
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .form-group input::placeholder {
-            color: #999;
-        }
-
-        .login-btn {
-            width: 100%;
-            padding: 15px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-bottom: 20px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .login-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: left 0.5s;
-        }
-
-        .login-btn:hover::before {
-            left: 100%;
-        }
-
-        .login-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
-        }
-
-        .login-btn:active {
-            transform: translateY(0);
-        }
-
-        .login-btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        .error-message {
-            background: rgba(254, 238, 238, 0.9);
-            color: #c53030;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            border-left: 4px solid #c53030;
-            display: none;
-            backdrop-filter: blur(5px);
-        }
-
-        .success-message {
-            background: rgba(240, 255, 244, 0.9);
-            color: #38a169;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            border-left: 4px solid #38a169;
-            display: none;
-            backdrop-filter: blur(5px);
-        }
-
-        .loading {
-            display: none;
-            text-align: center;
-            color: #666;
-            margin-top: 10px;
-        }
-
-        .loading::after {
-            content: '';
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 2px solid #f3f3f3;
-            border-top: 2px solid #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-left: 10px;
-        }
-
-        /* Loading de pantalla completa */
-        .fullscreen-loading {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(10px);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-        }
-
-        .fullscreen-loading.show {
-            display: flex;
+          margin: 20px;
+          padding: 30px 20px;
         }
 
         .loading-content {
-            text-align: center;
-            color: white;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 40px;
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
+          margin: 20px;
+          padding: 30px 20px;
         }
+      }
 
-        .loading-spinner {
-            width: 60px;
-            height: 60px;
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
+      /* Animaciones adicionales para el contenedor */
+      @keyframes slideInUp {
+        from {
+          transform: translateY(30px);
+          opacity: 0;
         }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
 
-        .loading-text {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 10px;
-        }
+      .login-container {
+        animation: slideInUp 0.6s ease-out;
+      }
 
-        .loading-subtext {
-            font-size: 14px;
-            opacity: 0.8;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 0.5; }
-            50% { opacity: 1; }
-        }
-
-        /* Animación de aparición del loading */
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .fullscreen-loading.show {
-            animation: fadeIn 0.3s ease-in-out;
-        }
-
-        .footer {
-            text-align: center;
-            color: #666;
-            font-size: 14px;
-            margin-top: 20px;
-        }
-
-        @media (max-width: 480px) {
-            .login-container {
-                margin: 20px;
-                padding: 30px 20px;
-            }
-            
-            .loading-content {
-                margin: 20px;
-                padding: 30px 20px;
-            }
-        }
-
-        /* Animaciones adicionales para el contenedor */
-        @keyframes slideInUp {
-            from {
-                transform: translateY(30px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-        .login-container {
-            animation: slideInUp 0.6s ease-out;
-        }
-
-        /* Efecto de hover mejorado para los inputs */
-        .form-group input:hover {
-            border-color: #b8c6f0;
-            background: rgba(255, 255, 255, 0.7);
-        }
+      /* Efecto de hover mejorado para los inputs */
+      .form-group input:hover {
+        border-color: #b8c6f0;
+        background: rgba(255, 255, 255, 0.7);
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <!-- Contenedor de partículas -->
     <div id="particles-js"></div>
 
     <!-- Loading de pantalla completa -->
     <div id="fullscreen-loading" class="fullscreen-loading">
-        <div class="loading-content">
-            <div class="loading-spinner"></div>
-            <div class="loading-text">Iniciando Sesión</div>
-            <div class="loading-subtext">Verificando credenciales...</div>
-        </div>
+      <div class="loading-content">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Iniciando Sesión</div>
+        <div class="loading-subtext">Verificando credenciales...</div>
+      </div>
     </div>
 
     <div class="login-container">
-        <div class="logo">
-            <h1>📦 Inventario</h1>
-            <p>Sistema de Control</p>
+      <div class="logo">
+        <h1>📦 Inventario</h1>
+        <p>Sistema de Control</p>
+      </div>
+
+      <div id="error-message" class="error-message"></div>
+      <div id="success-message" class="success-message"></div>
+
+      <form id="login-form">
+        <div class="form-group">
+          <label for="email">Correo Electrónico</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            placeholder="Ingresa tu correo"
+            required
+          />
         </div>
 
-        <div id="error-message" class="error-message"></div>
-        <div id="success-message" class="success-message"></div>
-
-        <form id="login-form">
-            <div class="form-group">
-                <label for="email">Correo Electrónico</label>
-                <input type="email" id="email" name="email" placeholder="Ingresa tu correo" required>
-            </div>
-
-            <div class="form-group">
-                <label for="password">Contraseña</label>
-                <input type="password" id="password" name="password" placeholder="Ingresa tu contraseña" required>
-            </div>
-
-            <button type="submit" class="login-btn" id="login-btn">
-                Iniciar Sesión
-            </button>
-        </form>
-
-        <div id="loading" class="loading">
-            Verificando credenciales...
+        <div class="form-group">
+          <label for="password">Contraseña</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            placeholder="Ingresa tu contraseña"
+            required
+          />
         </div>
 
-        <div class="footer">
-            <p>&copy; <span id="current-year"></span> Sistema de Inventario</p>
-        </div>
+        <button type="submit" class="login-btn" id="login-btn">
+          Iniciar Sesión
+        </button>
+      </form>
+
+      <div id="loading" class="loading">Verificando credenciales...</div>
+
+      <div class="footer">
+        <p>&copy; <span id="current-year"></span> Sistema de Inventario</p>
+        <a href="./Movimientos.html">Crear Uusuaro</a>
+      </div>
     </div>
 
     <!-- Particles.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/particles.js/2.0.0/particles.min.js"></script>
-    
+
     <!-- Firebase SDK -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-app-compat.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-firestore-compat.min.js"></script>
 
     <script>
-        // Configuración de partículas
-        particlesJS('particles-js', {
-            "particles": {
-                "number": {
-                    "value": 80,
-                    "density": {
-                        "enable": true,
-                        "value_area": 800
-                    }
-                },
-                "color": {
-                    "value": ["#ffffff", "#667eea", "#764ba2"]
-                },
-                "shape": {
-                    "type": "circle",
-                    "stroke": {
-                        "width": 0,
-                        "color": "#000000"
-                    }
-                },
-                "opacity": {
-                    "value": 0.6,
-                    "random": true,
-                    "anim": {
-                        "enable": true,
-                        "speed": 1,
-                        "opacity_min": 0.1,
-                        "sync": false
-                    }
-                },
-                "size": {
-                    "value": 3,
-                    "random": true,
-                    "anim": {
-                        "enable": true,
-                        "speed": 2,
-                        "size_min": 0.1,
-                        "sync": false
-                    }
-                },
-                "line_linked": {
-                    "enable": true,
-                    "distance": 150,
-                    "color": "#ffffff",
-                    "opacity": 0.4,
-                    "width": 1
-                },
-                "move": {
-                    "enable": true,
-                    "speed": 2,
-                    "direction": "none",
-                    "random": true,
-                    "straight": false,
-                    "out_mode": "out",
-                    "bounce": false,
-                    "attract": {
-                        "enable": false,
-                        "rotateX": 600,
-                        "rotateY": 1200
-                    }
-                }
+      // Configuración de partículas
+      particlesJS("particles-js", {
+        particles: {
+          number: {
+            value: 80,
+            density: {
+              enable: true,
+              value_area: 800,
             },
-            "interactivity": {
-                "detect_on": "canvas",
-                "events": {
-                    "onhover": {
-                        "enable": true,
-                        "mode": "repulse"
-                    },
-                    "onclick": {
-                        "enable": true,
-                        "mode": "push"
-                    },
-                    "resize": true
-                },
-                "modes": {
-                    "grab": {
-                        "distance": 400,
-                        "line_linked": {
-                            "opacity": 1
-                        }
-                    },
-                    "bubble": {
-                        "distance": 400,
-                        "size": 40,
-                        "duration": 2,
-                        "opacity": 8,
-                        "speed": 3
-                    },
-                    "repulse": {
-                        "distance": 100,
-                        "duration": 0.4
-                    },
-                    "push": {
-                        "particles_nb": 4
-                    },
-                    "remove": {
-                        "particles_nb": 2
-                    }
-                }
+          },
+          color: {
+            value: ["#ffffff", "#667eea", "#764ba2"],
+          },
+          shape: {
+            type: "circle",
+            stroke: {
+              width: 0,
+              color: "#000000",
             },
-            "retina_detect": true
-        });
+          },
+          opacity: {
+            value: 0.6,
+            random: true,
+            anim: {
+              enable: true,
+              speed: 1,
+              opacity_min: 0.1,
+              sync: false,
+            },
+          },
+          size: {
+            value: 3,
+            random: true,
+            anim: {
+              enable: true,
+              speed: 2,
+              size_min: 0.1,
+              sync: false,
+            },
+          },
+          line_linked: {
+            enable: true,
+            distance: 150,
+            color: "#ffffff",
+            opacity: 0.4,
+            width: 1,
+          },
+          move: {
+            enable: true,
+            speed: 2,
+            direction: "none",
+            random: true,
+            straight: false,
+            out_mode: "out",
+            bounce: false,
+            attract: {
+              enable: false,
+              rotateX: 600,
+              rotateY: 1200,
+            },
+          },
+        },
+        interactivity: {
+          detect_on: "canvas",
+          events: {
+            onhover: {
+              enable: true,
+              mode: "repulse",
+            },
+            onclick: {
+              enable: true,
+              mode: "push",
+            },
+            resize: true,
+          },
+          modes: {
+            grab: {
+              distance: 400,
+              line_linked: {
+                opacity: 1,
+              },
+            },
+            bubble: {
+              distance: 400,
+              size: 40,
+              duration: 2,
+              opacity: 8,
+              speed: 3,
+            },
+            repulse: {
+              distance: 100,
+              duration: 0.4,
+            },
+            push: {
+              particles_nb: 4,
+            },
+            remove: {
+              particles_nb: 2,
+            },
+          },
+        },
+        retina_detect: true,
+      });
 
-        // Función para actualizar el año dinámicamente
-        function updateYear() {
-            const currentYear = new Date().getFullYear();
-            document.getElementById('current-year').textContent = currentYear;
+      // Función para actualizar el año dinámicamente
+      function updateYear() {
+        const currentYear = new Date().getFullYear();
+        document.getElementById("current-year").textContent = currentYear;
+      }
+
+      // Ejecutar cuando se carga la página
+      document.addEventListener("DOMContentLoaded", updateYear);
+
+      // Opcional: Actualizar el año cada minuto
+      setInterval(updateYear, 60000);
+
+      // Configuración de Firebase
+      const firebaseConfig = {
+        apiKey: "AIzaSyDycWG4lcgCk8KnIO6HLpUyabs3zqxUtFg",
+        authDomain: "controlinventarioit-2c8fc.firebaseapp.com",
+        projectId: "controlinventarioit-2c8fc",
+        storageBucket: "controlinventarioit-2c8fc.firebasestorage.app",
+        messagingSenderId: "621661032303",
+        appId: "1:621661032303:web:468a47222d01805e7de29a",
+        measurementId: "G-N6F1RQTW6B",
+      };
+
+      // Inicializar Firebase
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.firestore();
+
+      // Elementos del DOM
+      const loginForm = document.getElementById("login-form");
+      const emailInput = document.getElementById("email");
+      const passwordInput = document.getElementById("password");
+      const loginBtn = document.getElementById("login-btn");
+      const errorMessage = document.getElementById("error-message");
+      const successMessage = document.getElementById("success-message");
+      const loading = document.getElementById("loading");
+      const fullscreenLoading = document.getElementById("fullscreen-loading");
+
+      // Función para mostrar/ocultar loading de pantalla completa
+      function showFullscreenLoading() {
+        fullscreenLoading.classList.add("show");
+        document.body.style.overflow = "hidden";
+      }
+
+      function hideFullscreenLoading() {
+        fullscreenLoading.classList.remove("show");
+        document.body.style.overflow = "auto";
+      }
+
+      // Función para actualizar el texto del loading
+      function updateLoadingText(mainText, subText) {
+        const loadingTextEl = fullscreenLoading.querySelector(".loading-text");
+        const loadingSubtextEl =
+          fullscreenLoading.querySelector(".loading-subtext");
+
+        if (loadingTextEl) loadingTextEl.textContent = mainText;
+        if (loadingSubtextEl) loadingSubtextEl.textContent = subText;
+      }
+
+      // Función para mostrar mensajes
+      function showMessage(element, message) {
+        element.textContent = message;
+        element.style.display = "block";
+        setTimeout(() => {
+          element.style.display = "none";
+        }, 5000);
+      }
+
+      function hideMessages() {
+        errorMessage.style.display = "none";
+        successMessage.style.display = "none";
+      }
+
+      // **FUNCIÓN CORREGIDA** - Validar credenciales con sistema de roles
+      async function validateCredentials(email, password) {
+        try {
+          console.log("Validando credenciales para:", email);
+
+          // Consultar la colección 'Usuario'
+          const querySnapshot = await db
+            .collection("Usuario")
+            .where("correo", "==", email)
+            .limit(1)
+            .get();
+
+          if (querySnapshot.empty) {
+            console.log("Usuario no encontrado");
+            throw new Error("Usuario no encontrado");
+          }
+
+          const userDoc = querySnapshot.docs[0];
+          const userData = userDoc.data();
+
+          console.log("Datos del usuario encontrado:", userData);
+
+          // Verificar contraseña
+          if (userData.Contraseña !== password) {
+            console.log("Contraseña incorrecta");
+            throw new Error("Contraseña incorrecta");
+          }
+
+          // **CAMBIO PRINCIPAL**: Determinar permisos basados en el rol real de la base de datos
+          const userRole = userData.rol || 'Usuario'; // CAMBIO AQUI: Ahora lee 'rol' en minúsculas
+          const hasAdminPermission = userRole === "Administrador";
+
+          console.log("Rol del usuario:", userRole);
+          console.log("Permisos de administrador:", hasAdminPermission);
+
+          return {
+            success: true,
+            user: {
+              id: userDoc.id,
+              name: userData.Nombre,
+              email: userData.correo,
+              role: userRole,
+              hasPermission: true, // Permiso básico para acceder al sistema
+              hasAdminPermission: hasAdminPermission, // Permiso específico de administrador
+            },
+          };
+        } catch (error) {
+          console.error("Error en validateCredentials:", error);
+          return {
+            success: false,
+            error: error.message,
+          };
         }
-        
-        // Ejecutar cuando se carga la página
-        document.addEventListener('DOMContentLoaded', updateYear);
-        
-        // Opcional: Actualizar el año cada minuto (por si la página permanece abierta durante el cambio de año)
-        setInterval(updateYear, 60000);
+      }
 
-        // Configuración de Firebase
-        const firebaseConfig = {
-            apiKey: "AIzaSyDycWG4lcgCk8KnIO6HLpUyabs3zqxUtFg",
-            authDomain: "controlinventarioit-2c8fc.firebaseapp.com",
-            projectId: "controlinventarioit-2c8fc",
-            storageBucket: "controlinventarioit-2c8fc.firebasestorage.app",
-            messagingSenderId: "621661032303",
-            appId: "1:621661032303:web:468a47222d01805e7de29a",
-            measurementId: "G-N6F1RQTW6B"
+      // **FUNCIÓN ACTUALIZADA** - Guardar sesión con información de roles
+      function saveSession(user) {
+        const sessionData = {
+          userId: user.id,
+          userName: user.name,
+          userEmail: user.email,
+          userRole: user.role,
+          hasPermission: user.hasPermission,
+          hasAdminPermission: user.hasAdminPermission,
+          loginTime: new Date().toISOString(),
         };
 
-        // Inicializar Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+        console.log("Guardando sesión:", sessionData);
 
-        // Elementos del DOM
-        const loginForm = document.getElementById('login-form');
-        const emailInput = document.getElementById('email');
-        const passwordInput = document.getElementById('password');
-        const loginBtn = document.getElementById('login-btn');
-        const errorMessage = document.getElementById('error-message');
-        const successMessage = document.getElementById('success-message');
-        const loading = document.getElementById('loading');
-        const fullscreenLoading = document.getElementById('fullscreen-loading');
+        // Guardar en localStorage
+        localStorage.setItem("userSession", JSON.stringify(sessionData));
 
-        // Función para mostrar/ocultar loading de pantalla completa
-        function showFullscreenLoading() {
-            fullscreenLoading.classList.add('show');
-            document.body.style.overflow = 'hidden'; // Bloquear scroll
+        // También guardar en cookies como respaldo
+        document.cookie = `session=${JSON.stringify(
+          sessionData
+        )}; path=/; max-age=3600`;
+      }
+
+      // Función para verificar permisos básicos
+      function checkPermissions(user) {
+        return user.hasPermission === true;
+      }
+
+      // **NUEVA FUNCIÓN** - Verificar permisos de administrador
+      function checkAdminPermissions(user) {
+        return user.hasAdminPermission === true;
+      }
+
+      // **NUEVA FUNCIÓN** - Obtener sesión actual
+      function getCurrentSession() {
+        try {
+          const sessionData = localStorage.getItem("userSession");
+          if (sessionData) {
+            return JSON.parse(sessionData);
+          }
+
+          // Si no hay en localStorage, verificar cookies
+          const sessionCookie = document.cookie
+            .split("; ")
+            .find((row) => row.startsWith("session="));
+
+          if (sessionCookie) {
+            return JSON.parse(sessionCookie.split("=")[1]);
+          }
+
+          return null;
+        } catch (error) {
+          console.error("Error al obtener sesión:", error);
+          return null;
+        }
+      }
+
+      // Manejar envío del formulario
+      loginForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        hideMessages();
+
+        const email = emailInput.value.trim();
+        const password = passwordInput.value.trim();
+
+        if (!email || !password) {
+          showMessage(errorMessage, "Por favor, completa todos los campos");
+          return;
         }
 
-        function hideFullscreenLoading() {
-            fullscreenLoading.classList.remove('show');
-            document.body.style.overflow = 'auto'; // Restaurar scroll
-        }
+        // Mostrar loading de pantalla completa
+        showFullscreenLoading();
+        updateLoadingText("Iniciando Sesión", "Verificando credenciales...");
 
-        // Función para actualizar el texto del loading
-        function updateLoadingText(mainText, subText) {
-            const loadingTextEl = fullscreenLoading.querySelector('.loading-text');
-            const loadingSubtextEl = fullscreenLoading.querySelector('.loading-subtext');
-            
-            if (loadingTextEl) loadingTextEl.textContent = mainText;
-            if (loadingSubtextEl) loadingSubtextEl.textContent = subText;
-        }
+        // Deshabilitar botón
+        loginBtn.disabled = true;
+        loginBtn.textContent = "Verificando...";
 
-        // Función para mostrar mensajes
-        function showMessage(element, message) {
-            element.textContent = message;
-            element.style.display = 'block';
-            setTimeout(() => {
-                element.style.display = 'none';
-            }, 5000);
-        }
+        try {
+          // Simular un pequeño delay para que se vea el loading
+          await new Promise((resolve) => setTimeout(resolve, 1000));
 
-        function hideMessages() {
-            errorMessage.style.display = 'none';
-            successMessage.style.display = 'none';
-        }
+          const result = await validateCredentials(email, password);
 
-        // Función para validar credenciales
-        async function validateCredentials(email, password) {
-            try {
-                // Consultar la colección 'Usuario'
-                const querySnapshot = await db.collection('Usuario')
-                    .where('correo', '==', email)
-                    .limit(1)
-                    .get();
+          if (result.success) {
+            // Actualizar texto del loading
+            updateLoadingText(
+              "¡Acceso Concedido!",
+              "Configurando tu sesión..."
+            );
 
-                if (querySnapshot.empty) {
-                    throw new Error('Usuario no encontrado');
-                }
+            // Verificar permisos básicos
+            if (checkPermissions(result.user)) {
+              // Guardar sesión
+              saveSession(result.user);
 
-                const userDoc = querySnapshot.docs[0];
-                const userData = userDoc.data();
+              // Mostrar mensaje personalizado según el rol
+              const roleMessage = result.user.hasAdminPermission
+                ? `¡Bienvenido Administrador ${result.user.name}!`
+                : `¡Bienvenido ${result.user.name}!`;
 
-                // Verificar contraseña (en producción, usa hash)
-                if (userData.Contraseña !== password) {
-                    throw new Error('Contraseña incorrecta');
-                }
+              updateLoadingText(
+                "¡Bienvenido!",
+                `${roleMessage} Redirigiendo...`
+              );
 
-                return {
-                    success: true,
-                    user: {
-                        id: userDoc.id,
-                        name: userData.Nombre,
-                        email: userData.correo,
-                        hasPermission: true
-                    }
-                };
+              // Esperar un poco más para mostrar el mensaje de bienvenida
+              await new Promise((resolve) => setTimeout(resolve, 1500));
 
-            } catch (error) {
-                return {
-                    success: false,
-                    error: error.message
-                };
+              // Redireccionar
+              window.location.href = "Inicio.html";
+            } else {
+              hideFullscreenLoading();
+              showMessage(
+                errorMessage,
+                "No tienes permisos para acceder al sistema"
+              );
             }
+          } else {
+            hideFullscreenLoading();
+            showMessage(errorMessage, result.error);
+          }
+        } catch (error) {
+          hideFullscreenLoading();
+          showMessage(errorMessage, "Error de conexión. Intenta nuevamente.");
+          console.error("Error:", error);
+        } finally {
+          // Restaurar botón si no se redirigió
+          if (!window.location.href.includes("Inicio.html")) {
+            loginBtn.disabled = false;
+            loginBtn.textContent = "Iniciar Sesión";
+          }
+        }
+      });
+
+      // Verificar si ya hay una sesión activa al cargar la página
+      window.addEventListener("load", () => {
+        console.log("Verificando sesión existente en página de login...");
+
+        // Verificar localStorage primero
+        const sessionData = localStorage.getItem("userSession");
+        if (sessionData) {
+          try {
+            const userData = JSON.parse(sessionData);
+            if (userData.hasPermission && userData.userId) {
+              console.log("Sesión activa encontrada, redirigiendo...");
+
+              // Mostrar loading de redirección
+              showFullscreenLoading();
+              updateLoadingText(
+                "Sesión Activa",
+                "Redirigiendo al panel principal..."
+              );
+
+              // Redireccionar después de un momento
+              setTimeout(() => {
+                window.location.href = "Inicio.html";
+              }, 1000);
+              return;
+            }
+          } catch (error) {
+            console.log("Sesión inválida en localStorage");
+            localStorage.removeItem("userSession");
+          }
         }
 
-        // Función para guardar sesión
-        function saveSession(user) {
-            const sessionData = {
-                userId: user.id,
-                userName: user.name,
-                userEmail: user.email,
-                hasPermission: user.hasPermission,
-                loginTime: new Date().toISOString()
-            };
-            
-            // Guardar en localStorage
-            localStorage.setItem('userSession', JSON.stringify(sessionData));
-            
-            // También guardar en cookies como respaldo
-            document.cookie = `session=${JSON.stringify(sessionData)}; path=/; max-age=3600`;
+        // Si no hay en localStorage, verificar cookies
+        const sessionCookie = document.cookie
+          .split("; ")
+          .find((row) => row.startsWith("session="));
+
+        if (sessionCookie) {
+          try {
+            const sessionData = JSON.parse(sessionCookie.split("=")[1]);
+            if (sessionData.hasPermission && sessionData.userId) {
+              console.log(
+                "Sesión activa encontrada en cookies, redirigiendo..."
+              );
+
+              // Mostrar loading de redirección
+              showFullscreenLoading();
+              updateLoadingText(
+                "Sesión Activa",
+                "Redirigiendo al panel principal..."
+              );
+
+              // Redireccionar después de un momento
+              setTimeout(() => {
+                window.location.href = "Inicio.html";
+              }, 1000);
+            }
+          } catch (error) {
+            console.log("Sesión inválida en cookies");
+          }
         }
+      });
 
-        // Función para verificar permisos
-        function checkPermissions(user) {
-            return user.hasPermission === true;
-        }
+      // Función para logout
+      function logout() {
+        // Limpiar sesión
+        localStorage.removeItem("userSession");
+        document.cookie = "session=; path=/; max-age=0";
+        window.location.href = "Index.html";
+      }
 
-        // Manejar envío del formulario
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            hideMessages();
-
-            const email = emailInput.value.trim();
-            const password = passwordInput.value.trim();
-
-            if (!email || !password) {
-                showMessage(errorMessage, 'Por favor, completa todos los campos');
-                return;
-            }
-
-            // Mostrar loading de pantalla completa
-            showFullscreenLoading();
-            updateLoadingText('Iniciando Sesión', 'Verificando credenciales...');
-            
-            // Deshabilitar botón
-            loginBtn.disabled = true;
-            loginBtn.textContent = 'Verificando...';
-
-            try {
-                // Simular un pequeño delay para que se vea el loading
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                
-                const result = await validateCredentials(email, password);
-
-                if (result.success) {
-                    // Actualizar texto del loading
-                    updateLoadingText('¡Acceso Concedido!', 'Configurando tu sesión...');
-                    
-                    // Verificar permisos
-                    if (checkPermissions(result.user)) {
-                        // Guardar sesión
-                        saveSession(result.user);
-                        
-                        // Actualizar loading una vez más
-                        updateLoadingText('¡Bienvenido!', `Hola ${result.user.name}, redirigiendo...`);
-                        
-                        // Esperar un poco más para mostrar el mensaje de bienvenida
-                        await new Promise(resolve => setTimeout(resolve, 1500));
-                        
-                        // Redireccionar
-                        window.location.href = 'Inicio.html';
-                    } else {
-                        hideFullscreenLoading();
-                        showMessage(errorMessage, 'No tienes permisos para acceder al sistema');
-                    }
-                } else {
-                    hideFullscreenLoading();
-                    showMessage(errorMessage, result.error);
-                }
-            } catch (error) {
-                hideFullscreenLoading();
-                showMessage(errorMessage, 'Error de conexión. Intenta nuevamente.');
-                console.error('Error:', error);
-            } finally {
-                // Restaurar botón si no se redirigió
-                if (!window.location.href.includes('Inicio.html')) {
-                    loginBtn.disabled = false;
-                    loginBtn.textContent = 'Iniciar Sesión';
-                }
-            }
-        });
-
-        // Verificar si ya hay una sesión activa al cargar la página (SOLO EN LOGIN)
-        window.addEventListener('load', () => {
-            console.log('Verificando sesión existente en página de login...');
-            
-            // Verificar localStorage primero
-            const sessionData = localStorage.getItem('userSession');
-            if (sessionData) {
-                try {
-                    const userData = JSON.parse(sessionData);
-                    if (userData.hasPermission && userData.userId) {
-                        console.log('Sesión activa encontrada, redirigiendo...');
-                        
-                        // Mostrar loading de redirección
-                        showFullscreenLoading();
-                        updateLoadingText('Sesión Activa', 'Redirigiendo al panel principal...');
-                        
-                        // Redireccionar después de un momento
-                        setTimeout(() => {
-                            window.location.href = 'Inicio.html';
-                        }, 1000);
-                        return;
-                    }
-                } catch (error) {
-                    console.log('Sesión inválida en localStorage');
-                    localStorage.removeItem('userSession');
-                }
-            }
-
-            // Si no hay en localStorage, verificar cookies
-            const sessionCookie = document.cookie
-                .split('; ')
-                .find(row => row.startsWith('session='));
-            
-            if (sessionCookie) {
-                try {
-                    const sessionData = JSON.parse(sessionCookie.split('=')[1]);
-                    if (sessionData.hasPermission && sessionData.userId) {
-                        console.log('Sesión activa encontrada en cookies, redirigiendo...');
-                        
-                        // Mostrar loading de redirección
-                        showFullscreenLoading();
-                        updateLoadingText('Sesión Activa', 'Redirigiendo al panel principal...');
-                        
-                        // Redireccionar después de un momento
-                        setTimeout(() => {
-                            window.location.href = 'Inicio.html';
-                        }, 1000);
-                    }
-                } catch (error) {
-                    console.log('Sesión inválida en cookies');
-                }
-            }
-        });
-
-        // Función para logout (usar en otras páginas)
-        function logout() {
-            // Limpiar sesión
-            localStorage.removeItem('userSession');
-            document.cookie = 'session=; path=/; max-age=0';
-            window.location.href = 'Index.html';
-        }
-
-        // Hacer logout accesible globalmente
-        window.logout = logout;
+      // Hacer funciones accesibles globalmente
+      window.logout = logout;
+      window.getCurrentSession = getCurrentSession;
+      window.checkAdminPermissions = checkAdminPermissions;
     </script>
-</body>
+  </body>
 </html>
