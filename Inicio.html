@@ -1698,7 +1698,7 @@ function redirectToLogin(reason) {
     document.cookie = 'session=; path=/; max-age=0';
 
     // Redireccionar inmediatamente
-    window.location.replace('/');
+    window.location.replace('index.html');
 }
 
 // Función para mostrar información del usuario (MEJORADA)
@@ -1828,7 +1828,7 @@ function logout() {
         document.cookie = 'session=; path=/; max-age=0';
 
         // Redireccionar al login
-        window.location.replace('/');
+        window.location.replace('index.html');
     }
 }
 
