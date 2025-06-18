@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Usuario - Sistema de Inventario</title>
+    <style>
+        /* Reutilizamos los estilos base de tu archivo Index.html */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #14407b 0%, rgb(62, 48, 116) 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #particles-js {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            width: 100%;
+            max-width: 500px; /* Un poco más ancho para el formulario de usuario */
+            position: relative;
+            overflow: hidden;
+            z-index: 2;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: slideInUp 0.6s ease-out;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .header p {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e1e1;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: rgba(248, 249, 250, 0.8);
+            backdrop-filter: blur(5px);
+            -webkit-appearance: none; /* Eliminar estilo predeterminado en select */
+            -moz-appearance: none;
+            appearance: none;
+            cursor: pointer;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .form-group input::placeholder {
+            color: #999;
+        }
+
+        .form-group select {
+            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23666%22%20d%3D%22M287%2069.6c-3.2-3.2-7.8-4.9-12.4-4.9s-9.2%201.7-12.4%204.9L146.2%20195.9%2030.2%2069.6c-3.2-3.2-7.8-4.9-12.4-4.9S8.6%2066.4%205.4%2069.6c-6.5%206.5-6.5%2017.1%200%2023.6l116%20116c3.2%203.2%207.8%204.9%2012.4%204.9s9.2-1.7%2012.4-4.9l116-116c6.5-6.5%206.5-17.1%200-23.6z%22%2F%3E%3C%2Fsvg%3E');
+            background-repeat: no-repeat;
+            background-position: right 15px top 50%;
+            background-size: 16px 16px;
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .action-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .action-btn:hover::before {
+            left: 100%;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .action-btn:active {
+            transform: translateY(0);
+        }
+
+        .action-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .error-message {
+            background: rgba(254, 238, 238, 0.9);
+            color: #c53030;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #c53030;
+            display: none;
+            backdrop-filter: blur(5px);
+        }
+
+        .success-message {
+            background: rgba(240, 255, 244, 0.9);
+            color: #38a169;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #38a169;
+            display: none;
+            backdrop-filter: blur(5px);
+        }
+
+        /* Loading de pantalla completa */
+        .fullscreen-loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .fullscreen-loading.show {
+            display: flex;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .loading-content {
+            text-align: center;
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        .loading-text {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .loading-subtext {
+            font-size: 14px;
+            opacity: 0.8;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideInUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .form-group input:hover,
+        .form-group select:hover {
+            border-color: #b8c6f0;
+            background: rgba(255, 255, 255, 0.7);
+        }
+
+        .footer {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            margin-top: 20px;
+        }
+
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 25px;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .back-link:hover {
+            color: #764ba2;
+            text-decoration: underline;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                margin: 20px;
+                padding: 30px 20px;
+            }
+            .loading-content {
+                margin: 20px;
+                padding: 30px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Contenedor de partículas -->
+    <div id="particles-js"></div>
+
+    <!-- Loading de pantalla completa -->
+    <div id="fullscreen-loading" class="fullscreen-loading">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Cargando</div>
+            <div class="loading-subtext">Espere por favor...</div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>👥 Crear Nuevo Usuario</h1>
+            <p>Solo para Administradores</p>
+        </div>
+
+        <div id="error-message" class="error-message"></div>
+        <div id="success-message" class="success-message"></div>
+
+        <form id="create-user-form">
+            <div class="form-group">
+                <label for="nombre">Nombre Completo</label>
+                <input type="text" id="nombre" name="nombre" placeholder="Nombre y Apellido" required>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Correo Electrónico</label>
+                <input type="email" id="email" name="email" placeholder="ejemplo@dominio.com" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Contraseña</label>
+                <input type="password" id="password" name="password" placeholder="Mínimo 6 caracteres" required>
+            </div>
+
+            <div class="form-group">
+                <label for="role">Rol</label>
+                <select id="role" name="role" required>
+                    <option value="">Selecciona un rol</option>
+                    <option value="Administrador">Administrador</option>
+                    <option value="Usuario">Usuario</option>
+                </select>
+            </div>
+
+            <button type="submit" class="action-btn" id="create-user-btn">
+                Crear Usuario
+            </button>
+        </form>
+
+        <a href="Inicio.html" class="back-link">Volver al Inicio</a>
+
+        <div class="footer">
+            <p>&copy; <span id="current-year"></span> Sistema de Inventario</p>
+        </div>
+    </div>
+
+    <!-- Particles.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/particles.js/2.0.0/particles.min.js"></script>
+    
+    <!-- Firebase SDK -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-app-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-firestore-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-auth-compat.min.js"></script>
+
+    <script>
+        // Configuración de partículas (igual que en Index.html)
+        particlesJS('particles-js', {
+            "particles": {
+                "number": { "value": 80, "density": { "enable": true, "value_area": 800 } },
+                "color": { "value": ["#ffffff", "#667eea", "#764ba2"] },
+                "shape": { "type": "circle", "stroke": { "width": 0, "color": "#000000" } },
+                "opacity": { "value": 0.6, "random": true, "anim": { "enable": true, "speed": 1, "opacity_min": 0.1, "sync": false } },
+                "size": { "value": 3, "random": true, "anim": { "enable": true, "speed": 2, "size_min": 0.1, "sync": false } },
+                "line_linked": { "enable": true, "distance": 150, "color": "#ffffff", "opacity": 0.4, "width": 1 },
+                "move": { "enable": true, "speed": 2, "direction": "none", "random": true, "straight": false, "out_mode": "out", "bounce": false, "attract": { "enable": false, "rotateX": 600, "rotateY": 1200 } }
+            },
+            "interactivity": {
+                "detect_on": "canvas",
+                "events": { "onhover": { "enable": true, "mode": "repulse" }, "onclick": { "enable": true, "mode": "push" }, "resize": true },
+                "modes": {
+                    "grab": { "distance": 400, "line_linked": { "opacity": 1 } },
+                    "bubble": { "distance": 400, "size": 40, "duration": 2, "opacity": 8, "speed": 3 },
+                    "repulse": { "distance": 100, "duration": 0.4 },
+                    "push": { "particles_nb": 4 },
+                    "remove": { "particles_nb": 2 }
+                }
+            },
+            "retina_detect": true
+        });
+
+        // Función para actualizar el año dinámicamente
+        function updateYear() {
+            const currentYear = new Date().getFullYear();
+            document.getElementById('current-year').textContent = currentYear;
+        }
+        document.addEventListener('DOMContentLoaded', updateYear);
+        setInterval(updateYear, 60000);
+
+        // Configuración de Firebase (debe ser la misma que en Index.html)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDycWG4lcgCk8KnIO6HLpUyabs3zqxUtFg",
+            authDomain: "controlinventarioit-2c8fc.firebaseapp.com",
+            projectId: "controlinventarioit-2c8fc",
+            storageBucket: "controlinventarioit-2c8fc.firebasestorage.app",
+            messagingSenderId: "621661032303",
+            appId: "1:621661032303:web:468a47222d01805e7de29a",
+            measurementId: "G-N6F1RQTW6B"
+        };
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Elementos del DOM
+        const createUserForm = document.getElementById('create-user-form');
+        const nombreInput = document.getElementById('nombre');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const roleSelect = document.getElementById('role');
+        const createUserBtn = document.getElementById('create-user-btn');
+        const errorMessage = document.getElementById('error-message');
+        const successMessage = document.getElementById('success-message');
+        const fullscreenLoading = document.getElementById('fullscreen-loading');
+
+        // Funciones de utilidad (copiadas de Index.html para mantener coherencia)
+        function showFullscreenLoading() {
+            fullscreenLoading.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function hideFullscreenLoading() {
+            fullscreenLoading.classList.remove('show');
+            document.body.style.overflow = 'auto';
+        }
+
+        function updateLoadingText(mainText, subText) {
+            const loadingTextEl = fullscreenLoading.querySelector('.loading-text');
+            const loadingSubtextEl = fullscreenLoading.querySelector('.loading-subtext');
+            if (loadingTextEl) loadingTextEl.textContent = mainText;
+            if (loadingSubtextEl) loadingSubtextEl.textContent = subText;
+        }
+
+        function showMessage(element, message) {
+            element.textContent = message;
+            element.style.display = 'block';
+            setTimeout(() => {
+                element.style.display = 'none';
+            }, 5000);
+        }
+
+        function hideMessages() {
+            errorMessage.style.display = 'none';
+            successMessage.style.display = 'none';
+        }
+
+        // Recuperar y verificar la sesión para permisos de administrador
+        function getCurrentSession() {
+            try {
+                const sessionData = localStorage.getItem('userSession');
+                if (sessionData) {
+                    return JSON.parse(sessionData);
+                }
+                const sessionCookie = document.cookie
+                    .split('; ')
+                    .find(row => row.startsWith('session='));
+                if (sessionCookie) {
+                    return JSON.parse(sessionCookie.split('=')[1]);
+                }
+                return null;
+            } catch (error) {
+                console.error('Error al obtener sesión:', error);
+                return null;
+            }
+        }
+
+        function checkAdminPermissions(user) {
+            return user && user.hasAdminPermission === true;
+        }
+
+        // Verificar permisos al cargar la página
+        window.addEventListener('load', async () => {
+            showFullscreenLoading();
+            updateLoadingText('Verificando Permisos', 'Asegurando el acceso de administrador...');
+
+            // Importante: Dar tiempo a que el script de Index.html se ejecute
+            await new Promise(resolve => setTimeout(resolve, 500)); 
+
+            const session = getCurrentSession();
+            
+            if (!session || !checkAdminPermissions(session)) {
+                updateLoadingText('Acceso Denegado', 'Solo los administradores pueden acceder a esta página.');
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                hideFullscreenLoading();
+                window.location.href = 'Inicio.html'; // Redirigir a la página de inicio
+            } else {
+                updateLoadingText('Permisos Verificados', 'Bienvenido, Administrador.');
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                hideFullscreenLoading();
+            }
+        });
+
+        // Manejar el envío del formulario para crear un nuevo usuario
+        createUserForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideMessages();
+
+            const nombre = nombreInput.value.trim();
+            const email = emailInput.value.trim();
+            const password = passwordInput.value.trim();
+            const role = roleSelect.value;
+
+            if (!nombre || !email || !password || !role) {
+                showMessage(errorMessage, 'Por favor, completa todos los campos.');
+                return;
+            }
+
+            if (password.length < 6) {
+                showMessage(errorMessage, 'La contraseña debe tener al menos 6 caracteres.');
+                return;
+            }
+
+            showFullscreenLoading();
+            updateLoadingText('Creando Usuario', 'Guardando información en la base de datos...');
+            createUserBtn.disabled = true;
+            createUserBtn.textContent = 'Creando...';
+
+            try {
+                // Verificar si el correo ya existe
+                const existingUser = await db.collection('Usuario').where('correo', '==', email).limit(1).get();
+                if (!existingUser.empty) {
+                    throw new Error('El correo electrónico ya está registrado.');
+                }
+
+                // Añadir el nuevo usuario a la colección 'Usuario'
+                await db.collection('Usuario').add({
+                    Nombre: nombre,
+                    correo: email,
+                    Contraseña: password, // NOTA: En un entorno de producción, las contraseñas DEBEN ser hasheadas.
+                    rol: role, // CAMBIO AQUI: Ahora guarda 'rol' en minúsculas para coincidir con tu BD
+                    FechaCreacion: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                updateLoadingText('¡Usuario Creado!', 'El nuevo usuario ha sido registrado exitosamente.');
+                showMessage(successMessage, 'Usuario creado exitosamente. Puede crear otro o volver al inicio.');
+
+                // Limpiar formulario
+                nombreInput.value = '';
+                emailInput.value = '';
+                passwordInput.value = '';
+                roleSelect.value = '';
+
+                await new Promise(resolve => setTimeout(resolve, 1500)); // Pequeña pausa para ver el éxito
+            } catch (error) {
+                console.error('Error al crear usuario:', error);
+                updateLoadingText('Error', 'Hubo un problema al crear el usuario.');
+                showMessage(errorMessage, `Error: ${error.message}`);
+                await new Promise(resolve => setTimeout(resolve, 2000)); // Pequeña pausa para ver el error
+            } finally {
+                hideFullscreenLoading();
+                createUserBtn.disabled = false;
+                createUserBtn.textContent = 'Crear Usuario';
+            }
+        });
+    </script>
+</body>
+</html>
