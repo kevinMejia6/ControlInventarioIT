@@ -1,444 +1,595 @@
 <!DOCTYPE html>
 <html lang="es">
-
-<head>
+  <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Inventario de Computadoras</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet" />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"
+      rel="stylesheet"
+    />
     <!-- Firebase SDK -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.2/firebase-app-compat.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.2/firebase-firestore-compat.min.js"></script>
 
-    <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.7.12/sweetalert2.min.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.7.12/sweetalert2.min.css"
+    />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.7.12/sweetalert2.all.min.js"></script>
 
     <!-- Agrega un favicon para evitar errores 404 en la consola -->
     <link rel="icon" href="data:," />
-</head>
+  </head>
 
-<body class="bg-gray-100 min-h-screen">
+  <body class="bg-gray-100 min-h-screen">
     <!-- Header con botón de administrador -->
     <!-- Header con botón de administrador integrado -->
     <div class="bg-blue-900 text-white p-4 shadow-md">
-        <div class="flex justify-between items-center">
-            <div class="flex items-center gap-6">
-                <h1 class="text-3xl font-bold">
-                    Sistema de Control de Inventario de Computadoras
-                </h1>
-
-
-            </div>
-
-            <div class="relative">
-                <button onclick="toggleUserDropdown()"
-                    class="flex items-center gap-2 bg-blue-800 hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors duration-200">
-                    <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                        <i data-lucide="user" class="w-4 h-4"></i>
-                    </div>
-                    <span class="font-semibold" id="user-name">Cargando...</span>
-                    <i data-lucide="chevron-down" class="w-4 h-4"></i>
-                </button>
-
-                <div id="user-dropdown"
-                    class="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg py-2 text-gray-800 hidden z-10">
-                    <div class="px-4 py-2 border-b border-gray-200">
-                        <p class="font-semibold text-gray-900" id="username">Cargando...</p>
-                        <p class="text-sm text-gray-600" id="user-email">Cargando...</p>
-                        <p class="text-xs text-blue-600 font-medium" id="user-role">Cargando...</p>
-                    </div>
-
-                    <!-- Opciones adicionales para administradores -->
-                    <div id="admin-dropdown-options" data-admin-only="true" class="hidden border-b border-gray-200">
-                        <button onclick="redirectToCreateUser()"
-                            class="w-full text-left px-4 py-2 hover:bg-green-50 text-green-600 flex items-center gap-2">
-                            <i data-lucide="user-plus" class="w-4 h-4"></i>
-                            Crear Usuario
-                        </button>
-                        <button onclick="redirectToUserManagement()"
-                            class="w-full text-left px-4 py-2 hover:bg-blue-50 text-blue-600 flex items-center gap-2">
-                            <i data-lucide="users" class="w-4 h-4"></i>
-                            Gestionar Usuarios
-                        </button>
-                    </div>
-
-                    <button onclick="logout()"
-                        class="w-full text-left px-4 py-2 hover:bg-red-50 text-red-600 flex items-center gap-2">
-                        <i data-lucide="log-out" class="w-4 h-4"></i>
-                        Cerrar Sesión
-                    </button>
-                </div>
-            </div>
+      <div class="flex justify-between items-center">
+        <div class="flex items-center gap-6">
+          <h1 class="text-3xl font-bold">
+            Sistema de Control de Inventario de Computadoras
+          </h1>
         </div>
-    </div>
 
+        <div class="relative">
+          <button
+            onclick="toggleUserDropdown()"
+            class="flex items-center gap-2 bg-blue-800 hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors duration-200"
+          >
+            <div
+              class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center"
+            >
+              <i data-lucide="user" class="w-4 h-4"></i>
+            </div>
+            <span class="font-semibold" id="user-name">Cargando...</span>
+            <i data-lucide="chevron-down" class="w-4 h-4"></i>
+          </button>
+
+          <div
+            id="user-dropdown"
+            class="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg py-2 text-gray-800 hidden z-10"
+          >
+            <div class="px-4 py-2 border-b border-gray-200">
+              <p class="font-semibold text-gray-900" id="username">
+                Cargando...
+              </p>
+              <p class="text-sm text-gray-600" id="user-email">Cargando...</p>
+              <p class="text-xs text-blue-600 font-medium" id="user-role">
+                Cargando...
+              </p>
+            </div>
+
+            <!-- Opciones adicionales para administradores -->
+            <div
+              id="admin-dropdown-options"
+              data-admin-only="true"
+              class="hidden border-b border-gray-200"
+            >
+              <button
+                onclick="redirectToCreateUser()"
+                class="w-full text-left px-4 py-2 hover:bg-green-50 text-green-600 flex items-center gap-2"
+              >
+                <i data-lucide="user-plus" class="w-4 h-4"></i>
+                Crear Usuario
+              </button>
+              <button
+                onclick="redirectToUserManagement()"
+                class="w-full text-left px-4 py-2 hover:bg-blue-50 text-blue-600 flex items-center gap-2"
+              >
+                <i data-lucide="users" class="w-4 h-4"></i>
+                Gestionar Usuarios
+              </button>
+            </div>
+
+            <button
+              onclick="logout()"
+              class="w-full text-left px-4 py-2 hover:bg-red-50 text-red-600 flex items-center gap-2"
+            >
+              <i data-lucide="log-out" class="w-4 h-4"></i>
+              Cerrar Sesión
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <div class="container mx-auto px-4 py-6">
-        <!-- Panel de estadísticas -->
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
-            <div class="bg-white p-4 rounded-lg shadow-md text-center">
-                <h3 class="text-lg text-gray-700">Total</h3>
-                <p id="total-count" class="text-4xl font-bold text-gray-800">0</p>
-            </div>
-            <div class="bg-white p-4 rounded-lg shadow-md text-center">
-                <h3 class="text-lg text-gray-700">Buena</h3>
-                <p id="buena-count" class="text-4xl font-bold text-green-600">0</p>
-            </div>
-            <div class="bg-white p-4 rounded-lg shadow-md text-center">
-                <h3 class="text-lg text-gray-700">No funciona</h3>
-                <p id="no-funciona-count" class="text-4xl font-bold text-red-600">
-                    0
-                </p>
-            </div>
-            <div class="bg-white p-4 rounded-lg shadow-md text-center">
-                <h3 class="text-lg text-gray-700">Muy poco rendimiento</h3>
-                <p id="poco-rendimiento-count" class="text-4xl font-bold text-yellow-600">
-                    0
-                </p>
-            </div>
-            <div class="bg-white p-4 rounded-lg shadow-md text-center">
-                <h3 class="text-lg text-gray-700">Excelente rendimiento</h3>
-                <p id="excelente-count" class="text-4xl font-bold text-blue-600">0</p>
-            </div>
+      <!-- Panel de estadísticas -->
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+        <div class="bg-white p-4 rounded-lg shadow-md text-center">
+          <h3 class="text-lg text-gray-700">Total</h3>
+          <p id="total-count" class="text-4xl font-bold text-gray-800">0</p>
         </div>
-
-        <!-- Importar JSON -->
-        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
-            <h2 class="text-xl font-semibold mb-4">Importar Datos desde JSON</h2>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-gray-700 mb-2">Archivo JSON:</label>
-                    <input type="file" id="jsonFileInput" accept=".json" class="w-full p-2 border rounded" />
-                </div>
-                <div>
-                    <textarea id="jsonPreview" class="w-full p-2 border rounded h-32"
-                        placeholder="Vista previa del JSON..." readonly></textarea>
-                </div>
-                <div class="flex space-x-4">
-                    <button id="importJsonBtn"
-                        class="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600 disabled:bg-gray-400"
-                        disabled>
-                        Importar a Base de Datos
-                    </button>
-                    <div id="importStatus" class="hidden items-center">
-                        <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-purple-700 mr-2"></div>
-                        <span id="importStatusText">Importando...</span>
-                    </div>
-                </div>
-                <div id="importResults" class="mt-2 text-sm"></div>
-            </div>
+        <div class="bg-white p-4 rounded-lg shadow-md text-center">
+          <h3 class="text-lg text-gray-700">Buena</h3>
+          <p id="buena-count" class="text-4xl font-bold text-green-600">0</p>
         </div>
-
-        <!-- Formulario para agregar computadora -->
-        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
-            <h2 class="text-xl font-semibold mb-4">Agregar Nueva Computadora</h2>
-            <form id="addForm" class="space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div>
-                        <label class="block text-gray-700">Código de Inventario:</label>
-                        <input type="text" id="codigo" class="w-full p-2 border rounded" required />
-                    </div>
-                    <div>
-                        <label class="block text-gray-700">Tipo de Equipo:</label>
-                        <select id="tipoEquipo" class="w-full p-2 border rounded" required>
-                            <option value="">-- Seleccionar Tipo --</option>
-                            <option value="CPU">CPU</option>
-                            <option value="Laptop">Laptop</option>
-                            <option value="Monitor">Monitor</option>
-                            <option value="UPS">UPS</option>
-                            <option value="Impresora">Impresora</option>
-                            <option value="Escáner">Escáner</option>
-                            <option value="Servidor">Servidor</option>
-                            <option value="Accesorios">Accesorios</option>
-                            <option value="Otros">Otros</option>
-                            <option value="Telefono">Telefono</option>
-                            <option value="Access Point">Access Point</option>
-                            <option value="Router">Router</option>
-                            <option value="Modem">Módem</option>
-                            <option value="DVR">DVR</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-gray-700">Marca:</label>
-                        <input type="text" id="marca" class="w-full p-2 border rounded" required />
-                    </div>
-                    <div>
-                        <label class="block text-gray-700">Modelo:</label>
-                        <input type="text" id="modelo" class="w-full p-2 border rounded" required />
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label class="block text-gray-700">Procesador:</label>
-                        <input type="text" id="procesador" class="w-full p-2 border rounded" required />
-                    </div>
-                    <div>
-                        <label class="block text-gray-700">RAM (GB):</label>
-                        <input type="number" id="ram" class="w-full p-2 border rounded" required />
-                    </div>
-                    <div>
-                        <label class="block text-gray-700">Almacenamiento (GB):</label>
-                        <input type="number" id="almacenamiento" class="w-full p-2 border rounded" required />
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label class="block text-gray-700">Estado:</label>
-                        <select id="estado" class="w-full p-2 border rounded" required>
-                            <option value="">-- Seleccionar Estado --</option>
-                            <option value="Buena">Buena</option>
-                            <option value="No funciona">No funciona</option>
-                            <option value="Muy poco rendimiento">
-                                Muy poco rendimiento
-                            </option>
-                            <option value="Excelente rendimiento">
-                                Excelente rendimiento
-                            </option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-gray-700">Ubicación en Bodega:</label>
-                        <select id="ubicacion"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                            required>
-                            <option value="">Seleccione una ubicación</option>
-                            <option value="Bodega Central">Bodega Central</option>
-                            <option value="Bodega Sonsonate">Bodega Sonsonate</option>
-                            <option value="Bodega Santa Ana">Bodega Santa Ana</option>
-                            <option value="Bodega Soyapango">Bodega Soyapango</option>
-                            <option value="Bodega Ahuachapán">Bodega Ahuachapán</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-gray-700">Fecha de ingreso:</label>
-                        <input type="date" id="fecha" class="w-full p-2 border rounded" required />
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-gray-700">Notas adicionales:</label>
-                    <textarea id="notas" class="w-full p-2 border rounded" rows="3"></textarea>
-                </div>
-
-                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-                    Guardar Computadora
-                </button>
-            </form>
+        <div class="bg-white p-4 rounded-lg shadow-md text-center">
+          <h3 class="text-lg text-gray-700">No funciona</h3>
+          <p id="no-funciona-count" class="text-4xl font-bold text-red-600">
+            0
+          </p>
         </div>
-
-        <!-- Buscador -->
-        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
-            <h2 class="text-xl font-semibold mb-4">Buscar Computadoras</h2>
-            <div class="flex space-x-4 mb-4">
-                <input type="text" id="searchInput" class="flex-1 p-2 border rounded"
-                    placeholder="Buscar por código, marca o modelo..." />
-                <button id="searchBtn" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
-                    Buscar
-                </button>
-            </div>
-            <div class="mt-2 flex flex-wrap gap-4">
-                <label class="inline-flex items-center">
-                    <input type="checkbox" id="searchByCodigo" checked class="form-checkbox" />
-                    <span class="ml-2">Código</span>
-                </label>
-                <label class="inline-flex items-center">
-                    <input type="checkbox" id="searchByMarca" checked class="form-checkbox" />
-                    <span class="ml-2">Marca</span>
-                </label>
-                <label class="inline-flex items-center">
-                    <input type="checkbox" id="searchByModelo" checked class="form-checkbox" />
-                    <span class="ml-2">Modelo</span>
-                </label>
-                <label class="inline-flex items-center">
-                    <input type="checkbox" id="searchByProcesador" class="form-checkbox" />
-                    <span class="ml-2">Procesador</span>
-                </label>
-                <label class="inline-flex items-center">
-                    <input type="checkbox" id="searchByEstado" class="form-checkbox" />
-                    <span class="ml-2">Estado</span>
-                </label>
-            </div>
+        <div class="bg-white p-4 rounded-lg shadow-md text-center">
+          <h3 class="text-lg text-gray-700">Muy poco rendimiento</h3>
+          <p
+            id="poco-rendimiento-count"
+            class="text-4xl font-bold text-yellow-600"
+          >
+            0
+          </p>
         </div>
-
-        <!-- Resultados -->
-        <div class="bg-white p-6 rounded-lg shadow-md">
-            <h2 class="text-xl font-semibold mb-4">Inventario de Computadoras</h2>
-            <div class="overflow-x-auto">
-                <table class="min-w-full bg-white">
-                    <thead>
-                        <tr>
-                            <th
-                                class="py-2 px-2 border-b border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                Código
-                            </th>
-                            <th
-                                class="py-2 px-2 border-b border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                Tipo
-                            </th>
-                            <th
-                                class="py-2 px-2 border-b border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                Marca
-                            </th>
-                            <th
-                                class="py-2 px-2 border-b border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                Modelo
-                            </th>
-                            <th
-                                class="py-2 px-2 border-b border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                Procesador
-                            </th>
-                            <th
-                                class="py-2 px-2 border-b border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                RAM
-                            </th>
-                            <th
-                                class="py-2 px-2 border-b border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                Almacen.
-                            </th>
-                            <th
-                                class="py-2 px-2 border-b border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                Estado
-                            </th>
-                            <th
-                                class="py-2 px-2 border-b border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                Ubicación
-                            </th>
-                            <th
-                                class="py-2 px-2 border-b border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                Fecha
-                            </th>
-                            <th
-                                class="py-2 px-2 border-b border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                Descripción
-                            </th>
-                            <th
-                                class="py-2 px-2 border-b border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                Acciones
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody id="results">
-                        <tr>
-                            <td colspan="10" class="py-4 px-6 border-b text-gray-500 italic text-center">
-                                Los resultados aparecerán aquí...
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-                <!-- Controles de Paginación -->
-                <div class="mt-6 flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
-                    <!-- Selector de elementos por página -->
-                    <div class="flex items-center space-x-2">
-                        <label for="itemsPerPage" class="text-sm text-gray-700">Mostrar:</label>
-                        <select id="itemsPerPage" class="border border-gray-300 rounded px-2 py-1 text-sm">
-                            <option value="10" selected>10</option>
-                            <option value="25">25</option>
-                            <option value="50">50</option>
-                            <option value="100">100</option>
-                        </select>
-                        <span class="text-sm text-gray-700">por página</span>
-                    </div>
-
-                    <!-- Información de paginación -->
-                    <div class="text-sm text-gray-700">
-                        Mostrando <span id="showingStart">0</span> a
-                        <span id="showingEnd">0</span> de
-                        <span id="totalItems">0</span> registros
-                    </div>
-
-                    <!-- Botones de navegación -->
-                    <div class="flex items-center space-x-1">
-                        <button id="firstPage"
-                            class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-100 disabled:opacity-50"
-                            disabled>
-                            Primero
-                        </button>
-                        <button id="prevPage"
-                            class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-100 disabled:opacity-50"
-                            disabled>
-                            Anterior
-                        </button>
-
-                        <!-- Números de página -->
-                        <div id="pageNumbers" class="flex space-x-1"></div>
-
-                        <button id="nextPage"
-                            class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-100 disabled:opacity-50">
-                            Siguiente
-                        </button>
-                        <button id="lastPage"
-                            class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-100 disabled:opacity-50">
-                            Último
-                        </button>
-                    </div>
-                </div>
-            </div>
+        <div class="bg-white p-4 rounded-lg shadow-md text-center">
+          <h3 class="text-lg text-gray-700">Excelente rendimiento</h3>
+          <p id="excelente-count" class="text-4xl font-bold text-blue-600">0</p>
         </div>
+      </div>
+
+      <!-- Importar JSON -->
+      <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+        <h2 class="text-xl font-semibold mb-4">Importar Datos desde JSON</h2>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-gray-700 mb-2">Archivo JSON:</label>
+            <input
+              type="file"
+              id="jsonFileInput"
+              accept=".json"
+              class="w-full p-2 border rounded"
+            />
+          </div>
+          <div>
+            <textarea
+              id="jsonPreview"
+              class="w-full p-2 border rounded h-32"
+              placeholder="Vista previa del JSON..."
+              readonly
+            ></textarea>
+          </div>
+          <div class="flex space-x-4">
+            <button
+              id="importJsonBtn"
+              class="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600 disabled:bg-gray-400"
+              disabled
+            >
+              Importar a Base de Datos
+            </button>
+            <div id="importStatus" class="hidden items-center">
+              <div
+                class="animate-spin rounded-full h-5 w-5 border-b-2 border-purple-700 mr-2"
+              ></div>
+              <span id="importStatusText">Importando...</span>
+            </div>
+          </div>
+          <div id="importResults" class="mt-2 text-sm"></div>
+        </div>
+      </div>
+
+      <!-- Formulario para agregar computadora -->
+      <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+        <h2 class="text-xl font-semibold mb-4">Agregar Nueva Computadora</h2>
+        <form id="addForm" class="space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <label class="block text-gray-700">Código de Inventario:</label>
+              <input
+                type="text"
+                id="codigo"
+                class="w-full p-2 border rounded"
+                required
+              />
+            </div>
+            <div>
+              <label class="block text-gray-700">Tipo de Equipo:</label>
+              <select
+                id="tipoEquipo"
+                class="w-full p-2 border rounded"
+                required
+              >
+                <option value="">-- Seleccionar Tipo --</option>
+                <option value="CPU">CPU</option>
+                <option value="Laptop">Laptop</option>
+                <option value="Monitor">Monitor</option>
+                <option value="UPS">UPS</option>
+                <option value="Impresora">Impresora</option>
+                <option value="Escáner">Escáner</option>
+                <option value="Servidor">Servidor</option>
+                <option value="Accesorios">Accesorios</option>
+                <option value="Otros">Otros</option>
+                <option value="Telefono">Telefono</option>
+                <option value="Access Point">Access Point</option>
+                <option value="Router">Router</option>
+                <option value="Modem">Módem</option>
+                <option value="DVR">DVR</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-gray-700">Marca:</label>
+              <input
+                type="text"
+                id="marca"
+                class="w-full p-2 border rounded"
+                required
+              />
+            </div>
+            <div>
+              <label class="block text-gray-700">Modelo:</label>
+              <input
+                type="text"
+                id="modelo"
+                class="w-full p-2 border rounded"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-gray-700">Procesador:</label>
+              <input
+                type="text"
+                id="procesador"
+                class="w-full p-2 border rounded"
+                required
+              />
+            </div>
+            <div>
+              <label class="block text-gray-700">RAM (GB):</label>
+              <input
+                type="number"
+                id="ram"
+                class="w-full p-2 border rounded"
+                required
+              />
+            </div>
+            <div>
+              <label class="block text-gray-700">Almacenamiento (GB):</label>
+              <input
+                type="number"
+                id="almacenamiento"
+                class="w-full p-2 border rounded"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-gray-700">Estado:</label>
+              <select id="estado" class="w-full p-2 border rounded" required>
+                <option value="">-- Seleccionar Estado --</option>
+                <option value="Buena">Buena</option>
+                <option value="No funciona">No funciona</option>
+                <option value="Muy poco rendimiento">
+                  Muy poco rendimiento
+                </option>
+                <option value="Excelente rendimiento">
+                  Excelente rendimiento
+                </option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-gray-700">Ubicación en Bodega:</label>
+              <select
+                id="ubicacion"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                required
+              >
+                <option value="">Seleccione una ubicación</option>
+                <option value="Bodega Central">Bodega Central</option>
+                <option value="Bodega Sonsonate">Bodega Sonsonate</option>
+                <option value="Bodega Santa Ana">Bodega Santa Ana</option>
+                <option value="Bodega Soyapango">Bodega Soyapango</option>
+                <option value="Bodega Ahuachapán">Bodega Ahuachapán</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-gray-700">Fecha de ingreso:</label>
+              <input
+                type="date"
+                id="fecha"
+                class="w-full p-2 border rounded"
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-gray-700">Notas adicionales:</label>
+            <textarea
+              id="notas"
+              class="w-full p-2 border rounded"
+              rows="3"
+            ></textarea>
+          </div>
+
+          <button
+            type="submit"
+            class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          >
+            Guardar Computadora
+          </button>
+        </form>
+      </div>
+
+      <!-- Buscador -->
+      <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+        <h2 class="text-xl font-semibold mb-4">Buscar Computadoras</h2>
+        <div class="flex space-x-4 mb-4">
+          <input
+            type="text"
+            id="searchInput"
+            class="flex-1 p-2 border rounded"
+            placeholder="Buscar por código, marca o modelo..."
+          />
+          <button
+            id="searchBtn"
+            class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+          >
+            Buscar
+          </button>
+        </div>
+        <div class="mt-2 flex flex-wrap gap-4">
+          <label class="inline-flex items-center">
+            <input
+              type="checkbox"
+              id="searchByCodigo"
+              checked
+              class="form-checkbox"
+            />
+            <span class="ml-2">Código</span>
+          </label>
+          <label class="inline-flex items-center">
+            <input
+              type="checkbox"
+              id="searchByMarca"
+              checked
+              class="form-checkbox"
+            />
+            <span class="ml-2">Marca</span>
+          </label>
+          <label class="inline-flex items-center">
+            <input
+              type="checkbox"
+              id="searchByModelo"
+              checked
+              class="form-checkbox"
+            />
+            <span class="ml-2">Modelo</span>
+          </label>
+          <label class="inline-flex items-center">
+            <input
+              type="checkbox"
+              id="searchByProcesador"
+              class="form-checkbox"
+            />
+            <span class="ml-2">Procesador</span>
+          </label>
+          <label class="inline-flex items-center">
+            <input type="checkbox" id="searchByEstado" class="form-checkbox" />
+            <span class="ml-2">Estado</span>
+          </label>
+          <label class="inline-flex items-center">
+            <input
+              type="checkbox"
+              id="searchByUbicacion"
+              class="form-checkbox"
+            />
+            <span class="ml-2">Ubicación</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Resultados -->
+      <div class="bg-white p-6 rounded-lg shadow-md">
+        <h2 class="text-xl font-semibold mb-4">Inventario de Computadoras</h2>
+        <div class="overflow-x-auto">
+          <table class="min-w-full bg-white">
+            <thead>
+              <tr>
+                <th
+                  class="py-2 px-2 border-b border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                >
+                  Código
+                </th>
+                <th
+                  class="py-2 px-2 border-b border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                >
+                  Tipo
+                </th>
+                <th
+                  class="py-2 px-2 border-b border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                >
+                  Marca
+                </th>
+                <th
+                  class="py-2 px-2 border-b border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                >
+                  Modelo
+                </th>
+                <th
+                  class="py-2 px-2 border-b border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                >
+                  Procesador
+                </th>
+                <th
+                  class="py-2 px-2 border-b border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                >
+                  RAM
+                </th>
+                <th
+                  class="py-2 px-2 border-b border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                >
+                  Almacen.
+                </th>
+                <th
+                  class="py-2 px-2 border-b border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                >
+                  Estado
+                </th>
+                <th
+                  class="py-2 px-2 border-b border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                >
+                  Ubicación
+                </th>
+                <th
+                  class="py-2 px-2 border-b border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                >
+                  Fecha
+                </th>
+                <th
+                  class="py-2 px-2 border-b border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                >
+                  Descripción
+                </th>
+                <th
+                  class="py-2 px-2 border-b border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                >
+                  Acciones
+                </th>
+              </tr>
+            </thead>
+            <tbody id="results">
+              <tr>
+                <td
+                  colspan="10"
+                  class="py-4 px-6 border-b text-gray-500 italic text-center"
+                >
+                  Los resultados aparecerán aquí...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <!-- Controles de Paginación -->
+          <div
+            class="mt-6 flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0"
+          >
+            <!-- Selector de elementos por página -->
+            <div class="flex items-center space-x-2">
+              <label for="itemsPerPage" class="text-sm text-gray-700"
+                >Mostrar:</label
+              >
+              <select
+                id="itemsPerPage"
+                class="border border-gray-300 rounded px-2 py-1 text-sm"
+              >
+                <option value="10" selected>10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select>
+              <span class="text-sm text-gray-700">por página</span>
+            </div>
+
+            <!-- Información de paginación -->
+            <div class="text-sm text-gray-700">
+              Mostrando <span id="showingStart">0</span> a
+              <span id="showingEnd">0</span> de
+              <span id="totalItems">0</span> registros
+            </div>
+
+            <!-- Botones de navegación -->
+            <div class="flex items-center space-x-1">
+              <button
+                id="firstPage"
+                class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-100 disabled:opacity-50"
+                disabled
+              >
+                Primero
+              </button>
+              <button
+                id="prevPage"
+                class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-100 disabled:opacity-50"
+                disabled
+              >
+                Anterior
+              </button>
+
+              <!-- Números de página -->
+              <div id="pageNumbers" class="flex space-x-1"></div>
+
+              <button
+                id="nextPage"
+                class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-100 disabled:opacity-50"
+              >
+                Siguiente
+              </button>
+              <button
+                id="lastPage"
+                class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-100 disabled:opacity-50"
+              >
+                Último
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
     <script>
-        // Variables de paginación
-        let currentPage = 1;
-        let itemsPerPage = 10;
-        let totalComputers = [];
-        let filteredComputers = [];
+      // Variables de paginación
+      let currentPage = 1;
+      let itemsPerPage = 10;
+      let totalComputers = [];
+      let filteredComputers = [];
 
-        // Configuración de Firebase
-        const firebaseConfig = {
-            apiKey: "AIzaSyDycWG4lcgCk8KnIO6HLpUyabs3zqxUtFg",
-            authDomain: "controlinventarioit-2c8fc.firebaseapp.com",
-            projectId: "controlinventarioit-2c8fc",
-            storageBucket: "controlinventarioit-2c8fc.firebasestorage.app",
-            messagingSenderId: "621661032303",
-            appId: "1:621661032303:web:468a47222d01805e7de29a",
-            measurementId: "G-N6F1RQTW6B",
-        };
+      // Configuración de Firebase
+      const firebaseConfig = {
+        apiKey: "AIzaSyDycWG4lcgCk8KnIO6HLpUyabs3zqxUtFg",
+        authDomain: "controlinventarioit-2c8fc.firebaseapp.com",
+        projectId: "controlinventarioit-2c8fc",
+        storageBucket: "controlinventarioit-2c8fc.firebasestorage.app",
+        messagingSenderId: "621661032303",
+        appId: "1:621661032303:web:468a47222d01805e7de29a",
+        measurementId: "G-N6F1RQTW6B",
+      };
 
-        // Inicializar Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const computadorasCollection = db.collection("computadoras");
+      // Inicializar Firebase
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.firestore();
+      const computadorasCollection = db.collection("computadoras");
 
-        // Elementos del DOM
-        const addForm = document.getElementById("addForm");
-        const codigoInput = document.getElementById("codigo");
-        const tipoEquipoInput = document.getElementById("tipoEquipo");
-        const marcaInput = document.getElementById("marca");
-        const modeloInput = document.getElementById("modelo");
-        const procesadorInput = document.getElementById("procesador");
-        const ramInput = document.getElementById("ram");
-        const almacenamientoInput = document.getElementById("almacenamiento");
-        const estadoInput = document.getElementById("estado");
-        const ubicacionInput = document.getElementById("ubicacion");
-        const fechaInput = document.getElementById("fecha");
-        const notasInput = document.getElementById("notas");
+      // Elementos del DOM
+      const addForm = document.getElementById("addForm");
+      const codigoInput = document.getElementById("codigo");
+      const tipoEquipoInput = document.getElementById("tipoEquipo");
+      const marcaInput = document.getElementById("marca");
+      const modeloInput = document.getElementById("modelo");
+      const procesadorInput = document.getElementById("procesador");
+      const ramInput = document.getElementById("ram");
+      const almacenamientoInput = document.getElementById("almacenamiento");
+      const estadoInput = document.getElementById("estado");
+      const ubicacionInput = document.getElementById("ubicacion");
+      const fechaInput = document.getElementById("fecha");
+      const notasInput = document.getElementById("notas");
 
-        const searchInput = document.getElementById("searchInput");
-        const searchBtn = document.getElementById("searchBtn");
-        const searchByCodigo = document.getElementById("searchByCodigo");
-        const searchByMarca = document.getElementById("searchByMarca");
-        const searchByModelo = document.getElementById("searchByModelo");
-        const searchByProcesador = document.getElementById("searchByProcesador");
-        const searchByEstado = document.getElementById("searchByEstado");
-        const resultsDiv = document.getElementById("results");
+      // Referencias a los elementos (asegúrate de tenerlas todas)
+      const searchInput = document.getElementById("searchInput");
+      const searchBtn = document.getElementById("searchBtn");
+      const searchByCodigo = document.getElementById("searchByCodigo");
+      const searchByMarca = document.getElementById("searchByMarca");
+      const searchByModelo = document.getElementById("searchByModelo");
+      const searchByProcesador = document.getElementById("searchByProcesador");
+      const searchByEstado = document.getElementById("searchByEstado");
+      const searchByUbicacion = document.getElementById("searchByUbicacion"); // Esta línea es importante
+      const resultsDiv = document.getElementById("results");
 
-        // Elementos del contador
-        const totalCount = document.getElementById("total-count");
-        const buenaCount = document.getElementById("buena-count");
-        const noFuncionaCount = document.getElementById("no-funciona-count");
-        const pocoRendimientoCount = document.getElementById(
-            "poco-rendimiento-count"
-        );
-        const excelenteCount = document.getElementById("excelente-count");
+      // Elementos del contador
+      const totalCount = document.getElementById("total-count");
+      const buenaCount = document.getElementById("buena-count");
+      const noFuncionaCount = document.getElementById("no-funciona-count");
+      const pocoRendimientoCount = document.getElementById(
+        "poco-rendimiento-count"
+      );
+      const excelenteCount = document.getElementById("excelente-count");
 
-        // Función para integrar el modal de edición responsivo
-        function integrarModalEdicion() {
-            // Verificar si el modal ya existe
-            if (!document.getElementById("editModal")) {
-                // Agregar el HTML del modal al final del body
-                const modalHTML = `
+      // Función para integrar el modal de edición responsivo
+      function integrarModalEdicion() {
+        // Verificar si el modal ya existe
+        if (!document.getElementById("editModal")) {
+          // Agregar el HTML del modal al final del body
+          const modalHTML = `
     <!-- Modal de Edición Responsivo -->
     <div id="editModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 p-4 hidden">
         <!-- Contenedor del Modal -->
@@ -605,453 +756,461 @@
     </style>
     `;
 
-                document.body.insertAdjacentHTML("beforeend", modalHTML);
+          document.body.insertAdjacentHTML("beforeend", modalHTML);
 
-                // Configurar los event listeners del modal
-                configurarEventListenersModal();
-            }
+          // Configurar los event listeners del modal
+          configurarEventListenersModal();
         }
+      }
 
-        // Configurar los event listeners del modal de edición
-        function configurarEventListenersModal() {
-            // Cerrar modal con el botón X
-            document
-                .getElementById("closeModalBtn")
-                .addEventListener("click", () => {
-                    document.getElementById("editModal").classList.add("hidden");
-                });
+      // Configurar los event listeners del modal de edición
+      function configurarEventListenersModal() {
+        // Cerrar modal con el botón X
+        document
+          .getElementById("closeModalBtn")
+          .addEventListener("click", () => {
+            document.getElementById("editModal").classList.add("hidden");
+          });
 
-            // Cerrar modal con el botón Cancelar
-            document.getElementById("cancelEdit").addEventListener("click", () => {
-                document.getElementById("editModal").classList.add("hidden");
-            });
+        // Cerrar modal con el botón Cancelar
+        document.getElementById("cancelEdit").addEventListener("click", () => {
+          document.getElementById("editModal").classList.add("hidden");
+        });
 
-            // Cerrar modal al hacer clic fuera del contenido
-            document.getElementById("editModal").addEventListener("click", (e) => {
-                if (e.target === document.getElementById("editModal")) {
-                    document.getElementById("editModal").classList.add("hidden");
-                }
-            });
+        // Cerrar modal al hacer clic fuera del contenido
+        document.getElementById("editModal").addEventListener("click", (e) => {
+          if (e.target === document.getElementById("editModal")) {
+            document.getElementById("editModal").classList.add("hidden");
+          }
+        });
 
-            // Manejar la actualización de la computadora
-            document
-                .getElementById("editForm")
-                .addEventListener("submit", async (e) => {
-                    e.preventDefault();
-
-                    const id = document.getElementById("editId").value;
-                    const codigoValue = document
-                        .getElementById("editCodigo")
-                        .value.trim();
-
-                    try {
-                        // Verificar si el código ya existe y pertenece a otra computadora
-                        const codigoSnapshot = await computadorasCollection
-                            .where("codigo", "==", codigoValue)
-                            .get();
-
-                        if (!codigoSnapshot.empty && codigoSnapshot.docs[0].id !== id) {
-                            Swal.fire({
-                                icon: "warning",
-                                title: "Código duplicado",
-                                text: "Este código de inventario ya existe en otra computadora. Por favor use otro.",
-                            });
-                            return;
-                        }
-
-                        const updatedComputer = {
-                            codigo: codigoValue,
-                            tipoEquipo: document.getElementById("editTipoEquipo").value,
-                            marca: document.getElementById("editMarca").value.trim(),
-                            modelo: document.getElementById("editModelo").value.trim(),
-                            procesador: document
-                                .getElementById("editProcesador")
-                                .value.trim(),
-                            ram: parseInt(document.getElementById("editRam").value),
-                            almacenamiento: parseInt(
-                                document.getElementById("editAlmacenamiento").value
-                            ),
-                            estado: document.getElementById("editEstado").value,
-                            ubicacion: document
-                                .getElementById("editUbicacion")
-                                .value.trim(),
-                            fecha: document.getElementById("editFecha").value,
-                            notas: document.getElementById("editNotas").value.trim(),
-                            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        };
-
-                        // Actualizar en Firebase
-                        await computadorasCollection.doc(id).update(updatedComputer);
-
-                        // Cerrar el modal y mostrar mensaje de éxito
-                        document.getElementById("editModal").classList.add("hidden");
-                        // Mostrar notificación con SweetAlert2 (Versión Toast simple)
-                        Swal.fire({
-                            toast: true,
-                            icon: "success",
-                            title: "¡Computadora actualizada correctamente!",
-                            position: "top-end",
-                            showConfirmButton: false,
-                            timer: 3000,
-                            timerProgressBar: true,
-                            didOpen: (toast) => {
-                                toast.addEventListener("mouseenter", Swal.stopTimer);
-                                toast.addEventListener("mouseleave", Swal.resumeTimer);
-                            },
-                        });
-
-                        // Recargar las computadoras
-                        loadAllComputers();
-                    } catch (error) {
-                        console.error("Error al actualizar:", error);
-                        // SweetAlert2 toast notification
-                        Swal.fire({
-                            toast: true,
-                            position: "top-end",
-                            icon: "error",
-                            title: "Error al actualizar",
-                            text: error.message,
-                            showConfirmButton: false,
-                            timer: 3000,
-                            timerProgressBar: true,
-                        });
-                    }
-                });
-        }
-        // Configurar los event listeners del modal de edición
-        function configurarEventListenersModal() {
-            // Manejar el cierre del modal al hacer clic en Cancelar
-            document.getElementById("cancelEdit").addEventListener("click", () => {
-                document.getElementById("editModal").classList.add("hidden");
-            });
-
-            // Manejar la actualización de la computadora
-            document
-                .getElementById("editForm")
-                .addEventListener("submit", async (e) => {
-                    e.preventDefault();
-
-                    const id = document.getElementById("editId").value;
-                    const codigoValue = document
-                        .getElementById("editCodigo")
-                        .value.trim();
-
-                    try {
-                        // Verificar si el código ya existe y pertenece a otra computadora
-                        const codigoSnapshot = await computadorasCollection
-                            .where("codigo", "==", codigoValue)
-                            .get();
-
-                        if (!codigoSnapshot.empty && codigoSnapshot.docs[0].id !== id) {
-                            alert(
-                                "Este código de inventario ya existe en otra computadora. Por favor use otro."
-                            );
-                            return;
-                        }
-
-                        const updatedComputer = {
-                            codigo: codigoValue,
-                            tipoEquipo: document.getElementById("editTipoEquipo").value,
-                            marca: document.getElementById("editMarca").value.trim(),
-                            modelo: document.getElementById("editModelo").value.trim(),
-                            procesador: document
-                                .getElementById("editProcesador")
-                                .value.trim(),
-                            ram: parseInt(document.getElementById("editRam").value),
-                            almacenamiento: parseInt(
-                                document.getElementById("editAlmacenamiento").value
-                            ),
-                            estado: document.getElementById("editEstado").value,
-                            ubicacion: document
-                                .getElementById("editUbicacion")
-                                .value.trim(),
-                            fecha: document.getElementById("editFecha").value,
-                            notas: document.getElementById("editNotas").value.trim(),
-                            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        };
-
-                        // Actualizar en Firebase
-                        await computadorasCollection.doc(id).update(updatedComputer);
-
-                        // Cerrar el modal y mostrar mensaje de éxito
-                        document.getElementById("editModal").classList.add("hidden");
-                        // Mostrar notificación con SweetAlert2 (Versión Toast simple)
-                        Swal.fire({
-                            toast: true,
-                            icon: "success",
-                            title: "¡Computadora actualizada correctamente!",
-                            position: "top-end",
-                            showConfirmButton: false,
-                            timer: 3000,
-                            timerProgressBar: true,
-                            didOpen: (toast) => {
-                                toast.addEventListener("mouseenter", Swal.stopTimer);
-                                toast.addEventListener("mouseleave", Swal.resumeTimer);
-                            },
-                        });
-
-                        // Recargar las computadoras
-                        loadAllComputers();
-                    } catch (error) {
-                        console.error("Error al actualizar:", error);
-                        // SweetAlert2 toast notification
-                        Swal.fire({
-                            toast: true,
-                            position: "top-end",
-                            icon: "error",
-                            title: "Error al actualizar la computadora",
-                            text: error.message,
-                            showConfirmButton: false,
-                            timer: 3000,
-                            timerProgressBar: true,
-                        });
-                    }
-                });
-        }
-
-        // Agregar nueva computadora a Firebase
-        addForm.addEventListener("submit", async (e) => {
+        // Manejar la actualización de la computadora
+        document
+          .getElementById("editForm")
+          .addEventListener("submit", async (e) => {
             e.preventDefault();
 
-            // Verificar si el código ya existe
-            const codigoValue = codigoInput.value.trim();
-            const codigoSnapshot = await computadorasCollection
+            const id = document.getElementById("editId").value;
+            const codigoValue = document
+              .getElementById("editCodigo")
+              .value.trim();
+
+            try {
+              // Verificar si el código ya existe y pertenece a otra computadora
+              const codigoSnapshot = await computadorasCollection
                 .where("codigo", "==", codigoValue)
                 .get();
 
-            if (!codigoSnapshot.empty) {
-                alert("Este código de inventario ya existe. Por favor use otro.");
+              if (!codigoSnapshot.empty && codigoSnapshot.docs[0].id !== id) {
+                Swal.fire({
+                  icon: "warning",
+                  title: "Código duplicado",
+                  text: "Este código de inventario ya existe en otra computadora. Por favor use otro.",
+                });
                 return;
-            }
+              }
 
-            const newComputer = {
+              const updatedComputer = {
                 codigo: codigoValue,
-                tipoEquipo: tipoEquipoInput.value,
-                marca: marcaInput.value.trim(),
-                modelo: modeloInput.value.trim(),
-                procesador: procesadorInput.value.trim(),
-                ram: parseInt(ramInput.value),
-                almacenamiento: parseInt(almacenamientoInput.value),
-                estado: estadoInput.value,
-                ubicacion: ubicacionInput.value.trim(),
-                fecha: fechaInput.value,
-                notas: notasInput.value.trim(),
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            };
+                tipoEquipo: document.getElementById("editTipoEquipo").value,
+                marca: document.getElementById("editMarca").value.trim(),
+                modelo: document.getElementById("editModelo").value.trim(),
+                procesador: document
+                  .getElementById("editProcesador")
+                  .value.trim(),
+                ram: parseInt(document.getElementById("editRam").value),
+                almacenamiento: parseInt(
+                  document.getElementById("editAlmacenamiento").value
+                ),
+                estado: document.getElementById("editEstado").value,
+                ubicacion: document
+                  .getElementById("editUbicacion")
+                  .value.trim(),
+                fecha: document.getElementById("editFecha").value,
+                notas: document.getElementById("editNotas").value.trim(),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+              };
 
-            try {
-                await computadorasCollection.add(newComputer);
-                Swal.fire({
-                    toast: true,
-                    position: "top-end",
-                    icon: "success",
-                    title: "Excelente",
-                    text: "Equipo Guardado con éxito",
-                    showConfirmButton: false,
-                    timer: 3000,
-                    timerProgressBar: true,
-                    background: "#1e1e1e", // fondo oscuro
-                    color: "#ffffff", // texto blanco
-                    iconColor: "#00ff88", // color del ícono de éxito (opcional)
-                    customClass: {
-                        popup: 'swal2-dark-toast'
-                    }
-                });
+              // Actualizar en Firebase
+              await computadorasCollection.doc(id).update(updatedComputer);
 
-                addForm.reset();
-                loadAllComputers(); // Recargar todas las computadoras después de agregar una nueva
+              // Cerrar el modal y mostrar mensaje de éxito
+              document.getElementById("editModal").classList.add("hidden");
+              // Mostrar notificación con SweetAlert2 (Versión Toast simple)
+              Swal.fire({
+                toast: true,
+                icon: "success",
+                title: "¡Computadora actualizada correctamente!",
+                position: "top-end",
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                  toast.addEventListener("mouseenter", Swal.stopTimer);
+                  toast.addEventListener("mouseleave", Swal.resumeTimer);
+                },
+              });
+
+              // Recargar las computadoras
+              loadAllComputers();
             } catch (error) {
-                // SweetAlert2 toast notification
-                Swal.fire({
-                    toast: true,
-                    position: "top-end",
-                    icon: "error",
-                    title: "Error al guardar la computadora:",
-                    text: error.message,
-                    showConfirmButton: false,
-                    timer: 3000,
-                    timerProgressBar: true,
-                    background: "#1e1e1e", // fondo oscuro
-                    color: "#ffffff", // texto blanco
-                    iconColor: "#00ff88", // color del ícono de éxito (opcional)
-                    customClass: {
-                        popup: 'swal2-dark-toast'
-                    }
-                });
+              console.error("Error al actualizar:", error);
+              // SweetAlert2 toast notification
+              Swal.fire({
+                toast: true,
+                position: "top-end",
+                icon: "error",
+                title: "Error al actualizar",
+                text: error.message,
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+              });
             }
+          });
+      }
+      // Configurar los event listeners del modal de edición
+      function configurarEventListenersModal() {
+        // Manejar el cierre del modal al hacer clic en Cancelar
+        document.getElementById("cancelEdit").addEventListener("click", () => {
+          document.getElementById("editModal").classList.add("hidden");
         });
 
-        // Función de búsqueda
-        searchBtn.addEventListener("click", performSearch);
-        searchInput.addEventListener("keypress", (e) => {
-            if (e.key === "Enter") performSearch();
-        });
+        // Manejar la actualización de la computadora
+        document
+          .getElementById("editForm")
+          .addEventListener("submit", async (e) => {
+            e.preventDefault();
 
-        async function performSearch() {
-            const searchTerm = searchInput.value.trim().toLowerCase();
-
-            if (!searchTerm) {
-                loadAllComputers();
-                return;
-            }
+            const id = document.getElementById("editId").value;
+            const codigoValue = document
+              .getElementById("editCodigo")
+              .value.trim();
 
             try {
-                resultsDiv.innerHTML =
-                    '<tr><td colspan="12" class="py-4 px-6 border-b text-gray-500 text-center">Buscando...</td></tr>';
+              // Verificar si el código ya existe y pertenece a otra computadora
+              const codigoSnapshot = await computadorasCollection
+                .where("codigo", "==", codigoValue)
+                .get();
 
-                // Obtener todas las computadoras
-                const snapshot = await computadorasCollection
-                    .orderBy("createdAt", "desc")
-                    .get();
-                const computers = [];
-
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-                    data.id = doc.id;
-                    computers.push(data);
-                });
-
-                // Filtrar según criterios de búsqueda
-                const filteredComputers = computers.filter((computer) => {
-                    const codigoMatch =
-                        searchByCodigo &&
-                        searchByCodigo.checked &&
-                        computer.codigo.toLowerCase().includes(searchTerm);
-                    const marcaMatch =
-                        searchByMarca &&
-                        searchByMarca.checked &&
-                        computer.marca.toLowerCase().includes(searchTerm);
-                    const modeloMatch =
-                        searchByModelo &&
-                        searchByModelo.checked &&
-                        computer.modelo.toLowerCase().includes(searchTerm);
-                    const procesadorMatch =
-                        searchByProcesador &&
-                        searchByProcesador.checked &&
-                        computer.procesador.toLowerCase().includes(searchTerm);
-                    const estadoMatch =
-                        searchByEstado &&
-                        searchByEstado.checked &&
-                        computer.estado.toLowerCase().includes(searchTerm);
-                    // Agregamos verificación para tipoEquipo, pero solo si existe
-                    const tipoMatch =
-                        computer.tipoEquipo &&
-                        computer.tipoEquipo.toLowerCase().includes(searchTerm);
-
-                    return (
-                        codigoMatch ||
-                        marcaMatch ||
-                        modeloMatch ||
-                        procesadorMatch ||
-                        estadoMatch ||
-                        tipoMatch
-                    );
-                });
-
-                displayResults(filteredComputers);
-            } catch (error) {
-                console.error("Error al buscar:", error);
-                resultsDiv.innerHTML =
-                    `<tr><td colspan="12" class="py-4 px-6 border-b text-red-500 text-center">Error al buscar: ${error.message}</td></tr>`;
-            }
-        }
-
-        // Actualizar los contadores de estadísticas
-        function updateStatistics(computers) {
-            let total = computers.length;
-            let buena = 0;
-            let noFunciona = 0;
-            let pocoRendimiento = 0;
-            let excelente = 0;
-
-            computers.forEach((computer) => {
-                switch (computer.estado) {
-                    case "Buena":
-                        buena++;
-                        break;
-                    case "No funciona":
-                        noFunciona++;
-                        break;
-                    case "Muy poco rendimiento":
-                        pocoRendimiento++;
-                        break;
-                    case "Excelente rendimiento":
-                        excelente++;
-                        break;
-                }
-            });
-
-            totalCount.textContent = total;
-            buenaCount.textContent = buena;
-            noFuncionaCount.textContent = noFunciona;
-            pocoRendimientoCount.textContent = pocoRendimiento;
-            excelenteCount.textContent = excelente;
-        }
-
-        // Obtener color de estado
-        function getEstadoColor(estado) {
-            switch (estado) {
-                case "Buena":
-                    return "bg-green-100 text-green-800";
-                case "No funciona":
-                    return "bg-red-100 text-red-800";
-                case "Muy poco rendimiento":
-                    return "bg-yellow-100 text-yellow-800";
-                case "Excelente rendimiento":
-                    return "bg-blue-100 text-blue-800";
-                default:
-                    return "";
-            }
-        }
-
-        // Mostrar resultados
-        function displayResults(computers) {
-            // Asegurar que el modal de edición está integrado
-            integrarModalEdicion();
-
-            // Guardar los datos para paginación
-            filteredComputers = computers;
-
-            if (computers.length === 0) {
-                resultsDiv.innerHTML =
-                    '<tr><td colspan="12" class="py-4 px-6 border-b text-gray-500 italic text-center">No se encontraron resultados</td></tr>';
-                updateStatistics([]);
-                updatePaginationInfo(0, 0, 0);
+              if (!codigoSnapshot.empty && codigoSnapshot.docs[0].id !== id) {
+                alert(
+                  "Este código de inventario ya existe en otra computadora. Por favor use otro."
+                );
                 return;
+              }
+
+              const updatedComputer = {
+                codigo: codigoValue,
+                tipoEquipo: document.getElementById("editTipoEquipo").value,
+                marca: document.getElementById("editMarca").value.trim(),
+                modelo: document.getElementById("editModelo").value.trim(),
+                procesador: document
+                  .getElementById("editProcesador")
+                  .value.trim(),
+                ram: parseInt(document.getElementById("editRam").value),
+                almacenamiento: parseInt(
+                  document.getElementById("editAlmacenamiento").value
+                ),
+                estado: document.getElementById("editEstado").value,
+                ubicacion: document
+                  .getElementById("editUbicacion")
+                  .value.trim(),
+                fecha: document.getElementById("editFecha").value,
+                notas: document.getElementById("editNotas").value.trim(),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+              };
+
+              // Actualizar en Firebase
+              await computadorasCollection.doc(id).update(updatedComputer);
+
+              // Cerrar el modal y mostrar mensaje de éxito
+              document.getElementById("editModal").classList.add("hidden");
+              // Mostrar notificación con SweetAlert2 (Versión Toast simple)
+              Swal.fire({
+                toast: true,
+                icon: "success",
+                title: "¡Computadora actualizada correctamente!",
+                position: "top-end",
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                  toast.addEventListener("mouseenter", Swal.stopTimer);
+                  toast.addEventListener("mouseleave", Swal.resumeTimer);
+                },
+              });
+
+              // Recargar las computadoras
+              loadAllComputers();
+            } catch (error) {
+              console.error("Error al actualizar:", error);
+              // SweetAlert2 toast notification
+              Swal.fire({
+                toast: true,
+                position: "top-end",
+                icon: "error",
+                title: "Error al actualizar la computadora",
+                text: error.message,
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+              });
             }
-            // Función para actualizar la información de paginación
-            function updatePaginationInfo(start, end, total) {
-                document.getElementById("showingStart").textContent = start;
-                document.getElementById("showingEnd").textContent = end;
-                document.getElementById("totalItems").textContent = total;
+          });
+      }
+
+      // Agregar nueva computadora a Firebase
+      addForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        // Verificar si el código ya existe
+        const codigoValue = codigoInput.value.trim();
+        const codigoSnapshot = await computadorasCollection
+          .where("codigo", "==", codigoValue)
+          .get();
+
+        if (!codigoSnapshot.empty) {
+          alert("Este código de inventario ya existe. Por favor use otro.");
+          return;
+        }
+
+        const newComputer = {
+          codigo: codigoValue,
+          tipoEquipo: tipoEquipoInput.value,
+          marca: marcaInput.value.trim(),
+          modelo: modeloInput.value.trim(),
+          procesador: procesadorInput.value.trim(),
+          ram: parseInt(ramInput.value),
+          almacenamiento: parseInt(almacenamientoInput.value),
+          estado: estadoInput.value,
+          ubicacion: ubicacionInput.value.trim(),
+          fecha: fechaInput.value,
+          notas: notasInput.value.trim(),
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        };
+
+        try {
+          await computadorasCollection.add(newComputer);
+          Swal.fire({
+            toast: true,
+            position: "top-end",
+            icon: "success",
+            title: "Excelente",
+            text: "Equipo Guardado con éxito",
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            background: "#1e1e1e", // fondo oscuro
+            color: "#ffffff", // texto blanco
+            iconColor: "#00ff88", // color del ícono de éxito (opcional)
+            customClass: {
+              popup: "swal2-dark-toast",
+            },
+          });
+
+          addForm.reset();
+          loadAllComputers(); // Recargar todas las computadoras después de agregar una nueva
+        } catch (error) {
+          // SweetAlert2 toast notification
+          Swal.fire({
+            toast: true,
+            position: "top-end",
+            icon: "error",
+            title: "Error al guardar la computadora:",
+            text: error.message,
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            background: "#1e1e1e", // fondo oscuro
+            color: "#ffffff", // texto blanco
+            iconColor: "#00ff88", // color del ícono de éxito (opcional)
+            customClass: {
+              popup: "swal2-dark-toast",
+            },
+          });
+        }
+      });
+
+
+      // Función de búsqueda
+      searchBtn.addEventListener("click", performSearch);
+      searchInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") performSearch();
+      });
+
+      // Función de búsqueda actualizada
+      async function performSearch() {
+        const searchTerm = searchInput.value.trim().toLowerCase();
+
+        if (!searchTerm) {
+          loadAllComputers();
+          return;
+        }
+
+        try {
+          resultsDiv.innerHTML =
+            '<tr><td colspan="12" class="py-4 px-6 border-b text-gray-500 text-center">Buscando...</td></tr>';
+
+          // Obtener todas las computadoras
+          const snapshot = await computadorasCollection
+            .orderBy("createdAt", "desc")
+            .get();
+          const computers = [];
+
+          snapshot.forEach((doc) => {
+            const data = doc.data();
+            data.id = doc.id;
+            computers.push(data);
+          });
+
+          // Filtrar según criterios de búsqueda
+          const filteredComputers = computers.filter((computer) => {
+            const codigoMatch =
+              searchByCodigo &&
+              searchByCodigo.checked &&
+              computer.codigo.toLowerCase().includes(searchTerm);
+            const marcaMatch =
+              searchByMarca &&
+              searchByMarca.checked &&
+              computer.marca.toLowerCase().includes(searchTerm);
+            const modeloMatch =
+              searchByModelo &&
+              searchByModelo.checked &&
+              computer.modelo.toLowerCase().includes(searchTerm);
+            const procesadorMatch =
+              searchByProcesador &&
+              searchByProcesador.checked &&
+              computer.procesador.toLowerCase().includes(searchTerm);
+            const estadoMatch =
+              searchByEstado &&
+              searchByEstado.checked &&
+              computer.estado.toLowerCase().includes(searchTerm);
+            // Búsqueda por ubicación (nueva funcionalidad)
+            const ubicacionMatch =
+              searchByUbicacion &&
+              searchByUbicacion.checked &&
+              computer.ubicacion &&
+              computer.ubicacion.toLowerCase().includes(searchTerm);
+            // Agregamos verificación para tipoEquipo, pero solo si existe
+            const tipoMatch =
+              computer.tipoEquipo &&
+              computer.tipoEquipo.toLowerCase().includes(searchTerm);
+
+            return (
+              codigoMatch ||
+              marcaMatch ||
+              modeloMatch ||
+              procesadorMatch ||
+              estadoMatch ||
+              ubicacionMatch || // Nueva condición agregada
+              tipoMatch
+            );
+          });
+
+          displayResults(filteredComputers);
+        } catch (error) {
+          console.error("Error al buscar:", error);
+          resultsDiv.innerHTML = `<tr><td colspan="12" class="py-4 px-6 border-b text-red-500 text-center">Error al buscar: ${error.message}</td></tr>`;
+        }
+      }
+      // Actualizar los contadores de estadísticas
+      function updateStatistics(computers) {
+        let total = computers.length;
+        let buena = 0;
+        let noFunciona = 0;
+        let pocoRendimiento = 0;
+        let excelente = 0;
+
+        computers.forEach((computer) => {
+          switch (computer.estado) {
+            case "Buena":
+              buena++;
+              break;
+            case "No funciona":
+              noFunciona++;
+              break;
+            case "Muy poco rendimiento":
+              pocoRendimiento++;
+              break;
+            case "Excelente rendimiento":
+              excelente++;
+              break;
+          }
+        });
+
+        totalCount.textContent = total;
+        buenaCount.textContent = buena;
+        noFuncionaCount.textContent = noFunciona;
+        pocoRendimientoCount.textContent = pocoRendimiento;
+        excelenteCount.textContent = excelente;
+      }
+
+      // Obtener color de estado
+      function getEstadoColor(estado) {
+        switch (estado) {
+          case "Buena":
+            return "bg-green-100 text-green-800";
+          case "No funciona":
+            return "bg-red-100 text-red-800";
+          case "Muy poco rendimiento":
+            return "bg-yellow-100 text-yellow-800";
+          case "Excelente rendimiento":
+            return "bg-blue-100 text-blue-800";
+          default:
+            return "";
+        }
+      }
+
+      // Mostrar resultados
+      function displayResults(computers) {
+        // Asegurar que el modal de edición está integrado
+        integrarModalEdicion();
+
+        // Guardar los datos para paginación
+        filteredComputers = computers;
+
+        if (computers.length === 0) {
+          resultsDiv.innerHTML =
+            '<tr><td colspan="12" class="py-4 px-6 border-b text-gray-500 italic text-center">No se encontraron resultados</td></tr>';
+          updateStatistics([]);
+          updatePaginationInfo(0, 0, 0);
+          return;
+        }
+        // Función para actualizar la información de paginación
+        function updatePaginationInfo(start, end, total) {
+          document.getElementById("showingStart").textContent = start;
+          document.getElementById("showingEnd").textContent = end;
+          document.getElementById("totalItems").textContent = total;
+        }
+
+        // Calcular paginación
+        const totalPages = Math.ceil(computers.length / itemsPerPage);
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = Math.min(startIndex + itemsPerPage, computers.length);
+        const paginatedComputers = computers.slice(startIndex, endIndex);
+
+        // Mostrar computadoras de la página actual
+        let html = "";
+        paginatedComputers.forEach((computer) => {
+          // Formatear la fecha para mostrarla en formato DD/MM/AAAA
+          let formattedDate = computer.fecha;
+          if (computer.fecha) {
+            const dateParts = computer.fecha.split("-");
+            if (dateParts.length === 3) {
+              formattedDate = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
             }
+          }
 
-            // Calcular paginación
-            const totalPages = Math.ceil(computers.length / itemsPerPage);
-            const startIndex = (currentPage - 1) * itemsPerPage;
-            const endIndex = Math.min(startIndex + itemsPerPage, computers.length);
-            const paginatedComputers = computers.slice(startIndex, endIndex);
+          // Obtener la clase de color basada en el estado
+          const estadoColorClass = getEstadoColor(computer.estado);
 
-            // Mostrar computadoras de la página actual
-            let html = "";
-            paginatedComputers.forEach((computer) => {
-                // Formatear la fecha para mostrarla en formato DD/MM/AAAA
-                let formattedDate = computer.fecha;
-                if (computer.fecha) {
-                    const dateParts = computer.fecha.split("-");
-                    if (dateParts.length === 3) {
-                        formattedDate = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
-                    }
-                }
-
-                // Obtener la clase de color basada en el estado
-                const estadoColorClass = getEstadoColor(computer.estado);
-
-                html += `
+          html += `
         <tr>
             <td class="py-2 px-2 border-b">${computer.codigo}</td>
-            <td class="py-2 px-2 border-b">${computer.tipoEquipo || "No especificado"
-                    }</td>
+            <td class="py-2 px-2 border-b">${
+              computer.tipoEquipo || "No especificado"
+            }</td>
             <td class="py-2 px-2 border-b">${computer.marca}</td>
             <td class="py-2 px-2 border-b">${computer.modelo}</td>
             <td class="py-2 px-2 border-b">${computer.procesador}</td>
@@ -1066,425 +1225,455 @@
             <td class="py-2 px-2 border-b">${formattedDate}</td>
             <td class="py-2 px-2 border-b">${computer.notas || ""}</td>
             <td class="py-2 px-2 border-b flex space-x-1">
-                <button class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 edit-btn text-xs" data-id="${computer.id
-                    }">
+                <button class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 edit-btn text-xs" data-id="${
+                  computer.id
+                }">
                     Editar
                 </button>
-                <button class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 delete-btn text-xs" data-id="${computer.id
-                    }">
+                <button class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 delete-btn text-xs" data-id="${
+                  computer.id
+                }">
                     Eliminar
                 </button>
             </td>
         </tr>`;
-            });
-
-            resultsDiv.innerHTML = html;
-            updateStatistics(computers);
-            updatePaginationControls(totalPages);
-            updatePaginationInfo(startIndex + 1, endIndex, computers.length);
-
-            // Agregar event listeners para eliminar y editar
-            addActionEventListeners();
-        }
-
-        // Función para mover event listeners a función separada
-        function addActionEventListeners() {
-            // Agregar event listeners para eliminar
-            document.querySelectorAll(".delete-btn").forEach((btn) => {
-                btn.addEventListener("click", async (e) => {
-                    const id = e.target.getAttribute("data-id");
-
-                    const result = await Swal.fire({
-                        title: "¿Estás seguro?",
-                        text: "Esta acción no se puede deshacer",
-                        icon: "warning",
-                        showCancelButton: true,
-                        confirmButtonColor: "#d33",
-                        cancelButtonColor: "#3085d6",
-                        confirmButtonText: "Sí, eliminar",
-                        cancelButtonText: "Cancelar",
-                    });
-
-                    if (result.isConfirmed) {
-                        try {
-                            await computadorasCollection.doc(id).delete();
-                            Swal.fire({
-                                toast: true,
-                                icon: "success",
-                                title: "Computadora eliminada correctamente",
-                                position: "top-end",
-                                showConfirmButton: false,
-                                timer: 3000,
-                                timerProgressBar: true,
-                                background: "#1e1e1e", // fondo oscuro
-                                color: "#ffffff", // texto blanco
-                                iconColor: "#00ff88", // color del ícono de éxito (opcional)
-                                customClass: {
-                                    popup: 'swal2-dark-toast'
-                                }
-                            });
-                            loadAllComputers();
-                        } catch (error) {
-                            console.error("Error al eliminar:", error);
-                            Swal.fire({
-                                toast: true,
-                                icon: "error",
-                                title: "Error al eliminar",
-                                text: error.message,
-                                position: "top-end",
-                                showConfirmButton: false,
-                                timer: 3000,
-                                timerProgressBar: true,
-                                background: "#1e1e1e", // fondo oscuro
-                                color: "#ffffff", // texto blanco
-                                iconColor: "#00ff88", // color del ícono de éxito (opcional)
-                                customClass: {
-                                    popup: 'swal2-dark-toast'
-                                }
-                            });
-                        }
-                    }
-                });
-            });
-            // Agregar event listeners para editar
-            document.querySelectorAll(".edit-btn").forEach((btn) => {
-                btn.addEventListener("click", async (e) => {
-                    const id = e.target.getAttribute("data-id");
-                    try {
-                        const doc = await computadorasCollection.doc(id).get();
-                        if (doc.exists) {
-                            const computer = doc.data();
-
-                            // Llenar el formulario con los datos existentes
-                            document.getElementById("editId").value = id;
-                            document.getElementById("editCodigo").value =
-                                computer.codigo || "";
-                            document.getElementById("editTipoEquipo").value =
-                                computer.tipoEquipo || "";
-                            document.getElementById("editMarca").value =
-                                computer.marca || "";
-                            document.getElementById("editModelo").value =
-                                computer.modelo || "";
-                            document.getElementById("editProcesador").value =
-                                computer.procesador || "";
-                            document.getElementById("editRam").value = computer.ram || "";
-                            document.getElementById("editAlmacenamiento").value =
-                                computer.almacenamiento || "";
-                            document.getElementById("editEstado").value =
-                                computer.estado || "";
-                            document.getElementById("editUbicacion").value =
-                                computer.ubicacion || "";
-                            document.getElementById("editFecha").value =
-                                computer.fecha || "";
-                            document.getElementById("editNotas").value =
-                                computer.notas || "";
-
-                            // Mostrar el modal
-                            document.getElementById("editModal").classList.remove("hidden");
-                        }
-                    } catch (error) {
-                        console.error("Error al obtener datos para editar:", error);
-                        Swal.fire({
-                            toast: true,
-                            icon: "error",
-                            title: "Error al cargar datos para editar",
-                            text: error.message,
-                            position: "top-end",
-                            showConfirmButton: false,
-                            timer: 3000,
-                            timerProgressBar: true,
-                        });
-                    }
-                });
-            });
-        }
-        // Event listeners para controles de paginación
-        document.addEventListener("DOMContentLoaded", function () {
-            // Event listener para cambiar elementos por página
-            document
-                .getElementById("itemsPerPage")
-                .addEventListener("change", (e) => {
-                    itemsPerPage = parseInt(e.target.value);
-                    currentPage = 1; // Resetear a primera página
-                    displayResults(filteredComputers);
-                });
-
-            // Event listeners para botones de navegación
-            document
-                .getElementById("firstPage")
-                .addEventListener("click", () => goToPage(1));
-            document
-                .getElementById("prevPage")
-                .addEventListener("click", () =>
-                    goToPage(Math.max(1, currentPage - 1))
-                );
-            document.getElementById("nextPage").addEventListener("click", () => {
-                const totalPages = Math.ceil(filteredComputers.length / itemsPerPage);
-                goToPage(Math.min(totalPages, currentPage + 1));
-            });
-            document.getElementById("lastPage").addEventListener("click", () => {
-                const totalPages = Math.ceil(filteredComputers.length / itemsPerPage);
-                goToPage(totalPages);
-            });
         });
 
-        // 6. MODIFICAR LA FUNCIÓN performSearch PARA RESETEAR LA PÁGINA -->
-        // Reemplazar la función performSearch existente con esta versión:
+        resultsDiv.innerHTML = html;
+        updateStatistics(computers);
+        updatePaginationControls(totalPages);
+        updatePaginationInfo(startIndex + 1, endIndex, computers.length);
 
-        async function performSearch() {
-            const searchTerm = searchInput.value.trim().toLowerCase();
-            currentPage = 1; // Resetear a primera página al buscar
+        // Agregar event listeners para eliminar y editar
+        addActionEventListeners();
+      }
 
-            if (!searchTerm) {
+      // Función para mover event listeners a función separada
+      function addActionEventListeners() {
+        // Agregar event listeners para eliminar
+        document.querySelectorAll(".delete-btn").forEach((btn) => {
+          btn.addEventListener("click", async (e) => {
+            const id = e.target.getAttribute("data-id");
+
+            const result = await Swal.fire({
+              title: "¿Estás seguro?",
+              text: "Esta acción no se puede deshacer",
+              icon: "warning",
+              showCancelButton: true,
+              confirmButtonColor: "#d33",
+              cancelButtonColor: "#3085d6",
+              confirmButtonText: "Sí, eliminar",
+              cancelButtonText: "Cancelar",
+            });
+
+            if (result.isConfirmed) {
+              try {
+                await computadorasCollection.doc(id).delete();
+                Swal.fire({
+                  toast: true,
+                  icon: "success",
+                  title: "Computadora eliminada correctamente",
+                  position: "top-end",
+                  showConfirmButton: false,
+                  timer: 3000,
+                  timerProgressBar: true,
+                  background: "#1e1e1e", // fondo oscuro
+                  color: "#ffffff", // texto blanco
+                  iconColor: "#00ff88", // color del ícono de éxito (opcional)
+                  customClass: {
+                    popup: "swal2-dark-toast",
+                  },
+                });
                 loadAllComputers();
-                return;
+              } catch (error) {
+                console.error("Error al eliminar:", error);
+                Swal.fire({
+                  toast: true,
+                  icon: "error",
+                  title: "Error al eliminar",
+                  text: error.message,
+                  position: "top-end",
+                  showConfirmButton: false,
+                  timer: 3000,
+                  timerProgressBar: true,
+                  background: "#1e1e1e", // fondo oscuro
+                  color: "#ffffff", // texto blanco
+                  iconColor: "#00ff88", // color del ícono de éxito (opcional)
+                  customClass: {
+                    popup: "swal2-dark-toast",
+                  },
+                });
+              }
             }
-
+          });
+        });
+        // Agregar event listeners para editar
+        document.querySelectorAll(".edit-btn").forEach((btn) => {
+          btn.addEventListener("click", async (e) => {
+            const id = e.target.getAttribute("data-id");
             try {
-                resultsDiv.innerHTML =
-                    '<tr><td colspan="12" class="py-4 px-6 border-b text-gray-500 text-center">Buscando...</td></tr>';
+              const doc = await computadorasCollection.doc(id).get();
+              if (doc.exists) {
+                const computer = doc.data();
 
-                // Obtener todas las computadoras
-                const snapshot = await computadorasCollection
-                    .orderBy("createdAt", "desc")
-                    .get();
-                const computers = [];
+                // Llenar el formulario con los datos existentes
+                document.getElementById("editId").value = id;
+                document.getElementById("editCodigo").value =
+                  computer.codigo || "";
+                document.getElementById("editTipoEquipo").value =
+                  computer.tipoEquipo || "";
+                document.getElementById("editMarca").value =
+                  computer.marca || "";
+                document.getElementById("editModelo").value =
+                  computer.modelo || "";
+                document.getElementById("editProcesador").value =
+                  computer.procesador || "";
+                document.getElementById("editRam").value = computer.ram || "";
+                document.getElementById("editAlmacenamiento").value =
+                  computer.almacenamiento || "";
+                document.getElementById("editEstado").value =
+                  computer.estado || "";
+                document.getElementById("editUbicacion").value =
+                  computer.ubicacion || "";
+                document.getElementById("editFecha").value =
+                  computer.fecha || "";
+                document.getElementById("editNotas").value =
+                  computer.notas || "";
 
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-                    data.id = doc.id;
-                    computers.push(data);
-                });
-
-                // Filtrar según criterios de búsqueda
-                const filteredComputers = computers.filter((computer) => {
-                    const codigoMatch =
-                        searchByCodigo &&
-                        searchByCodigo.checked &&
-                        computer.codigo.toLowerCase().includes(searchTerm);
-                    const marcaMatch =
-                        searchByMarca &&
-                        searchByMarca.checked &&
-                        computer.marca.toLowerCase().includes(searchTerm);
-                    const modeloMatch =
-                        searchByModelo &&
-                        searchByModelo.checked &&
-                        computer.modelo.toLowerCase().includes(searchTerm);
-                    const procesadorMatch =
-                        searchByProcesador &&
-                        searchByProcesador.checked &&
-                        computer.procesador.toLowerCase().includes(searchTerm);
-                    const estadoMatch =
-                        searchByEstado &&
-                        searchByEstado.checked &&
-                        computer.estado.toLowerCase().includes(searchTerm);
-                    const tipoMatch =
-                        computer.tipoEquipo &&
-                        computer.tipoEquipo.toLowerCase().includes(searchTerm);
-
-                    return (
-                        codigoMatch ||
-                        marcaMatch ||
-                        modeloMatch ||
-                        procesadorMatch ||
-                        estadoMatch ||
-                        tipoMatch
-                    );
-                });
-
-                displayResults(filteredComputers);
+                // Mostrar el modal
+                document.getElementById("editModal").classList.remove("hidden");
+              }
             } catch (error) {
-                console.error("Error al buscar:", error);
-                resultsDiv.innerHTML =
-                    `<tr><td colspan="12" class="py-4 px-6 border-b text-red-500 text-center">Error al buscar: ${error.message}</td></tr>`;
+              console.error("Error al obtener datos para editar:", error);
+              Swal.fire({
+                toast: true,
+                icon: "error",
+                title: "Error al cargar datos para editar",
+                text: error.message,
+                position: "top-end",
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+              });
             }
-        }
-        // Función para actualizar los controles de paginación
-        function updatePaginationControls(totalPages) {
-            const firstBtn = document.getElementById("firstPage");
-            const prevBtn = document.getElementById("prevPage");
-            const nextBtn = document.getElementById("nextPage");
-            const lastBtn = document.getElementById("lastPage");
-            const pageNumbersDiv = document.getElementById("pageNumbers");
-
-            // Habilitar/deshabilitar botones
-            firstBtn.disabled = currentPage === 1;
-            prevBtn.disabled = currentPage === 1;
-            nextBtn.disabled = currentPage === totalPages || totalPages === 0;
-            lastBtn.disabled = currentPage === totalPages || totalPages === 0;
-
-            // Generar números de página
-            pageNumbersDiv.innerHTML = "";
-
-            if (totalPages <= 7) {
-                // Mostrar todas las páginas si son pocas
-                for (let i = 1; i <= totalPages; i++) {
-                    const pageBtn = createPageButton(i, i === currentPage);
-                    pageNumbersDiv.appendChild(pageBtn);
-                }
-            } else {
-                // Mostrar páginas con elipsis
-                const startPage = Math.max(1, currentPage - 2);
-                const endPage = Math.min(totalPages, currentPage + 2);
-
-                if (startPage > 1) {
-                    pageNumbersDiv.appendChild(createPageButton(1, false));
-                    if (startPage > 2) {
-                        const ellipsis = document.createElement("span");
-                        ellipsis.className = "px-2 py-1 text-gray-500";
-                        ellipsis.textContent = "...";
-                        pageNumbersDiv.appendChild(ellipsis);
-                    }
-                }
-
-                for (let i = startPage; i <= endPage; i++) {
-                    const pageBtn = createPageButton(i, i === currentPage);
-                    pageNumbersDiv.appendChild(pageBtn);
-                }
-
-                if (endPage < totalPages) {
-                    if (endPage < totalPages - 1) {
-                        const ellipsis = document.createElement("span");
-                        ellipsis.className = "px-2 py-1 text-gray-500";
-                        ellipsis.textContent = "...";
-                        pageNumbersDiv.appendChild(ellipsis);
-                    }
-                    pageNumbersDiv.appendChild(createPageButton(totalPages, false));
-                }
-            }
-        }
-
-        // Función para crear botón de página
-        function createPageButton(pageNum, isActive) {
-            const button = document.createElement("button");
-            button.className = `px-3 py-1 border rounded text-sm ${isActive
-                ? "bg-blue-500 text-white border-blue-500"
-                : "border-gray-300 hover:bg-gray-100"
-                }`;
-            button.textContent = pageNum;
-            button.addEventListener("click", () => goToPage(pageNum));
-            return button;
-        }
-
-        // Función para ir a una página específica
-        function goToPage(page) {
-            currentPage = page;
+          });
+        });
+      }
+      // Event listeners para controles de paginación
+      document.addEventListener("DOMContentLoaded", function () {
+        // Event listener para cambiar elementos por página
+        document
+          .getElementById("itemsPerPage")
+          .addEventListener("change", (e) => {
+            itemsPerPage = parseInt(e.target.value);
+            currentPage = 1; // Resetear a primera página
             displayResults(filteredComputers);
-        }
+          });
 
-        // Funcionalidad para importar JSON
-        const jsonFileInput = document.getElementById("jsonFileInput");
-        const jsonPreview = document.getElementById("jsonPreview");
-        const importJsonBtn = document.getElementById("importJsonBtn");
-        const importStatus = document.getElementById("importStatus");
-        const importResults = document.getElementById("importResults");
+        // Event listeners para botones de navegación
+        document
+          .getElementById("firstPage")
+          .addEventListener("click", () => goToPage(1));
+        document
+          .getElementById("prevPage")
+          .addEventListener("click", () =>
+            goToPage(Math.max(1, currentPage - 1))
+          );
+        document.getElementById("nextPage").addEventListener("click", () => {
+          const totalPages = Math.ceil(filteredComputers.length / itemsPerPage);
+          goToPage(Math.min(totalPages, currentPage + 1));
+        });
+        document.getElementById("lastPage").addEventListener("click", () => {
+          const totalPages = Math.ceil(filteredComputers.length / itemsPerPage);
+          goToPage(totalPages);
+        });
+      });
 
-        // Manejar la selección de archivo JSON
-        jsonFileInput.addEventListener("change", (e) => {
-            const file = e.target.files[0];
-            if (!file) {
-                importJsonBtn.disabled = true;
-                jsonPreview.value = "";
-                return;
-            }
+      // Reemplazar la función performSearch existente con esta versión:
 
-            const reader = new FileReader();
-            reader.onload = function (event) {
-                try {
-                    const jsonData = JSON.parse(event.target.result);
-                    jsonPreview.value =
-                        JSON.stringify(jsonData, null, 2).substring(0, 1000) +
-                        (JSON.stringify(jsonData, null, 2).length > 1000 ? "..." : "");
-                    importJsonBtn.disabled = false;
-                } catch (error) {
-                    console.error("Error al parsear JSON:", error);
-                    jsonPreview.value = "Error: Formato JSON inválido";
-                    importJsonBtn.disabled = true;
-                }
-            };
-            reader.readAsText(file);
+      
+async function performSearch() {
+    const searchTerm = searchInput.value.trim().toLowerCase();
+    
+    // Debug: mostrar qué se está buscando
+    console.log("Término de búsqueda:", searchTerm);
+    console.log("Checkbox Ubicación marcado:", searchByUbicacion?.checked);
+
+    if (!searchTerm) {
+        loadAllComputers();
+        return;
+    }
+
+    try {
+        resultsDiv.innerHTML =
+            '<tr><td colspan="12" class="py-4 px-6 border-b text-gray-500 text-center">Buscando...</td></tr>';
+
+        // Obtener todas las computadoras
+        const snapshot = await computadorasCollection
+            .orderBy("createdAt", "desc")
+            .get();
+        const computers = [];
+
+        snapshot.forEach((doc) => {
+            const data = doc.data();
+            data.id = doc.id;
+            computers.push(data);
         });
 
-        // Importar datos a Firebase
-        importJsonBtn.addEventListener("click", async () => {
+        console.log("Total computadoras encontradas:", computers.length);
+
+        // Filtrar según criterios de búsqueda
+        const filteredComputers = computers.filter((computer) => {
+            const codigoMatch =
+                searchByCodigo &&
+                searchByCodigo.checked &&
+                computer.codigo &&
+                computer.codigo.toLowerCase().includes(searchTerm);
+                
+            const marcaMatch =
+                searchByMarca &&
+                searchByMarca.checked &&
+                computer.marca &&
+                computer.marca.toLowerCase().includes(searchTerm);
+                
+            const modeloMatch =
+                searchByModelo &&
+                searchByModelo.checked &&
+                computer.modelo &&
+                computer.modelo.toLowerCase().includes(searchTerm);
+                
+            const procesadorMatch =
+                searchByProcesador &&
+                searchByProcesador.checked &&
+                computer.procesador &&
+                computer.procesador.toLowerCase().includes(searchTerm);
+                
+            const estadoMatch =
+                searchByEstado &&
+                searchByEstado.checked &&
+                computer.estado &&
+                computer.estado.toLowerCase().includes(searchTerm);
+                
+            // Búsqueda por ubicación con debug
+            const ubicacionMatch =
+                searchByUbicacion &&
+                searchByUbicacion.checked &&
+                computer.ubicacion &&
+                computer.ubicacion.toLowerCase().includes(searchTerm);
+                
+            // Debug para ubicación específicamente
+            if (searchByUbicacion && searchByUbicacion.checked) {
+                console.log(`Computadora ${computer.codigo}:`);
+                console.log(`  - Ubicación: "${computer.ubicacion}"`);
+                console.log(`  - Ubicación match: ${ubicacionMatch}`);
+            }
+                
+            const tipoMatch =
+                computer.tipoEquipo &&
+                computer.tipoEquipo.toLowerCase().includes(searchTerm);
+
+            const matchFound = codigoMatch || marcaMatch || modeloMatch || procesadorMatch || estadoMatch || ubicacionMatch || tipoMatch;
+            
+            return matchFound;
+        });
+
+        console.log("Computadoras filtradas:", filteredComputers.length);
+        displayResults(filteredComputers);
+        
+    } catch (error) {
+        console.error("Error al buscar:", error);
+        resultsDiv.innerHTML =
+            `<tr><td colspan="12" class="py-4 px-6 border-b text-red-500 text-center">Error al buscar: ${error.message}</td></tr>`;
+    }
+}
+
+      // Función para actualizar los controles de paginación
+      function updatePaginationControls(totalPages) {
+        const firstBtn = document.getElementById("firstPage");
+        const prevBtn = document.getElementById("prevPage");
+        const nextBtn = document.getElementById("nextPage");
+        const lastBtn = document.getElementById("lastPage");
+        const pageNumbersDiv = document.getElementById("pageNumbers");
+
+        // Habilitar/deshabilitar botones
+        firstBtn.disabled = currentPage === 1;
+        prevBtn.disabled = currentPage === 1;
+        nextBtn.disabled = currentPage === totalPages || totalPages === 0;
+        lastBtn.disabled = currentPage === totalPages || totalPages === 0;
+
+        // Generar números de página
+        pageNumbersDiv.innerHTML = "";
+
+        if (totalPages <= 7) {
+          // Mostrar todas las páginas si son pocas
+          for (let i = 1; i <= totalPages; i++) {
+            const pageBtn = createPageButton(i, i === currentPage);
+            pageNumbersDiv.appendChild(pageBtn);
+          }
+        } else {
+          // Mostrar páginas con elipsis
+          const startPage = Math.max(1, currentPage - 2);
+          const endPage = Math.min(totalPages, currentPage + 2);
+
+          if (startPage > 1) {
+            pageNumbersDiv.appendChild(createPageButton(1, false));
+            if (startPage > 2) {
+              const ellipsis = document.createElement("span");
+              ellipsis.className = "px-2 py-1 text-gray-500";
+              ellipsis.textContent = "...";
+              pageNumbersDiv.appendChild(ellipsis);
+            }
+          }
+
+          for (let i = startPage; i <= endPage; i++) {
+            const pageBtn = createPageButton(i, i === currentPage);
+            pageNumbersDiv.appendChild(pageBtn);
+          }
+
+          if (endPage < totalPages) {
+            if (endPage < totalPages - 1) {
+              const ellipsis = document.createElement("span");
+              ellipsis.className = "px-2 py-1 text-gray-500";
+              ellipsis.textContent = "...";
+              pageNumbersDiv.appendChild(ellipsis);
+            }
+            pageNumbersDiv.appendChild(createPageButton(totalPages, false));
+          }
+        }
+      }
+
+      // Función para crear botón de página
+      function createPageButton(pageNum, isActive) {
+        const button = document.createElement("button");
+        button.className = `px-3 py-1 border rounded text-sm ${
+          isActive
+            ? "bg-blue-500 text-white border-blue-500"
+            : "border-gray-300 hover:bg-gray-100"
+        }`;
+        button.textContent = pageNum;
+        button.addEventListener("click", () => goToPage(pageNum));
+        return button;
+      }
+
+      // Función para ir a una página específica
+      function goToPage(page) {
+        currentPage = page;
+        displayResults(filteredComputers);
+      }
+
+      // Funcionalidad para importar JSON
+      const jsonFileInput = document.getElementById("jsonFileInput");
+      const jsonPreview = document.getElementById("jsonPreview");
+      const importJsonBtn = document.getElementById("importJsonBtn");
+      const importStatus = document.getElementById("importStatus");
+      const importResults = document.getElementById("importResults");
+
+      // Manejar la selección de archivo JSON
+      jsonFileInput.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (!file) {
+          importJsonBtn.disabled = true;
+          jsonPreview.value = "";
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function (event) {
+          try {
+            const jsonData = JSON.parse(event.target.result);
+            jsonPreview.value =
+              JSON.stringify(jsonData, null, 2).substring(0, 1000) +
+              (JSON.stringify(jsonData, null, 2).length > 1000 ? "..." : "");
+            importJsonBtn.disabled = false;
+          } catch (error) {
+            console.error("Error al parsear JSON:", error);
+            jsonPreview.value = "Error: Formato JSON inválido";
+            importJsonBtn.disabled = true;
+          }
+        };
+        reader.readAsText(file);
+      });
+
+      // Importar datos a Firebase
+      importJsonBtn.addEventListener("click", async () => {
+        try {
+          const file = jsonFileInput.files[0];
+          if (!file) return;
+
+          importJsonBtn.disabled = true;
+          importStatus.classList.remove("hidden");
+          importStatus.classList.add("flex");
+          importResults.innerHTML = "";
+
+          const reader = new FileReader();
+          reader.onload = async function (event) {
             try {
-                const file = jsonFileInput.files[0];
-                if (!file) return;
+              const jsonData = JSON.parse(event.target.result);
+              if (!Array.isArray(jsonData)) {
+                throw new Error("El JSON debe ser un array de objetos");
+              }
 
-                importJsonBtn.disabled = true;
-                importStatus.classList.remove("hidden");
-                importStatus.classList.add("flex");
-                importResults.innerHTML = "";
+              let importCount = 0;
+              let skipCount = 0;
+              let errorCount = 0;
 
-                const reader = new FileReader();
-                reader.onload = async function (event) {
-                    try {
-                        const jsonData = JSON.parse(event.target.result);
-                        if (!Array.isArray(jsonData)) {
-                            throw new Error("El JSON debe ser un array de objetos");
-                        }
+              // Usar un lote (batch) para operaciones masivas
+              let batch = db.batch(); // Cambié de const a let para poder reinicializarlo
+              const promises = [];
 
-                        let importCount = 0;
-                        let skipCount = 0;
-                        let errorCount = 0;
+              for (const item of jsonData) {
+                try {
+                  // Verificar si el código ya existe
+                  const codigoSnapshot = await computadorasCollection
+                    .where("codigo", "==", item.codigo)
+                    .get();
 
-                        // Usar un lote (batch) para operaciones masivas
-                        let batch = db.batch(); // Cambié de const a let para poder reinicializarlo
-                        const promises = [];
+                  if (!codigoSnapshot.empty) {
+                    skipCount++;
+                    continue; // Saltar si ya existe
+                  }
 
-                        for (const item of jsonData) {
-                            try {
-                                // Verificar si el código ya existe
-                                const codigoSnapshot = await computadorasCollection
-                                    .where("codigo", "==", item.codigo)
-                                    .get();
+                  // Preparar el objeto para guardar
+                  const computerData = {
+                    codigo: item.codigo || "",
+                    tipoEquipo: item.tipoEquipo || "",
+                    marca: item.marca || "",
+                    modelo: item.modelo || "",
+                    procesador: item.procesador || "",
+                    ram: parseInt(item.ram) || 0,
+                    almacenamiento: parseInt(item.almacenamiento) || 0,
+                    estado: item.estado || "",
+                    ubicacion: item.ubicacion || "",
+                    fecha: item.fecha || new Date().toISOString().split("T")[0],
+                    notas: item.notas || "",
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                  };
 
-                                if (!codigoSnapshot.empty) {
-                                    skipCount++;
-                                    continue; // Saltar si ya existe
-                                }
+                  // Para grandes volúmenes es mejor usar operaciones por lotes
+                  const docRef = computadorasCollection.doc();
+                  batch.set(docRef, computerData);
+                  importCount++;
 
-                                // Preparar el objeto para guardar
-                                const computerData = {
-                                    codigo: item.codigo || "",
-                                    tipoEquipo: item.tipoEquipo || "",
-                                    marca: item.marca || "",
-                                    modelo: item.modelo || "",
-                                    procesador: item.procesador || "",
-                                    ram: parseInt(item.ram) || 0,
-                                    almacenamiento: parseInt(item.almacenamiento) || 0,
-                                    estado: item.estado || "",
-                                    ubicacion: item.ubicacion || "",
-                                    fecha: item.fecha || new Date().toISOString().split("T")[0],
-                                    notas: item.notas || "",
-                                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                                };
+                  // Cada 500 elementos, ejecutar el lote y crear uno nuevo
+                  if (importCount % 500 === 0) {
+                    promises.push(batch.commit());
+                    batch = db.batch(); // Reinicializar el lote
+                  }
+                } catch (error) {
+                  console.error("Error al procesar elemento:", error, item);
+                  errorCount++;
+                }
+              }
 
-                                // Para grandes volúmenes es mejor usar operaciones por lotes
-                                const docRef = computadorasCollection.doc();
-                                batch.set(docRef, computerData);
-                                importCount++;
+              // Ejecutar el último lote si hay pendientes
+              if (importCount % 500 !== 0) {
+                promises.push(batch.commit());
+              }
 
-                                // Cada 500 elementos, ejecutar el lote y crear uno nuevo
-                                if (importCount % 500 === 0) {
-                                    promises.push(batch.commit());
-                                    batch = db.batch(); // Reinicializar el lote
-                                }
-                            } catch (error) {
-                                console.error("Error al procesar elemento:", error, item);
-                                errorCount++;
-                            }
-                        }
+              // Esperar que todas las operaciones terminen
+              await Promise.all(promises);
 
-                        // Ejecutar el último lote si hay pendientes
-                        if (importCount % 500 !== 0) {
-                            promises.push(batch.commit());
-                        }
-
-                        // Esperar que todas las operaciones terminen
-                        await Promise.all(promises);
-
-                        importResults.innerHTML = `
+              importResults.innerHTML = `
         <div class="text-green-600">Importación completada:</div>
         <ul class="list-disc pl-5">
             <li>${importCount} elementos importados</li>
@@ -1492,480 +1681,503 @@
             <li>${errorCount} errores</li>
         </ul>`;
 
-                        // Recargar computadoras para mostrar las importadas
-                        loadAllComputers();
-                    } catch (error) {
-                        console.error("Error al importar JSON:", error);
-                        importResults.innerHTML =
-                            `<div class="text-red-600">Error: ${error.message}</div>`;
-                    } finally {
-                        importStatus.classList.remove("flex");
-                        importStatus.classList.add("hidden");
-                        importJsonBtn.disabled = false;
-                    }
-                };
-                reader.readAsText(file);
+              // Recargar computadoras para mostrar las importadas
+              loadAllComputers();
             } catch (error) {
-                console.error("Error al procesar archivo:", error);
-                importResults.innerHTML = `<div class="text-red-600">Error: ${error.message}</div>`;
-                importStatus.classList.remove("flex");
-                importStatus.classList.add("hidden");
-                importJsonBtn.disabled = false;
+              console.error("Error al importar JSON:", error);
+              importResults.innerHTML = `<div class="text-red-600">Error: ${error.message}</div>`;
+            } finally {
+              importStatus.classList.remove("flex");
+              importStatus.classList.add("hidden");
+              importJsonBtn.disabled = false;
             }
-        });
+          };
+          reader.readAsText(file);
+        } catch (error) {
+          console.error("Error al procesar archivo:", error);
+          importResults.innerHTML = `<div class="text-red-600">Error: ${error.message}</div>`;
+          importStatus.classList.remove("flex");
+          importStatus.classList.add("hidden");
+          importJsonBtn.disabled = false;
+        }
+      });
 
-        // Cargar todas las computadoras
-        async function loadAllComputers() {
-            try {
-                resultsDiv.innerHTML =
-                    '<tr><td colspan="12" class="py-4 px-6 border-b text-gray-500 text-center">Cargando...</td></tr>';
+      // Cargar todas las computadoras
+      async function loadAllComputers() {
+        try {
+          resultsDiv.innerHTML =
+            '<tr><td colspan="12" class="py-4 px-6 border-b text-gray-500 text-center">Cargando...</td></tr>';
 
-                // Configurar un listener en tiempo real para actualizar automáticamente cuando haya cambios
-                if (!window.realTimeListener) {
-                    window.realTimeListener = computadorasCollection
-                        .orderBy("createdAt", "desc")
-                        .onSnapshot(
-                            (snapshot) => {
-                                const computers = [];
-                                snapshot.forEach((doc) => {
-                                    const data = doc.data();
-                                    data.id = doc.id;
-                                    computers.push(data);
-                                });
-                                displayResults(computers);
-                            },
-                            (error) => {
-                                console.error("Error en tiempo real:", error);
-                                resultsDiv.innerHTML =
-                                    `<tr><td colspan="12" class="py-4 px-6 border-b text-red-500 text-center">Error al actualizar: ${error.message}</td></tr>`;
-                            }
-                        );
-                } else {
-                    // Si ya existe el listener, solo obtener los datos una vez
-                    const snapshot = await computadorasCollection
-                        .orderBy("createdAt", "desc")
-                        .get();
-                    const computers = [];
-
-                    snapshot.forEach((doc) => {
-                        const data = doc.data();
-                        data.id = doc.id;
-                        computers.push(data);
-                    });
-
-                    displayResults(computers);
+          // Configurar un listener en tiempo real para actualizar automáticamente cuando haya cambios
+          if (!window.realTimeListener) {
+            window.realTimeListener = computadorasCollection
+              .orderBy("createdAt", "desc")
+              .onSnapshot(
+                (snapshot) => {
+                  const computers = [];
+                  snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    data.id = doc.id;
+                    computers.push(data);
+                  });
+                  displayResults(computers);
+                },
+                (error) => {
+                  console.error("Error en tiempo real:", error);
+                  resultsDiv.innerHTML = `<tr><td colspan="12" class="py-4 px-6 border-b text-red-500 text-center">Error al actualizar: ${error.message}</td></tr>`;
                 }
-            } catch (error) {
-                console.error("Error al cargar computadoras:", error);
-                resultsDiv.innerHTML =
-                    `<tr><td colspan="12" class="py-4 px-6 border-b text-red-500 text-center">Error al cargar computadoras: ${error.message}</td></tr>`;
-            }
-        }
+              );
+          } else {
+            // Si ya existe el listener, solo obtener los datos una vez
+            const snapshot = await computadorasCollection
+              .orderBy("createdAt", "desc")
+              .get();
+            const computers = [];
 
-        // Agregar los eventos después de que el DOM esté completamente cargado
-        document.addEventListener("DOMContentLoaded", function () {
-            // Asegurar que el modal de edición está disponible
-            integrarModalEdicion();
-
-            // Cargar todas las computadoras al iniciar
-            loadAllComputers();
-        });
-
-        // Si no estamos seguro de que el DOMContentLoaded ya ha ocurrido (por ejemplo, si este script se carga tarde)
-        // podemos verificar si el documento ya está "ready"
-        if (document.readyState === "loading") {
-            document.addEventListener("DOMContentLoaded", function () {
-                integrarModalEdicion();
-                loadAllComputers();
+            snapshot.forEach((doc) => {
+              const data = doc.data();
+              data.id = doc.id;
+              computers.push(data);
             });
-        } else {
-            // DOMContentLoaded ya ha ocurrido
-            integrarModalEdicion();
-            loadAllComputers();
-        }
-    </script>
 
+            displayResults(computers);
+          }
+        } catch (error) {
+          console.error("Error al cargar computadoras:", error);
+          resultsDiv.innerHTML = `<tr><td colspan="12" class="py-4 px-6 border-b text-red-500 text-center">Error al cargar computadoras: ${error.message}</td></tr>`;
+        }
+      }
+
+      // Agregar los eventos después de que el DOM esté completamente cargado
+      document.addEventListener("DOMContentLoaded", function () {
+        // Asegurar que el modal de edición está disponible
+        integrarModalEdicion();
+
+        // Cargar todas las computadoras al iniciar
+        loadAllComputers();
+      });
+
+      // Si no estamos seguro de que el DOMContentLoaded ya ha ocurrido (por ejemplo, si este script se carga tarde)
+      // podemos verificar si el documento ya está "ready"
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", function () {
+          integrarModalEdicion();
+          loadAllComputers();
+        });
+      } else {
+        // DOMContentLoaded ya ha ocurrido
+        integrarModalEdicion();
+        loadAllComputers();
+      }
+    </script>
 
     <script>
-        // auth.js - Verificador de autenticación para páginas protegidas
+      // auth.js - Verificador de autenticación para páginas protegidas
 
-        // Función para mostrar/ocultar el dropdown del usuario
-        function toggleUserDropdown() {
-            const dropdown = document.getElementById('user-dropdown');
-            if (dropdown) {
-                dropdown.classList.toggle('hidden');
-                console.log('Dropdown toggled');
+      // Función para mostrar/ocultar el dropdown del usuario
+      function toggleUserDropdown() {
+        const dropdown = document.getElementById("user-dropdown");
+        if (dropdown) {
+          dropdown.classList.toggle("hidden");
+          console.log("Dropdown toggled");
+        }
+      }
+
+      // Cerrar dropdown al hacer clic fuera de él
+      document.addEventListener("click", function (event) {
+        const dropdown = document.getElementById("user-dropdown");
+        const button = event.target.closest(
+          'button[onclick="toggleUserDropdown()"]'
+        );
+
+        if (!button && dropdown && !dropdown.classList.contains("hidden")) {
+          dropdown.classList.add("hidden");
+        }
+      });
+
+      // Función para verificar autenticación
+      function checkAuthentication() {
+        console.log("Verificando autenticación...");
+
+        try {
+          // Verificar sesión en localStorage primero
+          const sessionData = localStorage.getItem("userSession");
+          if (sessionData) {
+            const userData = JSON.parse(sessionData);
+
+            // Verificar que la sesión sea válida
+            if (!userData.hasPermission || !userData.userId) {
+              console.log("Sesión inválida: faltan permisos o ID");
+              redirectToLogin("Sesión inválida");
+              return false;
             }
+
+            // Verificar tiempo de expiración (1 hora)
+            const loginTime = new Date(userData.loginTime);
+            const currentTime = new Date();
+            const timeDiff = (currentTime - loginTime) / (1000 * 60 * 60); // en horas
+
+            if (timeDiff > 1) {
+              console.log("Sesión expirada por tiempo");
+              localStorage.removeItem("userSession");
+              redirectToLogin("Sesión expirada");
+              return false;
+            }
+
+            // Si llegamos aquí, la sesión es válida
+            console.log("Usuario autenticado:", userData.userName);
+
+            // Mostrar información del usuario en la página
+            displayUserInfo(userData);
+
+            // Configurar elementos específicos del administrador
+            configureAdminElements(userData);
+
+            return true;
+          }
+
+          // Si no hay en localStorage, verificar cookies
+          const sessionCookie = document.cookie
+            .split("; ")
+            .find((row) => row.startsWith("session="));
+
+          if (!sessionCookie) {
+            console.log("No hay sesión en cookies");
+            redirectToLogin("No hay sesión activa");
+            return false;
+          }
+
+          const cookieData = JSON.parse(sessionCookie.split("=")[1]);
+
+          // Verificar que la sesión sea válida
+          if (!cookieData.hasPermission || !cookieData.userId) {
+            console.log("Sesión inválida en cookies");
+            redirectToLogin("Sesión inválida");
+            return false;
+          }
+
+          // Verificar tiempo de expiración (1 hora)
+          const loginTime = new Date(cookieData.loginTime);
+          const currentTime = new Date();
+          const timeDiff = (currentTime - loginTime) / (1000 * 60 * 60); // en horas
+
+          if (timeDiff > 1) {
+            console.log("Sesión expirada por tiempo (cookies)");
+            redirectToLogin("Sesión expirada");
+            return false;
+          }
+
+          // Si llegamos aquí, la sesión es válida
+          console.log("Usuario autenticado (cookies):", cookieData.userName);
+
+          // Copiar a localStorage para próximas verificaciones
+          localStorage.setItem("userSession", JSON.stringify(cookieData));
+
+          // Mostrar información del usuario en la página
+          displayUserInfo(cookieData);
+
+          // Configurar elementos específicos del administrador
+          configureAdminElements(cookieData);
+
+          return true;
+        } catch (error) {
+          console.error("Error verificando autenticación:", error);
+          redirectToLogin("Error de autenticación");
+          return false;
+        }
+      }
+
+      // Función para redireccionar al login
+      function redirectToLogin(reason) {
+        console.log("Redirigiendo al login:", reason);
+
+        // Limpiar cualquier sesión corrupta
+        localStorage.removeItem("userSession");
+        document.cookie = "session=; path=/; max-age=0";
+
+        // Redireccionar inmediatamente
+        window.location.replace("index.html");
+      }
+
+      // Función para mostrar información del usuario (MEJORADA)
+      function displayUserInfo(sessionData) {
+        //console.log('Mostrando información del usuario:', sessionData);
+
+        // Función helper para actualizar elemento si existe
+        function updateElement(id, content) {
+          const element = document.getElementById(id);
+          if (element) {
+            element.textContent = content;
+            console.log(`Actualizado ${id}:`, content);
+          } else {
+            console.log(`Elemento ${id} no encontrado`);
+          }
         }
 
-        // Cerrar dropdown al hacer clic fuera de él
-        document.addEventListener('click', function (event) {
-            const dropdown = document.getElementById('user-dropdown');
-            const button = event.target.closest('button[onclick="toggleUserDropdown()"]');
+        // Función helper para actualizar por clase
+        function updateElementByClass(className, content) {
+          const element = document.querySelector(`.${className}`);
+          if (element) {
+            element.textContent = content;
+            console.log(`Actualizado .${className}:`, content);
+          } else {
+            console.log(`Elemento .${className} no encontrado`);
+          }
+        }
 
-            if (!button && dropdown && !dropdown.classList.contains('hidden')) {
-                dropdown.classList.add('hidden');
-            }
+        // Actualizar elementos comunes
+        updateElement("user-name", sessionData.userName);
+        updateElement("user-email", sessionData.userEmail);
+        updateElement("username", sessionData.userName);
+        updateElement("user-display-name", sessionData.userName);
+        updateElement("user-role", sessionData.userRole || "Usuario");
+
+        // Actualizar por clases
+        updateElementByClass(
+          "welcome-message",
+          `Bienvenido, ${sessionData.userName}`
+        );
+        updateElementByClass("user-name", sessionData.userName);
+        updateElementByClass("user-email", sessionData.userEmail);
+
+        // Actualizar cualquier span que contenga el nombre
+        const userSpans = document.querySelectorAll('span[data-user="name"]');
+        userSpans.forEach((span) => {
+          span.textContent = sessionData.userName;
         });
 
-        // Función para verificar autenticación
-        function checkAuthentication() {
-            console.log('Verificando autenticación...');
-
-            try {
-                // Verificar sesión en localStorage primero
-                const sessionData = localStorage.getItem('userSession');
-                if (sessionData) {
-                    const userData = JSON.parse(sessionData);
-
-                    // Verificar que la sesión sea válida
-                    if (!userData.hasPermission || !userData.userId) {
-                        console.log('Sesión inválida: faltan permisos o ID');
-                        redirectToLogin('Sesión inválida');
-                        return false;
-                    }
-
-                    // Verificar tiempo de expiración (1 hora)
-                    const loginTime = new Date(userData.loginTime);
-                    const currentTime = new Date();
-                    const timeDiff = (currentTime - loginTime) / (1000 * 60 * 60); // en horas
-
-                    if (timeDiff > 1) {
-                        console.log('Sesión expirada por tiempo');
-                        localStorage.removeItem('userSession');
-                        redirectToLogin('Sesión expirada');
-                        return false;
-                    }
-
-                    // Si llegamos aquí, la sesión es válida
-                    console.log('Usuario autenticado:', userData.userName);
-
-                    // Mostrar información del usuario en la página
-                    displayUserInfo(userData);
-
-                    // Configurar elementos específicos del administrador
-                    configureAdminElements(userData);
-
-                    return true;
-                }
-
-                // Si no hay en localStorage, verificar cookies
-                const sessionCookie = document.cookie
-                    .split('; ')
-                    .find(row => row.startsWith('session='));
-
-                if (!sessionCookie) {
-                    console.log('No hay sesión en cookies');
-                    redirectToLogin('No hay sesión activa');
-                    return false;
-                }
-
-                const cookieData = JSON.parse(sessionCookie.split('=')[1]);
-
-                // Verificar que la sesión sea válida
-                if (!cookieData.hasPermission || !cookieData.userId) {
-                    console.log('Sesión inválida en cookies');
-                    redirectToLogin('Sesión inválida');
-                    return false;
-                }
-
-                // Verificar tiempo de expiración (1 hora)
-                const loginTime = new Date(cookieData.loginTime);
-                const currentTime = new Date();
-                const timeDiff = (currentTime - loginTime) / (1000 * 60 * 60); // en horas
-
-                if (timeDiff > 1) {
-                    console.log('Sesión expirada por tiempo (cookies)');
-                    redirectToLogin('Sesión expirada');
-                    return false;
-                }
-
-                // Si llegamos aquí, la sesión es válida
-                console.log('Usuario autenticado (cookies):', cookieData.userName);
-
-                // Copiar a localStorage para próximas verificaciones
-                localStorage.setItem('userSession', JSON.stringify(cookieData));
-
-                // Mostrar información del usuario en la página
-                displayUserInfo(cookieData);
-
-                // Configurar elementos específicos del administrador
-                configureAdminElements(cookieData);
-
-                return true;
-
-            } catch (error) {
-                console.error('Error verificando autenticación:', error);
-                redirectToLogin('Error de autenticación');
-                return false;
-            }
-        }
-
-        // Función para redireccionar al login
-        function redirectToLogin(reason) {
-            console.log('Redirigiendo al login:', reason);
-
-            // Limpiar cualquier sesión corrupta
-            localStorage.removeItem('userSession');
-            document.cookie = 'session=; path=/; max-age=0';
-
-            // Redireccionar inmediatamente
-            window.location.replace('index.html');
-        }
-
-        // Función para mostrar información del usuario (MEJORADA)
-        function displayUserInfo(sessionData) {
-            //console.log('Mostrando información del usuario:', sessionData);
-
-            // Función helper para actualizar elemento si existe
-            function updateElement(id, content) {
-                const element = document.getElementById(id);
-                if (element) {
-                    element.textContent = content;
-                    console.log(`Actualizado ${id}:`, content);
-                } else {
-                    console.log(`Elemento ${id} no encontrado`);
-                }
-            }
-
-            // Función helper para actualizar por clase
-            function updateElementByClass(className, content) {
-                const element = document.querySelector(`.${className}`);
-                if (element) {
-                    element.textContent = content;
-                    console.log(`Actualizado .${className}:`, content);
-                } else {
-                    console.log(`Elemento .${className} no encontrado`);
-                }
-            }
-
-            // Actualizar elementos comunes
-            updateElement('user-name', sessionData.userName);
-            updateElement('user-email', sessionData.userEmail);
-            updateElement('username', sessionData.userName);
-            updateElement('user-display-name', sessionData.userName);
-            updateElement('user-role', sessionData.userRole || 'Usuario');
-
-            // Actualizar por clases
-            updateElementByClass('welcome-message', `Bienvenido, ${sessionData.userName}`);
-            updateElementByClass('user-name', sessionData.userName);
-            updateElementByClass('user-email', sessionData.userEmail);
-
-            // Actualizar cualquier span que contenga el nombre
-            const userSpans = document.querySelectorAll('span[data-user="name"]');
-            userSpans.forEach(span => {
-                span.textContent = sessionData.userName;
-            });
-
-            // Actualizar elementos con atributo data-field
-            const nameFields = document.querySelectorAll('[data-field="userName"]');
-            nameFields.forEach(field => {
-                field.textContent = sessionData.userName;
-            });
-
-            const emailFields = document.querySelectorAll('[data-field="userEmail"]');
-            emailFields.forEach(field => {
-                field.textContent = sessionData.userEmail;
-            });
-
-            const roleFields = document.querySelectorAll('[data-field="userRole"]');
-            roleFields.forEach(field => {
-                field.textContent = sessionData.userRole || 'Usuario';
-            });
-        }
-
-        // NUEVA FUNCIÓN: Configurar elementos específicos del administrador
-        function configureAdminElements(userData) {
-            console.log('Configurando elementos de administrador para:', userData.userRole);
-
-            // Buscar el botón de crear usuario
-            const adminCreateUserBtn = document.getElementById('admin-create-user-btn');
-
-            if (adminCreateUserBtn) {
-                if (userData.userRole === 'Administrador') {
-                    // Mostrar botón para administradores
-                    adminCreateUserBtn.classList.remove('hidden');
-                    adminCreateUserBtn.classList.add('flex');
-                    console.log('Botón de crear usuario mostrado para administrador');
-                } else {
-                    // Ocultar botón para usuarios normales
-                    adminCreateUserBtn.classList.add('hidden');
-                    adminCreateUserBtn.classList.remove('flex');
-                    console.log('Botón de crear usuario ocultado para usuario normal');
-                }
-            } else {
-                console.log('Botón admin-create-user-btn no encontrado en esta página');
-            }
-
-            // Configurar otros elementos específicos de administrador si los hay
-            const adminElements = document.querySelectorAll('[data-admin-only="true"]');
-            adminElements.forEach(element => {
-                if (userData.userRole === 'Administrador') {
-                    element.classList.remove('hidden');
-                    element.style.display = '';
-                } else {
-                    element.classList.add('hidden');
-                    element.style.display = 'none';
-                }
-            });
-
-            // Configurar elementos específicos de roles
-            const roleElements = document.querySelectorAll('[data-required-role]');
-            roleElements.forEach(element => {
-                const requiredRole = element.getAttribute('data-required-role');
-                if (userData.userRole === requiredRole) {
-                    element.classList.remove('hidden');
-                    element.style.display = '';
-                } else {
-                    element.classList.add('hidden');
-                    element.style.display = 'none';
-                }
-            });
-        }
-
-        // Función para cargar información del usuario (SIMPLIFICADA)
-        function loadUserInfo() {
-            console.log('Función loadUserInfo llamada - redirigiendo a checkAuthentication');
-            // Esta función ahora solo llama a checkAuthentication que ya maneja todo
-            return checkAuthentication();
-        }
-
-        // Función para logout
-        function logout() {
-            if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
-                console.log('Cerrando sesión...');
-
-                // Limpiar sesión
-                localStorage.removeItem('userSession');
-                document.cookie = 'session=; path=/; max-age=0';
-
-                // Redireccionar al login
-                window.location.replace('index.html');
-            }
-        }
-
-        // Función para obtener datos del usuario actual
-        function getCurrentUser() {
-            try {
-                const sessionData = localStorage.getItem('userSession');
-                if (sessionData) {
-                    return JSON.parse(sessionData);
-                }
-
-                // Si no hay en localStorage, verificar cookies
-                const sessionCookie = document.cookie
-                    .split('; ')
-                    .find(row => row.startsWith('session='));
-
-                if (sessionCookie) {
-                    return JSON.parse(sessionCookie.split('=')[1]);
-                }
-
-                return null;
-            } catch (error) {
-                console.error('Error obteniendo usuario actual:', error);
-                return null;
-            }
-        }
-
-        // Función para forzar actualización de la información del usuario
-        function refreshUserInfo() {
-            const user = getCurrentUser();
-            if (user) {
-                displayUserInfo(user);
-                configureAdminElements(user);
-            }
-        }
-
-        // NUEVA FUNCIÓN: Redirigir a la página de crear usuario
-        function redirectToCreateUser() {
-            const currentUser = getCurrentUser();
-
-            if (!currentUser) {
-                console.log('No hay usuario logueado');
-                redirectToLogin('Sesión expirada');
-                return;
-            }
-
-            // Verificar que el usuario sea administrador
-            if (currentUser.userRole === 'Administrador') {
-                console.log('Administrador verificado, redirigiendo a crear usuario');
-                window.location.href = 'Crear-usuario.html'; // Cambia por tu página real
-            } else {
-                console.log('Usuario sin permisos de administrador intentó crear usuario');
-                alert(
-                    'No tienes permisos para acceder a esta función. Solo los administradores pueden crear usuarios.'
-                    );
-            }
-        }
-
-        function redirectToUserManagement() {
-            const currentUser = getCurrentUser();
-
-            if (!currentUser) {
-                console.log('No hay usuario logueado');
-                redirectToLogin('Sesión expirada');
-                return;
-            }
-
-            // Verificar que el usuario sea administrador
-            if (currentUser.userRole === 'Administrador') {
-                console.log('Administrador verificado, redirigiendo a tabla de usuarios');
-                window.location.href = 'Usuarios.html'; // Cambia por tu página real
-            } else {
-                console.log('Usuario sin permisos de administrador intentó crear usuario');
-                alert(
-                    'No tienes permisos para acceder a esta función. Solo los administradores pueden crear usuarios.'
-                    );
-            }
-        }
-
-        // NUEVA FUNCIÓN: Verificar si el usuario actual es administrador
-        function isCurrentUserAdmin() {
-            const user = getCurrentUser();
-            return user && user.userRole === 'Administrador';
-        }
-
-        // NUEVA FUNCIÓN: Ejecutar función solo si es administrador
-        function executeIfAdmin(callback, errorMessage = 'Solo los administradores pueden realizar esta acción.') {
-            if (isCurrentUserAdmin()) {
-                callback();
-            } else {
-                alert(errorMessage);
-            }
-        }
-
-        // Ejecutar verificación cuando se carga la página
-        document.addEventListener('DOMContentLoaded', function () {
-            console.log('DOM cargado, ejecutando verificación de autenticación...');
-            checkAuthentication();
+        // Actualizar elementos con atributo data-field
+        const nameFields = document.querySelectorAll('[data-field="userName"]');
+        nameFields.forEach((field) => {
+          field.textContent = sessionData.userName;
         });
 
-        // También ejecutar cuando la página está completamente cargada
-        window.addEventListener('load', function () {
-            console.log('Página completamente cargada, refrescando info de usuario...');
-            setTimeout(refreshUserInfo, 100);
+        const emailFields = document.querySelectorAll(
+          '[data-field="userEmail"]'
+        );
+        emailFields.forEach((field) => {
+          field.textContent = sessionData.userEmail;
         });
 
-        // Verificar sesión periódicamente (cada 5 minutos)
-        setInterval(function () {
-            console.log('Verificación periódica de sesión...');
-            checkAuthentication();
-        }, 5 * 60 * 1000);
+        const roleFields = document.querySelectorAll('[data-field="userRole"]');
+        roleFields.forEach((field) => {
+          field.textContent = sessionData.userRole || "Usuario";
+        });
+      }
 
-        // Hacer funciones accesibles globalmente
-        window.logout = logout;
-        window.getCurrentUser = getCurrentUser;
-        window.checkAuthentication = checkAuthentication;
-        window.loadUserInfo = loadUserInfo;
-        window.refreshUserInfo = refreshUserInfo;
-        window.displayUserInfo = displayUserInfo;
-        window.redirectToCreateUser = redirectToCreateUser;
-        window.isCurrentUserAdmin = isCurrentUserAdmin;
-        window.executeIfAdmin = executeIfAdmin;
-        window.configureAdminElements = configureAdminElements;
-        window.toggleUserDropdown = toggleUserDropdown;
+      // NUEVA FUNCIÓN: Configurar elementos específicos del administrador
+      function configureAdminElements(userData) {
+        console.log(
+          "Configurando elementos de administrador para:",
+          userData.userRole
+        );
+
+        // Buscar el botón de crear usuario
+        const adminCreateUserBtn = document.getElementById(
+          "admin-create-user-btn"
+        );
+
+        if (adminCreateUserBtn) {
+          if (userData.userRole === "Administrador") {
+            // Mostrar botón para administradores
+            adminCreateUserBtn.classList.remove("hidden");
+            adminCreateUserBtn.classList.add("flex");
+            console.log("Botón de crear usuario mostrado para administrador");
+          } else {
+            // Ocultar botón para usuarios normales
+            adminCreateUserBtn.classList.add("hidden");
+            adminCreateUserBtn.classList.remove("flex");
+            console.log("Botón de crear usuario ocultado para usuario normal");
+          }
+        } else {
+          console.log(
+            "Botón admin-create-user-btn no encontrado en esta página"
+          );
+        }
+
+        // Configurar otros elementos específicos de administrador si los hay
+        const adminElements = document.querySelectorAll(
+          '[data-admin-only="true"]'
+        );
+        adminElements.forEach((element) => {
+          if (userData.userRole === "Administrador") {
+            element.classList.remove("hidden");
+            element.style.display = "";
+          } else {
+            element.classList.add("hidden");
+            element.style.display = "none";
+          }
+        });
+
+        // Configurar elementos específicos de roles
+        const roleElements = document.querySelectorAll("[data-required-role]");
+        roleElements.forEach((element) => {
+          const requiredRole = element.getAttribute("data-required-role");
+          if (userData.userRole === requiredRole) {
+            element.classList.remove("hidden");
+            element.style.display = "";
+          } else {
+            element.classList.add("hidden");
+            element.style.display = "none";
+          }
+        });
+      }
+
+      // Función para cargar información del usuario (SIMPLIFICADA)
+      function loadUserInfo() {
+        console.log(
+          "Función loadUserInfo llamada - redirigiendo a checkAuthentication"
+        );
+        // Esta función ahora solo llama a checkAuthentication que ya maneja todo
+        return checkAuthentication();
+      }
+
+      // Función para logout
+      function logout() {
+        if (confirm("¿Estás seguro de que quieres cerrar sesión?")) {
+          console.log("Cerrando sesión...");
+
+          // Limpiar sesión
+          localStorage.removeItem("userSession");
+          document.cookie = "session=; path=/; max-age=0";
+
+          // Redireccionar al login
+          window.location.replace("index.html");
+        }
+      }
+
+      // Función para obtener datos del usuario actual
+      function getCurrentUser() {
+        try {
+          const sessionData = localStorage.getItem("userSession");
+          if (sessionData) {
+            return JSON.parse(sessionData);
+          }
+
+          // Si no hay en localStorage, verificar cookies
+          const sessionCookie = document.cookie
+            .split("; ")
+            .find((row) => row.startsWith("session="));
+
+          if (sessionCookie) {
+            return JSON.parse(sessionCookie.split("=")[1]);
+          }
+
+          return null;
+        } catch (error) {
+          console.error("Error obteniendo usuario actual:", error);
+          return null;
+        }
+      }
+
+      // Función para forzar actualización de la información del usuario
+      function refreshUserInfo() {
+        const user = getCurrentUser();
+        if (user) {
+          displayUserInfo(user);
+          configureAdminElements(user);
+        }
+      }
+
+      // NUEVA FUNCIÓN: Redirigir a la página de crear usuario
+      function redirectToCreateUser() {
+        const currentUser = getCurrentUser();
+
+        if (!currentUser) {
+          console.log("No hay usuario logueado");
+          redirectToLogin("Sesión expirada");
+          return;
+        }
+
+        // Verificar que el usuario sea administrador
+        if (currentUser.userRole === "Administrador") {
+          console.log("Administrador verificado, redirigiendo a crear usuario");
+          window.location.href = "Crear-usuario.html"; // Cambia por tu página real
+        } else {
+          console.log(
+            "Usuario sin permisos de administrador intentó crear usuario"
+          );
+          alert(
+            "No tienes permisos para acceder a esta función. Solo los administradores pueden crear usuarios."
+          );
+        }
+      }
+
+      function redirectToUserManagement() {
+        const currentUser = getCurrentUser();
+
+        if (!currentUser) {
+          console.log("No hay usuario logueado");
+          redirectToLogin("Sesión expirada");
+          return;
+        }
+
+        // Verificar que el usuario sea administrador
+        if (currentUser.userRole === "Administrador") {
+          console.log(
+            "Administrador verificado, redirigiendo a tabla de usuarios"
+          );
+          window.location.href = "Usuarios.html"; // Cambia por tu página real
+        } else {
+          console.log(
+            "Usuario sin permisos de administrador intentó crear usuario"
+          );
+          alert(
+            "No tienes permisos para acceder a esta función. Solo los administradores pueden crear usuarios."
+          );
+        }
+      }
+
+      // NUEVA FUNCIÓN: Verificar si el usuario actual es administrador
+      function isCurrentUserAdmin() {
+        const user = getCurrentUser();
+        return user && user.userRole === "Administrador";
+      }
+
+      // NUEVA FUNCIÓN: Ejecutar función solo si es administrador
+      function executeIfAdmin(
+        callback,
+        errorMessage = "Solo los administradores pueden realizar esta acción."
+      ) {
+        if (isCurrentUserAdmin()) {
+          callback();
+        } else {
+          alert(errorMessage);
+        }
+      }
+
+      // Ejecutar verificación cuando se carga la página
+      document.addEventListener("DOMContentLoaded", function () {
+        console.log("DOM cargado, ejecutando verificación de autenticación...");
+        checkAuthentication();
+      });
+
+      // También ejecutar cuando la página está completamente cargada
+      window.addEventListener("load", function () {
+        console.log(
+          "Página completamente cargada, refrescando info de usuario..."
+        );
+        setTimeout(refreshUserInfo, 100);
+      });
+
+      // Verificar sesión periódicamente (cada 5 minutos)
+      setInterval(function () {
+        console.log("Verificación periódica de sesión...");
+        checkAuthentication();
+      }, 5 * 60 * 1000);
+
+      // Hacer funciones accesibles globalmente
+      window.logout = logout;
+      window.getCurrentUser = getCurrentUser;
+      window.checkAuthentication = checkAuthentication;
+      window.loadUserInfo = loadUserInfo;
+      window.refreshUserInfo = refreshUserInfo;
+      window.displayUserInfo = displayUserInfo;
+      window.redirectToCreateUser = redirectToCreateUser;
+      window.isCurrentUserAdmin = isCurrentUserAdmin;
+      window.executeIfAdmin = executeIfAdmin;
+      window.configureAdminElements = configureAdminElements;
+      window.toggleUserDropdown = toggleUserDropdown;
     </script>
-</body>
-
+  </body>
 </html>
