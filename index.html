@@ -401,6 +401,10 @@
               <label class="mb-1.5 block text-sm font-bold">Fecha ingreso</label>
               <input id="fecha" class="input-base" type="date" required>
             </div>
+            <div>
+              <label class="mb-1.5 block text-sm font-bold">Precio estimado</label>
+              <input id="precioEstimado" class="input-base" type="number" min="0" step="0.01" placeholder="0.00">
+            </div>
             <div class="lg:col-span-2">
               <label class="mb-1.5 block text-sm font-bold">Notas</label>
               <input id="notas" class="input-base" type="text" placeholder="Notas adicionales">
@@ -419,7 +423,7 @@
           <div class="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
             <div>
               <h2 class="text-xl font-extrabold">Importar datos desde JSON</h2>
-              <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">El JSON debe ser un arreglo de objetos con campos como código, marca, modelo, RAM, estado y ubicación.</p>
+              <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">El JSON debe ser un arreglo de objetos con campos como código, marca, modelo, RAM, precio estimado, estado y ubicación.</p>
             </div>
             <button id="importJsonBtn" class="btn-primary disabled:cursor-not-allowed disabled:opacity-50" disabled>
               <i data-lucide="upload-cloud" class="h-4 w-4"></i>
@@ -485,7 +489,7 @@
           </div>
 
           <div class="overflow-x-auto">
-            <table class="min-w-[1150px] w-full text-left text-sm">
+            <table class="min-w-[1280px] w-full text-left text-sm">
               <thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500 dark:bg-white/5 dark:text-slate-400">
                 <tr>
                   <th class="px-4 py-3">Código</th>
@@ -497,13 +501,14 @@
                   <th class="px-4 py-3">Estado</th>
                   <th class="px-4 py-3">Ubicación</th>
                   <th class="px-4 py-3">Fecha</th>
+                  <th class="px-4 py-3">Precio estimado</th>
                   <th class="px-4 py-3">Notas</th>
                   <th class="px-4 py-3 text-right">Acciones</th>
                 </tr>
               </thead>
               <tbody id="results" class="divide-y divide-slate-100 dark:divide-white/10">
                 <tr>
-                  <td colspan="11" class="px-4 py-10 text-center text-slate-500">Cargando registros...</td>
+                  <td colspan="12" class="px-4 py-10 text-center text-slate-500">Cargando registros...</td>
                 </tr>
               </tbody>
             </table>
@@ -594,6 +599,10 @@
           <div>
             <label class="mb-1.5 block text-sm font-bold">Fecha ingreso</label>
             <input id="modalFecha" type="date" class="input-base" required>
+          </div>
+          <div>
+            <label class="mb-1.5 block text-sm font-bold">Precio estimado</label>
+            <input id="modalPrecioEstimado" type="number" min="0" step="0.01" class="input-base" placeholder="0.00">
           </div>
           <div class="sm:col-span-2 lg:col-span-4">
             <label class="mb-1.5 block text-sm font-bold">Notas adicionales</label>
@@ -944,6 +953,7 @@
         estado: $("#estado").value,
         ubicacion: $("#ubicacion").value,
         fecha: $("#fecha").value,
+        precioEstimado: Number($("#precioEstimado").value || 0),
         notas: $("#notas").value.trim(),
       };
 
@@ -971,6 +981,7 @@
         estado: $("#modalEstado").value,
         ubicacion: $("#modalUbicacion").value,
         fecha: $("#modalFecha").value,
+        precioEstimado: Number($("#modalPrecioEstimado").value || 0),
         notas: $("#modalNotas").value.trim(),
       };
 
@@ -1036,6 +1047,7 @@
         $("#modalEstado").value = computer.estado || "";
         $("#modalUbicacion").value = computer.ubicacion || "";
         $("#modalFecha").value = computer.fecha || new Date().toISOString().split("T")[0];
+        $("#modalPrecioEstimado").value = computer.precioEstimado ?? "";
         $("#modalNotas").value = computer.notas || "";
       } else {
         $("#modalTitle").textContent = "Nueva computadora";
@@ -1104,7 +1116,7 @@
           hidePageLoader();
         }, error => {
           console.error(error);
-          $("#results").innerHTML = `<tr><td colspan="11" class="px-4 py-10 text-center text-red-500">Error al cargar registros: ${escapeHTML(error.message)}</td></tr>`;
+          $("#results").innerHTML = `<tr><td colspan="12" class="px-4 py-10 text-center text-red-500">Error al cargar registros: ${escapeHTML(error.message)}</td></tr>`;
           hidePageLoader();
         });
     }
@@ -1130,6 +1142,7 @@
           item.estado,
           item.ubicacion,
           item.fecha,
+          item.precioEstimado,
           item.notas,
         ].some(value => normalizeText(value).includes(term));
 
@@ -1165,7 +1178,7 @@
       if (total === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="11" class="px-4 py-14 text-center">
+            <td colspan="12" class="px-4 py-14 text-center">
               <div class="mx-auto max-w-sm">
                 <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-3xl bg-slate-100 text-slate-500 dark:bg-white/10">
                   <i data-lucide="search-x" class="h-7 w-7"></i>
@@ -1202,6 +1215,7 @@
           <td class="px-4 py-4">${statusBadge(item.estado || "")}</td>
           <td class="px-4 py-4">${escapeHTML(item.ubicacion || "")}</td>
           <td class="px-4 py-4">${formatDate(item.fecha)}</td>
+          <td class="px-4 py-4 font-extrabold text-emerald-600 dark:text-emerald-300">${formatMoney(item.precioEstimado)}</td>
           <td class="max-w-[220px] truncate px-4 py-4 text-slate-500 dark:text-slate-400" title="${escapeAttr(item.notas || "")}">${escapeHTML(item.notas || "")}</td>
           <td class="px-4 py-4">
             <div class="flex justify-end gap-2">
@@ -1367,6 +1381,7 @@
               estado: item.estado || "",
               ubicacion: item.ubicacion || "",
               fecha: item.fecha || new Date().toISOString().split("T")[0],
+              precioEstimado: Number(item.precioEstimado || 0),
               notas: item.notas || "",
               createdAt: firebase.firestore.FieldValue.serverTimestamp(),
               createdBy: getCurrentUser()?.userEmail || "",
@@ -1418,7 +1433,7 @@
         return;
       }
 
-      const headers = ["codigo", "tipoEquipo", "marca", "modelo", "procesador", "ram", "almacenamiento", "estado", "ubicacion", "fecha", "notas"];
+      const headers = ["codigo", "tipoEquipo", "marca", "modelo", "procesador", "ram", "almacenamiento", "estado", "ubicacion", "fecha", "precioEstimado", "notas"];
       const rows = data.map(item => headers.map(header => csvCell(item[header] ?? "")).join(","));
       const csv = [headers.join(","), ...rows].join("\n");
 
@@ -1434,8 +1449,8 @@
         return;
       }
 
-      const cleanData = data.map(({ id, codigo, tipoEquipo, marca, modelo, procesador, ram, almacenamiento, estado, ubicacion, fecha, notas }) => ({
-        id, codigo, tipoEquipo, marca, modelo, procesador, ram, almacenamiento, estado, ubicacion, fecha, notas
+      const cleanData = data.map(({ id, codigo, tipoEquipo, marca, modelo, procesador, ram, almacenamiento, estado, ubicacion, fecha, precioEstimado, notas }) => ({
+        id, codigo, tipoEquipo, marca, modelo, procesador, ram, almacenamiento, estado, ubicacion, fecha, precioEstimado, notas
       }));
 
       downloadFile(JSON.stringify(cleanData, null, 2), `inventario_computadoras_${todayFileName()}.json`, "application/json;charset=utf-8;");
@@ -1495,6 +1510,16 @@
         .toLowerCase()
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "");
+    }
+
+    function formatMoney(value) {
+      const amount = Number(value || 0);
+
+      return new Intl.NumberFormat("es-SV", {
+        style: "currency",
+        currency: "USD",
+        minimumFractionDigits: 2,
+      }).format(amount);
     }
 
     function formatDate(value) {
