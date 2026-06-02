@@ -479,7 +479,13 @@
               <input id="codigo" class="input-base uppercase" type="text" placeholder="INV-001" required>
             </div>
             <div>
-              <label class="mb-1.5 block text-sm font-bold">Tipo</label>
+              <div class="mb-1.5 flex items-center justify-between gap-2">
+                <label class="block text-sm font-bold">Tipo</label>
+                <button type="button" onclick="openAddTypeModal('tipoEquipo')" class="inline-flex items-center gap-1 rounded-xl bg-blue-50 px-2.5 py-1 text-xs font-extrabold text-blue-700 transition hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-300 dark:hover:bg-blue-500/20">
+                  <i data-lucide="plus" class="h-3.5 w-3.5"></i>
+                  Nuevo
+                </button>
+              </div>
               <select id="tipoEquipo" class="input-base" required></select>
             </div>
             <div>
@@ -709,7 +715,13 @@
             <input id="modalCodigo" class="input-base uppercase" required>
           </div>
           <div>
-            <label class="mb-1.5 block text-sm font-bold">Tipo de equipo</label>
+            <div class="mb-1.5 flex items-center justify-between gap-2">
+              <label class="block text-sm font-bold">Tipo de equipo</label>
+              <button type="button" onclick="openAddTypeModal('modalTipoEquipo')" class="inline-flex items-center gap-1 rounded-xl bg-blue-50 px-2.5 py-1 text-xs font-extrabold text-blue-700 transition hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-300 dark:hover:bg-blue-500/20">
+                <i data-lucide="plus" class="h-3.5 w-3.5"></i>
+                Nuevo
+              </button>
+            </div>
             <select id="modalTipoEquipo" class="input-base" required></select>
           </div>
           <div>
@@ -796,6 +808,8 @@
     const computadorasCollection = db.collection("computadoras");
     const ubicacionesCollection = db.collection("ubicaciones");
     const estadosCollection = db.collection("estados");
+    const tiposCollection = db.collection("tipos");
+    const systemSchemasCollection = db.collection("_systemSchemas");
     
     
 
@@ -803,10 +817,12 @@
     const THEME_KEY = "inventoryTheme";
     const SIDEBAR_COLLAPSED_KEY = "inventorySidebarCollapsed";
 
-    const EQUIPMENT_TYPES = [
+    const DEFAULT_EQUIPMENT_TYPES = [
       "CPU", "Laptop", "Monitor", "UPS", "Impresora", "Escáner", "Servidor",
       "Accesorios", "Otros", "Telefono", "Access Point", "Router", "Modem", "DVR"
     ];
+
+    let EQUIPMENT_TYPES = [...DEFAULT_EQUIPMENT_TYPES];
 
     const DEFAULT_STATES = [
       "Buena", "No funciona", "Muy poco rendimiento", "Excelente rendimiento"
@@ -830,6 +846,7 @@
     let unsubscribeInventory = null;
     let unsubscribeLocations = null;
     let unsubscribeStates = null;
+    let unsubscribeTypes = null;
 
     const $ = (selector) => document.querySelector(selector);
     const $$ = (selector) => document.querySelectorAll(selector);
@@ -847,9 +864,7 @@
 
       const authenticated = checkAuthentication();
       if (authenticated) {
-        loadLocationsRealtime();
-        loadStatesRealtime();
-        loadInventoryRealtime();
+        initializeDatabaseAndInventory();
       }
 
       refreshIcons();
@@ -1237,6 +1252,7 @@
         } else {
           await computadorasCollection.add({
             ...computer,
+            activo: true,
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
             createdBy: getCurrentUser()?.userEmail || "",
           });
@@ -1325,6 +1341,128 @@
     }
 
     /************************************************************
+     * CREACIÓN AUTOMÁTICA DE COLECCIONES / ESTRUCTURA
+     ************************************************************/
+    async function initializeDatabaseAndInventory() {
+      try {
+        await ensureDatabaseStructure();
+        await syncDefaultCatalogsToFirestore();
+
+        loadLocationsRealtime();
+        loadStatesRealtime();
+        loadTypesRealtime();
+        loadInventoryRealtime();
+      } catch (error) {
+        console.error(error);
+        showToast("error", "Base de datos", error.message || "No se pudo inicializar la estructura de Firebase.");
+        hidePageLoader();
+      }
+    }
+
+    async function ensureDatabaseStructure() {
+      await Promise.all([
+        ensureCollectionSchema("computadoras", {
+          codigo: "",
+          tipoEquipo: "",
+          marca: "",
+          modelo: "",
+          procesador: "",
+          ram: 0,
+          almacenamiento: 0,
+          estado: "",
+          ubicacion: "",
+          fecha: "",
+          precioEstimado: 0,
+          notas: "",
+          createdAt: null,
+          createdBy: "",
+          updatedAt: null,
+          updatedBy: "",
+        }),
+        ensureCollectionSchema("ubicaciones", {
+          nombre: "",
+          nombreNormalizado: "",
+          esBase: true,
+          activo: true,
+          createdAt: null,
+          createdBy: "",
+        }),
+        ensureCollectionSchema("estados", {
+          nombre: "",
+          nombreNormalizado: "",
+          esBase: true,
+          activo: true,
+          createdAt: null,
+          createdBy: "",
+        }),
+        ensureCollectionSchema("tipos", {
+          nombre: "",
+          nombreNormalizado: "",
+          esBase: true,
+          activo: true,
+          createdAt: null,
+          createdBy: "",
+        }),
+      ]);
+    }
+
+    async function ensureCollectionSchema(collectionName, fields) {
+      const schemaRef = systemSchemasCollection.doc(collectionName);
+      const schemaDoc = await schemaRef.get();
+
+      if (schemaDoc.exists) {
+        await schemaRef.set({
+          fields,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        }, { merge: true });
+        return;
+      }
+
+      await schemaRef.set({
+        collectionName,
+        fields,
+        version: 1,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        createdBy: "sistema",
+      });
+    }
+
+    async function syncDefaultCatalogsToFirestore() {
+      await Promise.all([
+        seedCatalogCollection(ubicacionesCollection, DEFAULT_LOCATIONS),
+        seedCatalogCollection(estadosCollection, DEFAULT_STATES),
+        seedCatalogCollection(tiposCollection, DEFAULT_EQUIPMENT_TYPES),
+      ]);
+    }
+
+    async function seedCatalogCollection(collectionRef, defaultItems) {
+      for (const item of defaultItems) {
+        const cleanName = String(item || "").trim();
+        if (!cleanName) continue;
+
+        const normalizedName = normalizeText(cleanName);
+
+        const exists = await collectionRef
+          .where("nombreNormalizado", "==", normalizedName)
+          .limit(1)
+          .get();
+
+        if (!exists.empty) continue;
+
+        await collectionRef.add({
+          nombre: cleanName,
+          nombreNormalizado: normalizedName,
+          esBase: true,
+          activo: true,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          createdBy: "sistema",
+        });
+      }
+    }
+
+
+    /************************************************************
      * UBICACIONES
      ************************************************************/
     function mergeUniqueLocations(defaults, customLocations) {
@@ -1349,8 +1487,15 @@
       unsubscribeLocations = ubicacionesCollection
         .orderBy("nombre", "asc")
         .onSnapshot(snapshot => {
-          const customLocations = snapshot.docs.map(doc => doc.data().nombre).filter(Boolean);
-          LOCATIONS = mergeUniqueLocations(DEFAULT_LOCATIONS, customLocations);
+          const customLocations = snapshot.docs
+            .map(doc => doc.data())
+            .filter(item => item.activo !== false)
+            .map(item => item.nombre)
+            .filter(Boolean);
+
+          LOCATIONS = customLocations.length
+            ? mergeUniqueLocations([], customLocations)
+            : [...DEFAULT_LOCATIONS];
           fillSelects();
           applyFilters();
           refreshIcons();
@@ -1412,6 +1557,8 @@
         await ubicacionesCollection.add({
           nombre: locationName,
           nombreNormalizado: normalizeText(locationName),
+          esBase: false,
+          activo: true,
           createdAt: firebase.firestore.FieldValue.serverTimestamp(),
           createdBy: getCurrentUser()?.userEmail || "",
         });
@@ -1460,8 +1607,15 @@
       unsubscribeStates = estadosCollection
         .orderBy("nombre", "asc")
         .onSnapshot(snapshot => {
-          const customStates = snapshot.docs.map(doc => doc.data().nombre).filter(Boolean);
-          STATES = mergeUniqueStates(DEFAULT_STATES, customStates);
+          const customStates = snapshot.docs
+            .map(doc => doc.data())
+            .filter(item => item.activo !== false)
+            .map(item => item.nombre)
+            .filter(Boolean);
+
+          STATES = customStates.length
+            ? mergeUniqueStates([], customStates)
+            : [...DEFAULT_STATES];
           fillSelects();
           applyFilters();
           refreshIcons();
@@ -1523,6 +1677,8 @@
         await estadosCollection.add({
           nombre: stateName,
           nombreNormalizado: normalizeText(stateName),
+          esBase: false,
+          activo: true,
           createdAt: firebase.firestore.FieldValue.serverTimestamp(),
           createdBy: getCurrentUser()?.userEmail || "",
         });
@@ -1542,6 +1698,126 @@
         console.error(error);
         Swal.close();
         showToast("error", "Error", error.message || "No se pudo guardar el estado.");
+      }
+    }
+
+
+    /************************************************************
+     * TIPOS DE EQUIPO
+     ************************************************************/
+    function mergeUniqueTypes(defaults, customTypes) {
+      const map = new Map();
+
+      [...defaults, ...customTypes].forEach(type => {
+        const clean = String(type || "").trim();
+        if (!clean) return;
+
+        const key = normalizeText(clean);
+        if (!map.has(key)) {
+          map.set(key, clean);
+        }
+      });
+
+      return Array.from(map.values()).sort((a, b) => a.localeCompare(b, "es"));
+    }
+
+    function loadTypesRealtime() {
+      if (unsubscribeTypes) unsubscribeTypes();
+
+      unsubscribeTypes = tiposCollection
+        .orderBy("nombre", "asc")
+        .onSnapshot(snapshot => {
+          const customTypes = snapshot.docs
+            .map(doc => doc.data())
+            .filter(item => item.activo !== false)
+            .map(item => item.nombre)
+            .filter(Boolean);
+
+          EQUIPMENT_TYPES = customTypes.length
+            ? mergeUniqueTypes([], customTypes)
+            : [...DEFAULT_EQUIPMENT_TYPES];
+          fillSelects();
+          applyFilters();
+          refreshIcons();
+        }, error => {
+          console.error(error);
+          EQUIPMENT_TYPES = [...DEFAULT_EQUIPMENT_TYPES];
+          fillSelects();
+          showToast("warning", "Tipos", "No se pudieron cargar los tipos personalizados.");
+        });
+    }
+
+    async function openAddTypeModal(targetSelectId = "tipoEquipo") {
+      const result = await Swal.fire({
+        title: "Nuevo tipo de equipo",
+        text: "Escribe el nombre del nuevo tipo.",
+        input: "text",
+        inputPlaceholder: "Ejemplo: Tablet",
+        showCancelButton: true,
+        confirmButtonText: "Guardar tipo",
+        cancelButtonText: "Cancelar",
+        confirmButtonColor: "#2563eb",
+        inputValidator: (value) => {
+          const typeName = String(value || "").trim();
+
+          if (!typeName) {
+            return "Debes escribir un tipo.";
+          }
+
+          if (typeName.length < 2) {
+            return "El tipo debe tener al menos 2 caracteres.";
+          }
+
+          const exists = EQUIPMENT_TYPES.some(type => normalizeText(type) === normalizeText(typeName));
+          if (exists) {
+            return "Ese tipo ya existe.";
+          }
+
+          return null;
+        },
+        didOpen: () => {
+          const input = Swal.getInput();
+          if (input) input.focus();
+        }
+      });
+
+      if (!result.isConfirmed) return;
+
+      const typeName = String(result.value || "").trim();
+
+      Swal.fire({
+        title: "Guardando tipo...",
+        text: "Por favor espera un momento.",
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: () => Swal.showLoading(),
+      });
+
+      try {
+        await tiposCollection.add({
+          nombre: typeName,
+          nombreNormalizado: normalizeText(typeName),
+          esBase: false,
+          activo: true,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          createdBy: getCurrentUser()?.userEmail || "",
+        });
+
+        EQUIPMENT_TYPES = mergeUniqueTypes(EQUIPMENT_TYPES, [typeName]);
+        fillSelects();
+
+        const targetSelect = document.getElementById(targetSelectId);
+        if (targetSelect) {
+          targetSelect.value = typeName;
+        }
+
+        Swal.close();
+        showToast("success", "Tipo agregado", "El nuevo tipo fue creado correctamente.");
+        refreshIcons();
+      } catch (error) {
+        console.error(error);
+        Swal.close();
+        showToast("error", "Error", error.message || "No se pudo guardar el tipo.");
       }
     }
 
@@ -2208,6 +2484,8 @@
     window.deleteComputer = deleteComputer;
     window.openAddLocationModal = openAddLocationModal;
     window.openAddStateModal = openAddStateModal;
+    window.openAddTypeModal = openAddTypeModal;
+    window.initializeDatabaseAndInventory = initializeDatabaseAndInventory;
     window.exportCSV = exportCSV;
     window.exportJSON = exportJSON;
     window.exportExcel = exportExcel;
