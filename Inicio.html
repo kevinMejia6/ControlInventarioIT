@@ -485,6 +485,10 @@
                 class="rounded-2xl bg-white/15 px-4 py-3 text-sm font-extrabold text-white transition hover:-translate-y-0.5 hover:bg-white/20">
                 Limpiar filtros
               </button>
+              <button onclick="optimizeEmbeddedPhotos()"
+                class="rounded-2xl bg-emerald-400/20 px-4 py-3 text-sm font-extrabold text-white ring-1 ring-emerald-200/30 transition hover:-translate-y-0.5 hover:bg-emerald-400/30">
+                Optimizar fotos
+              </button>
             </div>
           </div>
         </section>
@@ -726,7 +730,7 @@
                 </button>
               </div>
               <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">Puedes seleccionar varias imágenes o tomar
-                fotos desde la cámara. Se guardan en Base64 dentro de Firestore. Puedes agregar más fotos, pero deben ser livianas para no superar el límite de Firestore.</p>
+                fotos desde la cámara. Se guardan comprimidas en una subcolección de Firestore para que la tabla cargue más rápido.</p>
               <div id="quickPhotoPreview" class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6"></div>
             </div>
             <div class="flex items-end lg:col-span-4">
@@ -797,6 +801,10 @@
                   <i data-lucide="file-text" class="h-4 w-4"></i>
                   PDF
                 </button>
+                <button onclick="optimizeEmbeddedPhotos()" class="btn-secondary">
+                  <i data-lucide="zap" class="h-4 w-4"></i>
+                  Optimizar fotos
+                </button>
               </div>
             </div>
 
@@ -818,39 +826,36 @@
           </div>
 
           <div class="overflow-x-auto">
-            <table class="min-w-[1280px] w-full text-left text-sm">
+            <table class="min-w-full w-full table-fixed text-left text-sm">
               <thead
                 class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500 dark:bg-white/5 dark:text-slate-400">
                 <tr>
-                  <th class="px-4 py-3">Código</th>
-                  <th class="px-4 py-3">Tipo</th>
-                  <th class="px-4 py-3">Marca / Modelo</th>
-                  <th class="px-4 py-3">Procesador</th>
-                  <th class="px-4 py-3">RAM</th>
-                  <th class="px-4 py-3">Almacen.</th>
-                  <th class="px-4 py-3">Estado</th>
-                  <th class="px-4 py-3">Ubicación</th>
-                  <th class="px-4 py-3">Fecha</th>
-                  <th class="px-4 py-3">Precio estimado</th>
-                  <th class="px-4 py-3">Notas</th>
-                  <th class="px-4 py-3">Fotos</th>
-                  <th class="px-4 py-3 text-right">Acciones</th>
+                  <th class="w-[13%] px-3 py-3">Código</th>
+                  <th class="w-[12%] px-3 py-3">Tipo</th>
+                  <th class="w-[13%] px-3 py-3">Marca / Modelo</th>
+                  <th class="w-[10%] px-3 py-3">Procesador</th>
+                  <th class="w-[10%] px-3 py-3">Estado</th>
+                  <th class="w-[10%] px-3 py-3">Ubicación</th>
+                  <th class="w-[10%] px-3 py-3">Precio</th>
+                  <th class="w-[10%] px-3 py-3">Notas</th>
+                  <th class="w-[7%] px-3 py-3">Fotos</th>
+                  <th class="w-[12%] px-3 py-3 text-right">Acciones</th>
                 </tr>
               </thead>
               <tbody id="results" class="divide-y divide-slate-100 dark:divide-white/10">
                 <tr>
-                  <td colspan="13" class="px-4 py-10 text-center text-slate-500">Cargando registros...</td>
+                  <td colspan="10" class="px-3 py-10 text-center text-slate-500">Cargando registros...</td>
                 </tr>
               </tbody>
               <tfoot class="border-t border-slate-200 bg-slate-50 text-sm dark:border-white/10 dark:bg-white/5">
                 <tr>
-                  <td colspan="9" class="px-4 py-4 text-right font-extrabold text-slate-700 dark:text-slate-200">
+                  <td colspan="6" class="px-3 py-4 text-right font-extrabold text-slate-700 dark:text-slate-200">
                     Total precio estimado
                   </td>
-                  <td id="estimatedPriceTotal" class="px-4 py-4 font-extrabold text-emerald-600 dark:text-emerald-300">
+                  <td id="estimatedPriceTotal" class="px-3 py-4 font-extrabold text-emerald-600 dark:text-emerald-300">
                     $0.00
                   </td>
-                  <td colspan="3" class="px-4 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                  <td colspan="3" class="px-3 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400">
                     Sumatoria de registros filtrados
                   </td>
                 </tr>
@@ -1053,8 +1058,7 @@
               </button>
             </div>
             <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">Puedes agregar varias fotos o tomar fotos desde
-              la cámara. En edición, las fotos actuales se conservan salvo que las elimines. Se guardan en Base64 dentro
-              de Firestore.</p>
+              la cámara. En edición, las fotos actuales se conservan salvo que las elimines. Se guardan comprimidas en una subcolección de Firestore.</p>
             <div id="modalPhotoPreview" class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6"></div>
           </div>
         </div>
@@ -1180,6 +1184,13 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
+
+    // Mejora de rendimiento: permite usar caché local de Firestore entre recargas.
+    // Si falla por múltiples pestañas o navegador incompatible, el sistema sigue funcionando normal.
+    db.enablePersistence({ synchronizeTabs: true }).catch((error) => {
+      console.warn("Persistencia Firestore no disponible:", error?.code || error?.message || error);
+    });
+
     const computadorasCollection = db.collection("computadoras");
     const mobiliarioCollection = db.collection("mobiliario");
     const ubicacionesCollection = db.collection("ubicaciones");
@@ -1194,6 +1205,18 @@
     const THEME_KEY = "inventoryTheme";
     const SIDEBAR_COLLAPSED_KEY = "inventorySidebarCollapsed";
     const MODULE_KEY = "inventoryActiveModule";
+
+    // Evita escribir/verificar estructura en Firestore cada vez que se abre el panel.
+    const DB_STRUCTURE_CACHE_KEY = "inventoryDbStructureCheckedAt";
+    const DB_CATALOG_CACHE_KEY = "inventoryDbCatalogCheckedAt";
+    const DB_INIT_CACHE_HOURS = 24;
+
+    // OPTIMIZACION REAL: las fotos ya no deben vivir dentro del documento principal.
+    // Firestore descarga el documento completo en cada snapshot; si el campo fotos tiene Base64,
+    // la tabla siempre sera lenta. Ahora las fotos se guardan en subcoleccion: computadoras/{id}/fotos.
+    const PHOTO_SUBCOLLECTION = "fotos";
+    const AUTO_PHOTO_MIGRATION_KEY_PREFIX = "inventoryAutoPhotoMigrationDone";
+    let autoPhotoMigrationRunning = false;
 
     // Los tipos deben venir SIEMPRE desde Firestore.
     // Colecciones usadas:
@@ -1232,6 +1255,8 @@
     let unsubscribeTypes = null;
     let inventoryFirstLoadDone = false;
     let lastInventorySnapshotSize = 0;
+    let tableRenderRaf = null;
+    let filtersApplyRaf = null;
     let quickSelectedPhotos = [];
     let modalSelectedPhotos = [];
     let modalExistingPhotos = [];
@@ -1584,6 +1609,20 @@
     }
 
     function fillSelects() {
+      // Preserva selecciones actuales para no reiniciar filtros/formularios
+      // cada vez que llega un snapshot de catálogos.
+      const selectedValues = {
+        tipoEquipo: $("#tipoEquipo")?.value || "",
+        estado: $("#estado")?.value || "",
+        ubicacion: $("#ubicacion")?.value || "",
+        modalTipoEquipo: $("#modalTipoEquipo")?.value || "",
+        modalEstado: $("#modalEstado")?.value || "",
+        modalUbicacion: $("#modalUbicacion")?.value || "",
+        filterTipo: $("#filterTipo")?.value || "",
+        filterEstado: $("#filterEstado")?.value || "",
+        filterUbicacion: $("#filterUbicacion")?.value || "",
+      };
+
       const typeOptions = optionHTML(getCurrentTypes(), "Seleccione tipo");
       const stateOptions = optionHTML(STATES, "Seleccione estado");
       const locationOptions = optionHTML(LOCATIONS, "Seleccione ubicación");
@@ -1599,6 +1638,13 @@
       $("#filterTipo").innerHTML = `<option value="">Todos los tipos</option>` + getCurrentTypes().map(item => `<option value="${escapeAttr(item)}">${escapeHTML(item)}</option>`).join("");
       $("#filterEstado").innerHTML = `<option value="">Todos los estados</option>` + STATES.map(item => `<option value="${escapeAttr(item)}">${escapeHTML(item)}</option>`).join("");
       $("#filterUbicacion").innerHTML = `<option value="">Todas las ubicaciones</option>` + LOCATIONS.map(item => `<option value="${escapeAttr(item)}">${escapeHTML(item)}</option>`).join("");
+
+      Object.entries(selectedValues).forEach(([id, value]) => {
+        const element = document.getElementById(id);
+        if (element && [...element.options].some(option => option.value === value)) {
+          element.value = value;
+        }
+      });
     }
 
     function setToday() {
@@ -2013,7 +2059,7 @@
       }
 
       try {
-        const duplicated = await activeCollection.where("codigo", "==", computer.codigo).get();
+        const duplicated = await activeCollection.where("codigo", "==", computer.codigo).limit(2).get();
         const hasDuplicate = duplicated.docs.some(doc => doc.id !== id);
 
         if (hasDuplicate) {
@@ -2023,26 +2069,28 @@
 
         if (id) {
           const docRef = activeCollection.doc(id);
+          const base64Photos = await convertPhotoFilesToBase64(photoFiles, id, existingPhotos || []);
+          const finalPhotos = [...(existingPhotos || []), ...base64Photos];
+
+          // Guardamos fotos fuera del documento principal para que la tabla cargue rapido.
+          await replacePhotoSubcollection(docRef, finalPhotos);
 
           await docRef.update({
             ...computer,
-            fotos: existingPhotos || [],
+            fotos: [],
+            fotoCount: finalPhotos.length,
+            hasExternalPhotos: finalPhotos.length > 0,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
             updatedBy: getCurrentUser()?.userEmail || "",
           });
 
-          const base64Photos = await convertPhotoFilesToBase64(photoFiles, id, existingPhotos || []);
-          await docRef.update({
-            fotos: [...(existingPhotos || []), ...base64Photos],
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-            updatedBy: getCurrentUser()?.userEmail || "",
-          });
-
-          showToast("success", "Actualizado", "El equipo fue actualizado correctamente.");
+          showToast("success", "Actualizado", "El registro fue actualizado correctamente.");
         } else {
           const docRef = await activeCollection.add({
             ...computer,
             fotos: [],
+            fotoCount: 0,
+            hasExternalPhotos: false,
             activo: true,
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
             createdBy: getCurrentUser()?.userEmail || "",
@@ -2050,21 +2098,79 @@
 
           const base64Photos = await convertPhotoFilesToBase64(photoFiles, docRef.id, []);
           if (base64Photos.length) {
+            await replacePhotoSubcollection(docRef, base64Photos);
             await docRef.update({
-              fotos: base64Photos,
+              fotos: [],
+              fotoCount: base64Photos.length,
+              hasExternalPhotos: true,
               updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
               updatedBy: getCurrentUser()?.userEmail || "",
             });
           }
 
-          showToast("success", "Guardado", "El equipo fue registrado correctamente.");
+          showToast("success", "Guardado", "El registro fue guardado correctamente.");
         }
 
         return true;
       } catch (error) {
         console.error(error);
-        showToast("error", "Error", error.message || "No se pudo guardar el equipo.");
+        showToast("error", "Error", error.message || "No se pudo guardar el registro.");
         return false;
+      }
+    }
+
+    async function replacePhotoSubcollection(docRef, photos = []) {
+      const current = await docRef.collection(PHOTO_SUBCOLLECTION).get();
+      let batch = db.batch();
+      let operations = 0;
+
+      for (const doc of current.docs) {
+        batch.delete(doc.ref);
+        operations++;
+        if (operations >= 450) {
+          await batch.commit();
+          batch = db.batch();
+          operations = 0;
+        }
+      }
+
+      photos.forEach((photo, index) => {
+        const cleanPhoto = { ...photo };
+        delete cleanPhoto.__photoDocId;
+        batch.set(docRef.collection(PHOTO_SUBCOLLECTION).doc(), {
+          ...cleanPhoto,
+          orden: index,
+          migratedAt: cleanPhoto.migratedAt || null,
+        });
+        operations++;
+      });
+
+      if (operations > 0) await batch.commit();
+    }
+
+    async function getStoredPhotos(computer) {
+      if (!computer?.id) return [];
+
+      // Compatibilidad con registros viejos que todavia tienen fotos incrustadas.
+      if (Array.isArray(computer.fotos) && computer.fotos.length) {
+        return computer.fotos;
+      }
+
+      try {
+        const snapshot = await activeCollection
+          .doc(computer.id)
+          .collection(PHOTO_SUBCOLLECTION)
+          .orderBy("orden", "asc")
+          .get();
+
+        return snapshot.docs.map(doc => ({
+          __photoDocId: doc.id,
+          ...doc.data(),
+        }));
+      } catch (error) {
+        console.error("No se pudieron cargar las fotos:", error);
+        showToast("warning", "Fotos", "No se pudieron cargar las fotos del registro.");
+        return [];
       }
     }
 
@@ -2125,7 +2231,14 @@
         showToast("error", "No encontrado", "No se encontró el registro seleccionado.");
         return;
       }
-      openComputerModal(computer);
+
+      showRecordsLoader("Cargando fotos del registro...");
+      try {
+        const photos = await getStoredPhotos(computer);
+        openComputerModal({ ...computer, fotos: photos });
+      } finally {
+        hideRecordsLoader();
+      }
     }
 
     async function deleteComputer(id) {
@@ -2167,18 +2280,48 @@
         toggleFieldsByModule();
         showRecordsLoader("Cargando registros...");
 
-        await ensureDatabaseStructure();
-        await syncDefaultCatalogsToFirestore();
-
+        // Carga los datos visibles lo antes posible.
         loadLocationsRealtime();
         loadStatesRealtime();
         loadTypesRealtime();
         loadInventoryRealtime();
+
+        // La estructura/catálogos base se validan en segundo plano y con caché de 24 horas.
+        Promise.all([
+          ensureDatabaseStructureOnce(),
+          syncDefaultCatalogsToFirestoreOnce(),
+        ]).catch(error => {
+          console.warn("Inicialización secundaria:", error);
+        });
       } catch (error) {
         console.error(error);
         showToast("error", "Base de datos", error.message || "No se pudo inicializar la estructura de Firebase.");
         hidePageLoader();
       }
+    }
+
+    async function ensureDatabaseStructureOnce() {
+      const lastCheck = Number(localStorage.getItem(DB_STRUCTURE_CACHE_KEY) || 0);
+      const cacheMs = DB_INIT_CACHE_HOURS * 60 * 60 * 1000;
+
+      if (lastCheck && Date.now() - lastCheck < cacheMs) {
+        return;
+      }
+
+      await ensureDatabaseStructure();
+      localStorage.setItem(DB_STRUCTURE_CACHE_KEY, String(Date.now()));
+    }
+
+    async function syncDefaultCatalogsToFirestoreOnce() {
+      const lastCheck = Number(localStorage.getItem(DB_CATALOG_CACHE_KEY) || 0);
+      const cacheMs = DB_INIT_CACHE_HOURS * 60 * 60 * 1000;
+
+      if (lastCheck && Date.now() - lastCheck < cacheMs) {
+        return;
+      }
+
+      await syncDefaultCatalogsToFirestore();
+      localStorage.setItem(DB_CATALOG_CACHE_KEY, String(Date.now()));
     }
 
     async function ensureDatabaseStructure() {
@@ -2289,20 +2432,28 @@
     }
 
     async function seedCatalogCollection(collectionRef, defaultItems) {
-      for (const item of defaultItems) {
-        const cleanName = String(item || "").trim();
-        if (!cleanName) continue;
+      const cleanItems = (defaultItems || [])
+        .map(item => String(item || "").trim())
+        .filter(Boolean);
 
+      if (!cleanItems.length) return;
+
+      // Antes hacía un query por cada item. Ahora lee una vez y escribe solo faltantes.
+      const snapshot = await collectionRef.get();
+      const existingNormalized = new Set(
+        snapshot.docs
+          .map(doc => normalizeText(doc.data()?.nombreNormalizado || doc.data()?.nombre || ""))
+          .filter(Boolean)
+      );
+
+      const batch = db.batch();
+      let pendingWrites = 0;
+
+      cleanItems.forEach(cleanName => {
         const normalizedName = normalizeText(cleanName);
+        if (existingNormalized.has(normalizedName)) return;
 
-        const exists = await collectionRef
-          .where("nombreNormalizado", "==", normalizedName)
-          .limit(1)
-          .get();
-
-        if (!exists.empty) continue;
-
-        await collectionRef.add({
+        batch.set(collectionRef.doc(), {
           nombre: cleanName,
           nombreNormalizado: normalizedName,
           esBase: true,
@@ -2310,6 +2461,12 @@
           createdAt: firebase.firestore.FieldValue.serverTimestamp(),
           createdBy: "sistema",
         });
+
+        pendingWrites++;
+      });
+
+      if (pendingWrites) {
+        await batch.commit();
       }
     }
 
@@ -2349,7 +2506,7 @@
             ? mergeUniqueLocations([], customLocations)
             : [...DEFAULT_LOCATIONS];
           fillSelects();
-          applyFilters();
+          scheduleApplyFilters(false);
           refreshIcons();
         }, error => {
           console.error(error);
@@ -2469,7 +2626,7 @@
             ? mergeUniqueStates([], customStates)
             : [...DEFAULT_STATES];
           fillSelects();
-          applyFilters();
+          scheduleApplyFilters(false);
           refreshIcons();
         }, error => {
           console.error(error);
@@ -2705,41 +2862,38 @@
 
       unsubscribeInventory = activeCollection
         .orderBy("createdAt", "desc")
-        .onSnapshot({ includeMetadataChanges: true }, snapshot => {
+        .onSnapshot(snapshot => {
           const previousTotal = allComputers.length;
           const changes = snapshot.docChanges();
 
+          // Mapeo simple y una sola actualización visual por frame.
           allComputers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-          // Se actualiza la tabla, filtros, métricas y paginación automáticamente.
-          // resetPage=false evita regresar siempre a la página 1 cada vez que otro usuario registra algo.
-          applyFilters(false);
+          // Migración automática de fotos viejas en segundo plano.
+          // Nota: la primera carga todavía puede sentirse pesada si los documentos antiguos
+          // ya traen Base64, pero después de esta limpieza las siguientes cargas serán livianas.
+          autoOptimizeEmbeddedPhotosFromSnapshot(snapshot.docs);
 
-          const dataFromServer = !snapshot.metadata.fromCache;
+          applyFilters(false);
           updateLiveSyncStatus(snapshot);
 
-          if (!inventoryFirstLoadDone && dataFromServer) {
+          if (!inventoryFirstLoadDone) {
             inventoryFirstLoadDone = true;
             lastInventorySnapshotSize = snapshot.size;
 
             requestAnimationFrame(() => {
-              requestAnimationFrame(() => {
-                hidePageLoader();
-                hideRecordsLoader();
-              });
+              hidePageLoader();
+              hideRecordsLoader();
             });
 
             return;
           }
 
-          // Después de la primera carga, notificamos cambios reales de otros usuarios o pestañas.
-          if (inventoryFirstLoadDone && dataFromServer) {
-            notifyRealtimeChanges(changes, previousTotal);
-            lastInventorySnapshotSize = snapshot.size;
-          }
+          notifyRealtimeChanges(changes, previousTotal);
+          lastInventorySnapshotSize = snapshot.size;
         }, error => {
           console.error(error);
-          $("#results").innerHTML = `<tr><td colspan="13" class="px-4 py-10 text-center text-red-500">Error al cargar registros en tiempo real: ${escapeHTML(error.message)}</td></tr>`;
+          $("#results").innerHTML = `<tr><td colspan="10" class="px-3 py-10 text-center text-red-500">Error al cargar registros en tiempo real: ${escapeHTML(error.message)}</td></tr>`;
           updateLiveSyncStatus(null, true);
           hidePageLoader();
           hideRecordsLoader();
@@ -2798,6 +2952,24 @@
     /************************************************************
      * FILTROS / RENDER
      ************************************************************/
+    function scheduleApplyFilters(resetPage = false) {
+      if (filtersApplyRaf) cancelAnimationFrame(filtersApplyRaf);
+
+      filtersApplyRaf = requestAnimationFrame(() => {
+        filtersApplyRaf = null;
+        applyFilters(resetPage);
+      });
+    }
+
+    function requestTableRender() {
+      if (tableRenderRaf) cancelAnimationFrame(tableRenderRaf);
+
+      tableRenderRaf = requestAnimationFrame(() => {
+        tableRenderRaf = null;
+        renderTable();
+      });
+    }
+
     function applyFilters(resetPage = true) {
       const term = normalizeText($("#searchInput").value);
       const tipo = $("#filterTipo").value;
@@ -2837,7 +3009,7 @@
 
       if (resetPage) currentPage = 1;
       updateStatistics();
-      renderTable();
+      requestTableRender();
     }
 
     function updateStatistics() {
@@ -2870,7 +3042,7 @@
       if (total === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="13" class="px-4 py-14 text-center">
+            <td colspan="10" class="px-3 py-14 text-center">
               <div class="mx-auto max-w-sm">
                 <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-3xl bg-slate-100 text-slate-500 dark:bg-white/10">
                   <i data-lucide="search-x" class="h-7 w-7"></i>
@@ -2892,25 +3064,28 @@
 
       tbody.innerHTML = pageItems.map(item => `
         <tr class="transition hover:bg-slate-50 dark:hover:bg-white/[.03]">
-          <td class="px-4 py-4">
-            <div class="font-extrabold text-slate-900 dark:text-white">${escapeHTML(item.codigo || "")}</div>
-            <div class="text-xs text-slate-500 dark:text-slate-400">${escapeHTML(item.id || "")}</div>
+          <td class="px-3 py-4 align-top">
+            <div class="truncate font-extrabold text-slate-900 dark:text-white" title="${escapeAttr(item.codigo || "")}">${escapeHTML(item.codigo || "")}</div>
+            <div class="truncate text-xs text-slate-500 dark:text-slate-400" title="${escapeAttr(item.id || "")}">${escapeHTML(item.id || "")}</div>
           </td>
-          <td class="px-4 py-4">${badge(item.tipoEquipo || "Sin tipo", "slate")}</td>
-          <td class="px-4 py-4">
-            <div class="font-bold">${escapeHTML(item.marca || "")}</div>
-            <div class="text-sm text-slate-500 dark:text-slate-400">${escapeHTML(item.modelo || "")}</div>
+          <td class="px-3 py-4 align-top">${badge(item.tipoEquipo || "Sin tipo", "slate")}</td>
+          <td class="px-3 py-4 align-top">
+            <div class="truncate font-bold" title="${escapeAttr(item.marca || "")}">${escapeHTML(item.marca || "")}</div>
+            <div class="truncate text-sm text-slate-500 dark:text-slate-400" title="${escapeAttr(item.modelo || "")}">${escapeHTML(item.modelo || "")}</div>
           </td>
-          <td class="px-4 py-4">${escapeHTML(item.procesador || "")}</td>
-          <td class="px-4 py-4 font-bold">${Number(item.ram || 0)} GB</td>
-          <td class="px-4 py-4 font-bold">${Number(item.almacenamiento || 0)} GB</td>
-          <td class="px-4 py-4">${statusBadge(item.estado || "")}</td>
-          <td class="px-4 py-4">${escapeHTML(item.ubicacion || "")}</td>
-          <td class="px-4 py-4">${formatDate(item.fecha)}</td>
-          <td class="px-4 py-4 font-extrabold text-emerald-600 dark:text-emerald-300">${formatMoney(item.precioEstimado)}</td>
-          <td class="max-w-[220px] truncate px-4 py-4 text-slate-500 dark:text-slate-400" title="${escapeAttr(item.notas || "")}">${escapeHTML(item.notas || "")}</td>
-          <td class="px-4 py-4">${photosBadge(item.fotos || [])}</td>
-          <td class="px-4 py-4">
+          <td class="px-3 py-4 align-top">
+            <div class="truncate" title="${escapeAttr(item.procesador || "")}">${escapeHTML(item.procesador || "")}</div>
+          </td>
+          <td class="px-3 py-4 align-top">${statusBadge(item.estado || "")}</td>
+          <td class="px-3 py-4 align-top">
+            <div class="line-clamp-2" title="${escapeAttr(item.ubicacion || "")}">${escapeHTML(item.ubicacion || "")}</div>
+          </td>
+          <td class="px-3 py-4 align-top font-extrabold text-emerald-600 dark:text-emerald-300">${formatMoney(item.precioEstimado)}</td>
+          <td class="px-3 py-4 align-top text-slate-500 dark:text-slate-400">
+            <div class="truncate" title="${escapeAttr(item.notas || "")}">${escapeHTML(item.notas || "")}</div>
+          </td>
+          <td class="px-3 py-4 align-top">${photosBadge(item)}</td>
+          <td class="px-3 py-4 align-top">
             <div class="flex justify-end gap-2">
               <button onclick="viewComputerDetail('${item.id}')" class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-700 transition hover:bg-slate-200 dark:bg-white/10 dark:text-white dark:hover:bg-white/15" title="Ver detalle">
                 <i data-lucide="eye" class="h-4 w-4"></i>
@@ -2931,7 +3106,7 @@
     }
 
 
-    function viewComputerDetail(id) {
+    async function viewComputerDetail(id) {
       const computer = allComputers.find(item => item.id === id);
 
       if (!computer) {
@@ -2946,7 +3121,11 @@
       $("#detailTitle").textContent = `${computer.codigo || "Sin código"} - ${computer.marca || ""} ${computer.modelo || ""}`.trim();
       $("#detailSubtitle").textContent = `Registro ID: ${computer.id || ""}`;
 
-      const photos = Array.isArray(computer.fotos) ? computer.fotos : [];
+      content.innerHTML = `<div class="rounded-3xl border border-slate-200 bg-slate-50 p-8 text-center dark:border-white/10 dark:bg-white/5"><div class="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600"></div><p class="font-extrabold">Cargando detalle y fotos...</p></div>`;
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+
+      const photos = await getStoredPhotos(computer);
       const createdAt = formatFirestoreDateTime(computer.createdAt);
       const updatedAt = formatFirestoreDateTime(computer.updatedAt);
 
@@ -3311,28 +3490,25 @@
       if (!files || !files.length) return [];
 
       const convertedPhotos = [];
-      const maxTotalBase64Length = 950000; // Firestore permite 1 MiB por documento; dejamos margen para el resto de campos.
-      let currentTotalLength = (existingPhotos || []).reduce((total, photo) => total + String(photo?.url || "").length, 0);
+      const maxSingleBase64Length = 900000; // Cada foto vive en su propio documento; dejamos margen bajo 1 MiB.
 
       for (const file of files) {
         try {
-          const dataUrl = await compressImageToBase64(file, 700, 0.55);
+          const dataUrl = await compressImageToBase64(file, 520, 0.48);
 
-          if (currentTotalLength + dataUrl.length > maxTotalBase64Length) {
+          if (dataUrl.length > maxSingleBase64Length) {
             showToast(
               "warning",
-              "Límite de fotos",
-              "Una o más fotos no se agregaron porque Firestore solo permite documentos de hasta 1 MiB. Usa menos fotos o fotos más pequeñas."
+              "Foto demasiado pesada",
+              `${file.name || "Una foto"} no se agregó porque aun comprimida supera el limite recomendado.`
             );
             continue;
           }
 
-          currentTotalLength += dataUrl.length;
-
           convertedPhotos.push({
             url: dataUrl,
             base64: dataUrl,
-            storageType: "base64",
+            storageType: "base64-subcollection",
             path: `firestore-base64/${getModuleConfig().collectionName}/${computerId}/${Date.now()}_${createUniqueId()}`,
             nombre: file.name || `foto_${Date.now()}.jpg`,
             tipo: "image/jpeg",
@@ -3350,7 +3526,7 @@
       return convertedPhotos;
     }
 
-    function compressImageToBase64(file, maxWidth = 900, quality = 0.68) {
+    function compressImageToBase64(file, maxWidth = 700, quality = 0.55) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
 
@@ -3413,33 +3589,71 @@
       const container = $("#modalPhotoPreview");
       if (!container) return;
 
-      const existingHTML = modalExistingPhotos.map((photo, index) => `
-        <div class="photo-preview-card">
-          <a href="${escapeAttr(photo.url || "#")}" target="_blank" rel="noopener">
-            <img src="${escapeAttr(photo.url || "")}" alt="${escapeAttr(photo.nombre || "Foto del equipo")}">
-          </a>
-          <button type="button" class="photo-remove-btn" onclick="removeExistingPhoto(${index})" title="Eliminar foto">
-            <i data-lucide="x" class="h-4 w-4"></i>
-          </button>
-          <div class="p-2">
-            <p class="truncate text-xs font-bold" title="${escapeAttr(photo.nombre || "Foto guardada")}">${escapeHTML(photo.nombre || "Foto guardada")}</p>
-            <p class="text-[11px] text-slate-500 dark:text-slate-400">Guardada</p>
-          </div>
-        </div>
-      `).join("");
-
-      const selectedHTML = modalSelectedPhotos.map((file, index) => {
-        const url = URL.createObjectURL(file);
+      const existingHTML = modalExistingPhotos.map((photo, index) => {
+        const photoUrl = photo.url || "";
+        const photoName = photo.nombre || `Foto guardada ${index + 1}`;
+        const photoSize = formatPhotoSize(photo);
 
         return `
-          <div class="photo-preview-card">
-            <img src="${url}" alt="${escapeAttr(file.name)}">
-            <button type="button" class="photo-remove-btn" onclick="removeSelectedPhoto('modal', ${index})" title="Quitar foto">
+          <div class="photo-preview-card group">
+            <button
+              type="button"
+              onclick="openPhotoViewer(${escapeAttr(JSON.stringify(photoUrl))}, ${escapeAttr(JSON.stringify(photoName))}, ${escapeAttr(JSON.stringify(photoSize))})"
+              class="relative block w-full overflow-hidden text-left focus:outline-none focus:ring-4 focus:ring-blue-500/20"
+              title="Ampliar foto"
+            >
+              <img src="${escapeAttr(photoUrl)}" alt="${escapeAttr(photoName)}" class="transition duration-500 group-hover:scale-110">
+              <div class="absolute inset-0 bg-gradient-to-t from-slate-950/65 via-slate-950/10 to-transparent opacity-0 transition duration-300 group-hover:opacity-100"></div>
+              <div class="absolute bottom-2 right-2 flex h-9 w-9 translate-y-2 items-center justify-center rounded-2xl bg-blue-600 text-white opacity-0 shadow-xl shadow-blue-900/30 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
+                <svg class="h-4.5 w-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M15 3h6v6"></path>
+                  <path d="M9 21H3v-6"></path>
+                  <path d="M21 3l-7 7"></path>
+                  <path d="M3 21l7-7"></path>
+                </svg>
+              </div>
+            </button>
+            <button type="button" class="photo-remove-btn" onclick="event.stopPropagation(); removeExistingPhoto(${index})" title="Eliminar foto">
               <i data-lucide="x" class="h-4 w-4"></i>
             </button>
             <div class="p-2">
-              <p class="truncate text-xs font-bold" title="${escapeAttr(file.name)}">${escapeHTML(file.name)}</p>
-              <p class="text-[11px] text-slate-500 dark:text-slate-400">Nueva</p>
+              <p class="truncate text-xs font-bold" title="${escapeAttr(photoName)}">${escapeHTML(photoName)}</p>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400">Guardada · clic para ampliar</p>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      const selectedHTML = modalSelectedPhotos.map((file, index) => {
+        const url = URL.createObjectURL(file);
+        const photoName = file.name || `Foto nueva ${index + 1}`;
+        const photoSize = formatBytes(file.size || 0);
+
+        return `
+          <div class="photo-preview-card group">
+            <button
+              type="button"
+              onclick="openPhotoViewer(${escapeAttr(JSON.stringify(url))}, ${escapeAttr(JSON.stringify(photoName))}, ${escapeAttr(JSON.stringify(photoSize))})"
+              class="relative block w-full overflow-hidden text-left focus:outline-none focus:ring-4 focus:ring-blue-500/20"
+              title="Ampliar foto"
+            >
+              <img src="${escapeAttr(url)}" alt="${escapeAttr(photoName)}" class="transition duration-500 group-hover:scale-110">
+              <div class="absolute inset-0 bg-gradient-to-t from-slate-950/65 via-slate-950/10 to-transparent opacity-0 transition duration-300 group-hover:opacity-100"></div>
+              <div class="absolute bottom-2 right-2 flex h-9 w-9 translate-y-2 items-center justify-center rounded-2xl bg-blue-600 text-white opacity-0 shadow-xl shadow-blue-900/30 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
+                <svg class="h-4.5 w-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M15 3h6v6"></path>
+                  <path d="M9 21H3v-6"></path>
+                  <path d="M21 3l-7 7"></path>
+                  <path d="M3 21l7-7"></path>
+                </svg>
+              </div>
+            </button>
+            <button type="button" class="photo-remove-btn" onclick="event.stopPropagation(); removeSelectedPhoto('modal', ${index})" title="Quitar foto">
+              <i data-lucide="x" class="h-4 w-4"></i>
+            </button>
+            <div class="p-2">
+              <p class="truncate text-xs font-bold" title="${escapeAttr(photoName)}">${escapeHTML(photoName)}</p>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400">Nueva · clic para ampliar</p>
             </div>
           </div>
         `;
@@ -3447,6 +3661,14 @@
 
       container.innerHTML = existingHTML + selectedHTML;
       refreshIcons();
+    }
+
+    function formatBytes(bytes = 0) {
+      const value = Number(bytes || 0);
+      if (!value) return "";
+      if (value < 1024) return `${value} B`;
+      if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
+      return `${(value / (1024 * 1024)).toFixed(1)} MB`;
     }
 
     function removeSelectedPhoto(source, index) {
@@ -3573,24 +3795,191 @@
       if (video) video.srcObject = null;
     }
 
-    function photosBadge(photos) {
-      const total = Array.isArray(photos) ? photos.length : 0;
+    function photosBadge(itemOrPhotos) {
+      const photos = Array.isArray(itemOrPhotos) ? itemOrPhotos : itemOrPhotos?.fotos;
+      const total = Array.isArray(photos) && photos.length
+        ? photos.length
+        : Number(itemOrPhotos?.fotoCount || 0);
 
       if (!total) {
         return `<span class="text-xs font-bold text-slate-400">Sin fotos</span>`;
       }
 
-      const firstPhoto = photos[0]?.url || "#";
-
       return `
-        <a href="${escapeAttr(firstPhoto)}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-extrabold text-blue-700 transition hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-300 dark:hover:bg-blue-500/20">
+        <button type="button" onclick="viewComputerDetail('${escapeAttr(itemOrPhotos?.id || "")}')" class="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-extrabold text-blue-700 transition hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-300 dark:hover:bg-blue-500/20">
           <i data-lucide="image" class="h-3.5 w-3.5"></i>
           ${total} foto${total === 1 ? "" : "s"}
-        </a>
+        </button>
       `;
     }
 
     /************************************************************
+     * MIGRACION AUTOMATICA DE FOTOS LEGACY
+     ************************************************************/
+    function getAutoPhotoMigrationKey() {
+      return `${AUTO_PHOTO_MIGRATION_KEY_PREFIX}_${getModuleConfig().collectionName}`;
+    }
+
+    function hasEmbeddedLegacyPhotos(data = {}) {
+      return Array.isArray(data.fotos) && data.fotos.some(photo => photo && (photo.url || photo.base64));
+    }
+
+    function autoOptimizeEmbeddedPhotosFromSnapshot(docs = []) {
+      if (autoPhotoMigrationRunning) return;
+
+      const legacyDocs = docs.filter(doc => hasEmbeddedLegacyPhotos(doc.data()));
+      if (!legacyDocs.length) {
+        localStorage.setItem(getAutoPhotoMigrationKey(), String(Date.now()));
+        return;
+      }
+
+      autoPhotoMigrationRunning = true;
+      const totalPhotos = legacyDocs.reduce((total, doc) => {
+        const photos = Array.isArray(doc.data().fotos) ? doc.data().fotos : [];
+        return total + photos.length;
+      }, 0);
+
+      updateAutoMigrationNotice(legacyDocs.length, totalPhotos);
+
+      // Se ejecuta en segundo plano para no bloquear el primer pintado de la tabla.
+      setTimeout(async () => {
+        try {
+          let migratedDocs = 0;
+          let migratedPhotos = 0;
+
+          for (const doc of legacyDocs) {
+            const data = doc.data();
+            const photos = Array.isArray(data.fotos) ? data.fotos : [];
+            if (!photos.length) continue;
+
+            await migrateEmbeddedPhotosForDoc(doc.ref, photos);
+            migratedDocs++;
+            migratedPhotos += photos.length;
+          }
+
+          localStorage.setItem(getAutoPhotoMigrationKey(), String(Date.now()));
+
+          if (migratedDocs > 0) {
+            showToast(
+              "success",
+              "Fotos optimizadas",
+              `${migratedDocs} registros y ${migratedPhotos} fotos fueron limpiados automáticamente. Recarga la página y debería cargar más rápido.`
+            );
+          }
+        } catch (error) {
+          console.warn("Migración automática de fotos:", error);
+          showToast(
+            "warning",
+            "Optimización pendiente",
+            "No pude optimizar automáticamente algunas fotos. Revisa permisos de escritura o usa el botón Optimizar fotos."
+          );
+        } finally {
+          autoPhotoMigrationRunning = false;
+        }
+      }, 1200);
+    }
+
+    async function migrateEmbeddedPhotosForDoc(docRef, photos = []) {
+      let batch = db.batch();
+      let operations = 0;
+      const nowIso = new Date().toISOString();
+
+      photos.forEach((photo, index) => {
+        const cleanPhoto = { ...photo };
+        delete cleanPhoto.__photoDocId;
+
+        // ID fijo para que, si se interrumpe y vuelve a correr, no duplique fotos.
+        const photoId = `legacy_${String(index).padStart(4, "0")}`;
+        batch.set(docRef.collection(PHOTO_SUBCOLLECTION).doc(photoId), {
+          ...cleanPhoto,
+          orden: index,
+          migratedAt: cleanPhoto.migratedAt || nowIso,
+          migratedAutomatically: true,
+        }, { merge: true });
+        operations++;
+
+        if (operations >= 430) {
+          // No debería pasar con pocas fotos por documento, pero se deja seguro.
+          throw new Error("Este registro tiene demasiadas fotos para migrarlo en una sola operación.");
+        }
+      });
+
+      batch.update(docRef, {
+        fotos: [],
+        fotoCount: photos.length,
+        hasExternalPhotos: photos.length > 0,
+        photosOptimizedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        photosOptimizedMode: "automatic",
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+
+      await batch.commit();
+    }
+
+    function updateAutoMigrationNotice(records, photos) {
+      const status = $("#liveSyncStatus");
+      if (!status) return;
+
+      status.className = "inline-flex items-center gap-2 rounded-2xl bg-amber-400/20 px-4 py-2 text-sm font-extrabold text-white ring-1 ring-amber-200/30";
+      status.innerHTML = `<span class="h-2.5 w-2.5 animate-pulse rounded-full bg-amber-300"></span> Optimizando ${records} registro${records === 1 ? "" : "s"} con ${photos} foto${photos === 1 ? "" : "s"}...`;
+    }
+
+    /************************************************************
+     * MIGRACION DE FOTOS LEGACY
+     ************************************************************/
+    async function optimizeEmbeddedPhotos() {
+      if (!isCurrentUserAdmin()) {
+        showToast("warning", "Sin permisos", "Solo un administrador puede optimizar las fotos.");
+        return;
+      }
+
+      const result = await Swal.fire({
+        title: "Optimizar fotos",
+        html: `
+          <div class="text-left text-sm leading-6 text-slate-600">
+            <p><b>Esto es lo que realmente acelera la carga:</b></p>
+            <p class="mt-2">Moveré las fotos Base64 del documento principal hacia una subcolección <b>${PHOTO_SUBCOLLECTION}</b>.</p>
+            <p class="mt-2">Después de hacerlo, la tabla ya no descargará todas las fotos en cada carga.</p>
+          </div>
+        `,
+        icon: "info",
+        showCancelButton: true,
+        confirmButtonText: "Sí, optimizar ahora",
+        cancelButtonText: "Cancelar",
+        confirmButtonColor: "#059669",
+      });
+
+      if (!result.isConfirmed) return;
+
+      showRecordsLoader("Optimizando fotos existentes...");
+
+      try {
+        const snapshot = await activeCollection.get();
+        let migratedDocs = 0;
+        let migratedPhotos = 0;
+
+        for (const doc of snapshot.docs) {
+          const data = doc.data();
+          const photos = Array.isArray(data.fotos) ? data.fotos : [];
+          if (!photos.length) continue;
+
+          await migrateEmbeddedPhotosForDoc(doc.ref, photos);
+
+          migratedDocs++;
+          migratedPhotos += photos.length;
+        }
+
+        showToast("success", "Optimización lista", `${migratedDocs} registros y ${migratedPhotos} fotos fueron optimizados.`);
+      } catch (error) {
+        console.error(error);
+        showToast("error", "Error", error.message || "No se pudo optimizar las fotos.");
+      } finally {
+        hideRecordsLoader();
+      }
+    }
+
+    /************************************************************
+     * IMPORTAR    /************************************************************
      * IMPORTAR / EXPORTAR
      ************************************************************/
     function previewJSON(event) {
@@ -3671,7 +4060,9 @@
               fecha: item.fecha || new Date().toISOString().split("T")[0],
               precioEstimado: Number(item.precioEstimado || 0),
               notas: item.notas || "",
-              fotos: Array.isArray(item.fotos) ? item.fotos : [],
+              fotos: [],
+              fotoCount: 0,
+              hasExternalPhotos: false,
               moduloInventario: currentModule,
               createdAt: firebase.firestore.FieldValue.serverTimestamp(),
               createdBy: getCurrentUser()?.userEmail || "",
@@ -3767,7 +4158,7 @@
         "Fecha": formatDate(item.fecha),
         "Precio estimado": Number(item.precioEstimado || 0),
         "Notas": item.notas || "",
-        "Fotos": Array.isArray(item.fotos) ? item.fotos.length : 0,
+        "Fotos": Array.isArray(item.fotos) && item.fotos.length ? item.fotos.length : Number(item.fotoCount || 0),
       }));
     }
 
@@ -4080,6 +4471,7 @@
     window.capturePhotoFromCamera = capturePhotoFromCamera;
     window.openPhotoViewer = openPhotoViewer;
     window.closePhotoViewer = closePhotoViewer;
+    window.optimizeEmbeddedPhotos = optimizeEmbeddedPhotos;
   </script>
 </body>
 
