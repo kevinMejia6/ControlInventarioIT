@@ -1,579 +1,1007 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="scroll-smooth">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crear Usuario - Sistema de Inventario</title>
-    <style>
-        /* Reutilizamos los estilos base de tu archivo Index.html */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gestión de Usuarios | Inventario IT</title>
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #14407b 0%, rgb(62, 48, 116) 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            overflow: hidden;
-        }
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
 
-        #particles-js {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            z-index: 1;
-        }
+  <!-- Fuente -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-        .container {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-            width: 100%;
-            max-width: 500px; /* Un poco más ancho para el formulario de usuario */
-            position: relative;
-            overflow: hidden;
-            z-index: 2;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            animation: slideInUp 0.6s ease-out;
-        }
+  <!-- Firebase SDK Compat -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-app-compat.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-firestore-compat.min.js"></script>
 
-        .container::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #667eea, #764ba2);
-        }
+  <!-- SweetAlert2 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.10.8/sweetalert2.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.10.8/sweetalert2.all.min.js"></script>
 
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
 
-        .header h1 {
-            color: #333;
-            font-size: 28px;
-            margin-bottom: 10px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
+  <link rel="icon" href="data:," />
 
-        .header p {
-            color: #666;
-            font-size: 16px;
-        }
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ["Inter", "system-ui", "sans-serif"],
+          },
+          boxShadow: {
+            soft: "0 18px 55px rgba(15,23,42,.10)",
+            strong: "0 25px 90px rgba(15,23,42,.20)",
+          },
+          animation: {
+            "fade-in": "fadeIn .30s ease-out",
+            "slide-up": "slideUp .30s ease-out",
+          },
+          keyframes: {
+            fadeIn: {
+              "0%": { opacity: "0" },
+              "100%": { opacity: "1" },
+            },
+            slideUp: {
+              "0%": { opacity: "0", transform: "translateY(14px)" },
+              "100%": { opacity: "1", transform: "translateY(0)" },
+            },
+          },
+        },
+      },
+    };
+  </script>
 
-        .form-group {
-            margin-bottom: 25px;
-            position: relative;
-        }
+  <style>
+    body { font-family: "Inter", system-ui, sans-serif; }
 
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #333;
-            font-weight: 500;
-        }
+    .glass {
+      background: rgba(255, 255, 255, .86);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
 
-        .form-group input,
-        .form-group select {
-            width: 100%;
-            padding: 15px;
-            border: 2px solid #e1e1e1;
-            border-radius: 10px;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            background: rgba(248, 249, 250, 0.8);
-            backdrop-filter: blur(5px);
-            -webkit-appearance: none; /* Eliminar estilo predeterminado en select */
-            -moz-appearance: none;
-            appearance: none;
-            cursor: pointer;
-        }
+    .dark .glass { background: rgba(15, 23, 42, .78); }
 
-        .form-group input:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: #667eea;
-            background: rgba(255, 255, 255, 0.9);
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-        
-        .form-group input::placeholder {
-            color: #999;
-        }
+    .input-base {
+      width: 100%;
+      border-radius: 1rem;
+      border: 1px solid rgb(226 232 240);
+      background: white;
+      padding: .8rem 1rem;
+      font-size: .875rem;
+      outline: none;
+      transition: all .2s ease;
+      color: rgb(15 23 42);
+    }
 
-        .form-group select {
-            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23666%22%20d%3D%22M287%2069.6c-3.2-3.2-7.8-4.9-12.4-4.9s-9.2%201.7-12.4%204.9L146.2%20195.9%2030.2%2069.6c-3.2-3.2-7.8-4.9-12.4-4.9S8.6%2066.4%205.4%2069.6c-6.5%206.5-6.5%2017.1%200%2023.6l116%20116c3.2%203.2%207.8%204.9%2012.4%204.9s9.2-1.7%2012.4-4.9l116-116c6.5-6.5%206.5-17.1%200-23.6z%22%2F%3E%3C%2Fsvg%3E');
-            background-repeat: no-repeat;
-            background-position: right 15px top 50%;
-            background-size: 16px 16px;
-        }
+    .input-base:focus {
+      border-color: rgb(37 99 235);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, .12);
+    }
 
-        .action-btn {
-            width: 100%;
-            padding: 15px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-bottom: 20px;
-            position: relative;
-            overflow: hidden;
-        }
+    .dark .input-base {
+      border-color: rgba(255, 255, 255, .10);
+      background: rgba(255, 255, 255, .07);
+      color: white;
+    }
 
-        .action-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: left 0.5s;
-        }
+    .dark .input-base option { color: #0f172a; }
 
-        .action-btn:hover::before {
-            left: 100%;
-        }
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: .5rem;
+      border-radius: 1rem;
+      background: #2563eb;
+      padding: .8rem 1rem;
+      font-weight: 800;
+      color: white;
+      transition: .2s ease;
+      box-shadow: 0 12px 24px rgba(37, 99, 235, .20);
+    }
 
-        .action-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
-        }
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 18px 34px rgba(37, 99, 235, .28);
+      background: #1d4ed8;
+    }
 
-        .action-btn:active {
-            transform: translateY(0);
-        }
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: .5rem;
+      border-radius: 1rem;
+      border: 1px solid rgb(226 232 240);
+      background: white;
+      padding: .8rem 1rem;
+      font-weight: 800;
+      color: rgb(51 65 85);
+      transition: .2s ease;
+    }
 
-        .action-btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
+    .btn-secondary:hover {
+      transform: translateY(-1px);
+      border-color: rgb(147 197 253);
+      color: rgb(29 78 216);
+      box-shadow: 0 12px 24px rgba(15, 23, 42, .08);
+    }
 
-        .error-message {
-            background: rgba(254, 238, 238, 0.9);
-            color: #c53030;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            border-left: 4px solid #c53030;
-            display: none;
-            backdrop-filter: blur(5px);
-        }
+    .dark .btn-secondary {
+      border-color: rgba(255, 255, 255, .10);
+      background: rgba(255, 255, 255, .07);
+      color: white;
+    }
 
-        .success-message {
-            background: rgba(240, 255, 244, 0.9);
-            color: #38a169;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            border-left: 4px solid #38a169;
-            display: none;
-            backdrop-filter: blur(5px);
-        }
+    .sidebar-link {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      border-radius: 1rem;
+      padding: .75rem 1rem;
+      font-weight: 800;
+      color: rgb(71 85 105);
+      transition: .2s ease;
+    }
 
-        /* Loading de pantalla completa */
-        .fullscreen-loading {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(10px);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-        }
+    .sidebar-link:hover,
+    .sidebar-link.active {
+      background: rgb(239 246 255);
+      color: rgb(29 78 216);
+    }
 
-        .fullscreen-loading.show {
-            display: flex;
-            animation: fadeIn 0.3s ease-in-out;
-        }
+    .dark .sidebar-link { color: rgb(203 213 225); }
 
-        .loading-content {
-            text-align: center;
-            color: white;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 40px;
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
-        }
+    .dark .sidebar-link:hover,
+    .dark .sidebar-link.active {
+      background: rgba(59, 130, 246, .14);
+      color: rgb(147 197 253);
+    }
 
-        .loading-spinner {
-            width: 60px;
-            height: 60px;
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
+    .table-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 2.3rem;
+      width: 2.3rem;
+      border-radius: .85rem;
+      transition: .2s ease;
+    }
 
-        .loading-text {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 10px;
-        }
-
-        .loading-subtext {
-            font-size: 14px;
-            opacity: 0.8;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 0.5; }
-            50% { opacity: 1; }
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @keyframes slideInUp {
-            from {
-                transform: translateY(30px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-        .form-group input:hover,
-        .form-group select:hover {
-            border-color: #b8c6f0;
-            background: rgba(255, 255, 255, 0.7);
-        }
-
-        .footer {
-            text-align: center;
-            color: #666;
-            font-size: 14px;
-            margin-top: 20px;
-        }
-
-        .back-link {
-            display: block;
-            text-align: center;
-            margin-top: 25px;
-            color: #667eea;
-            text-decoration: none;
-            font-weight: 600;
-            transition: color 0.3s ease;
-        }
-
-        .back-link:hover {
-            color: #764ba2;
-            text-decoration: underline;
-        }
-
-        @media (max-width: 480px) {
-            .container {
-                margin: 20px;
-                padding: 30px 20px;
-            }
-            .loading-content {
-                margin: 20px;
-                padding: 30px 20px;
-            }
-        }
-    </style>
+    .modal-open { overflow: hidden; }
+  </style>
 </head>
-<body>
-    <!-- Contenedor de partículas -->
-    <div id="particles-js"></div>
 
-    <!-- Loading de pantalla completa -->
-    <div id="fullscreen-loading" class="fullscreen-loading">
-        <div class="loading-content">
-            <div class="loading-spinner"></div>
-            <div class="loading-text">Cargando</div>
-            <div class="loading-subtext">Espere por favor...</div>
-        </div>
+<body class="min-h-screen bg-slate-100 text-slate-900 dark:bg-slate-950 dark:text-white">
+  <!-- Loading inicial -->
+  <div id="pageLoader" class="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/85 text-white backdrop-blur-sm">
+    <div class="rounded-3xl bg-slate-900 px-7 py-5 text-center shadow-strong">
+      <div class="mx-auto mb-4 h-11 w-11 animate-spin rounded-full border-4 border-white/20 border-t-blue-400"></div>
+      <p class="text-base font-extrabold">Cargando usuarios...</p>
+      <p class="mt-1 text-sm text-slate-300">Consultando información desde Firebase</p>
     </div>
+  </div>
 
-    <div class="container">
-        <div class="header">
-            <h1>👥 Crear Nuevo Usuario</h1>
-            <p>Solo para Administradores</p>
+  <!-- Fondo decorativo -->
+  <div class="fixed inset-0 -z-10 overflow-hidden">
+    <div class="absolute -top-40 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-blue-500/20 blur-3xl"></div>
+    <div class="absolute bottom-0 right-0 h-[28rem] w-[28rem] rounded-full bg-indigo-500/20 blur-3xl"></div>
+  </div>
+
+  <div class="flex min-h-screen">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-72 -translate-x-full border-r border-slate-200 bg-white/95 p-4 shadow-strong transition lg:static lg:translate-x-0 dark:border-white/10 dark:bg-slate-900/95">
+      <div class="mb-5 flex items-center gap-3 rounded-3xl bg-blue-600 p-4 text-white shadow-lg">
+        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/15">
+          <i data-lucide="users-round" class="h-7 w-7"></i>
         </div>
+        <div class="min-w-0">
+          <h1 class="truncate text-lg font-extrabold leading-tight">Inventario IT</h1>
+          <p class="truncate text-xs text-blue-100">Gestión de Usuarios</p>
+        </div>
+      </div>
 
-        <div id="error-message" class="error-message"></div>
-        <div id="success-message" class="success-message"></div>
+      <nav class="space-y-2">
+        <a href="inventario_computadoras_marca_kevin_bajo_cerrar_sesion.html" class="sidebar-link">
+          <i data-lucide="layout-dashboard" class="h-5 w-5"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="inventario_computadoras_marca_kevin_bajo_cerrar_sesion.html#form-section" class="sidebar-link">
+          <i data-lucide="plus-circle" class="h-5 w-5"></i>
+          <span>Registrar equipo</span>
+        </a>
+        <a href="inventario_computadoras_marca_kevin_bajo_cerrar_sesion.html#inventory-section" class="sidebar-link">
+          <i data-lucide="table-2" class="h-5 w-5"></i>
+          <span>Inventario</span>
+        </a>
+        <a href="#usuarios" class="sidebar-link active">
+          <i data-lucide="users" class="h-5 w-5"></i>
+          <span>Gestionar usuarios</span>
+        </a>
+      </nav>
 
-        <form id="create-user-form">
-            <div class="form-group">
-                <label for="nombre">Nombre Completo</label>
-                <input type="text" id="nombre" name="nombre" placeholder="Nombre y Apellido" required>
-            </div>
+      <div class="mt-8 rounded-3xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/5">
+        <p class="text-sm font-extrabold">Sesión activa</p>
+        <p id="sidebarUserName" class="mt-1 truncate text-sm text-slate-500 dark:text-slate-400">Cargando...</p>
+        <button onclick="logout()" class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-red-50 px-4 py-2.5 text-sm font-extrabold text-red-600 transition hover:bg-red-100 dark:bg-red-500/10 dark:text-red-300 dark:hover:bg-red-500/20">
+          <i data-lucide="log-out" class="h-4 w-4"></i>
+          Cerrar sesión
+        </button>
 
-            <div class="form-group">
-                <label for="email">Correo Electrónico</label>
-                <input type="email" id="email" name="email" placeholder="ejemplo@dominio.com" required>
-            </div>
+        <div class="mt-5 border-t border-slate-200 pt-4 text-center dark:border-white/10">
+          <p class="text-[11px] font-extrabold uppercase tracking-[0.22em] text-slate-400">Creado por</p>
+          <p class="mt-1 text-sm font-extrabold text-slate-700 dark:text-slate-100">Kevin Eduardo</p>
+          <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">© <span id="sidebarYear"></span> Inventario IT</p>
+        </div>
+      </div>
+    </aside>
 
-            <div class="form-group">
-                <label for="password">Contraseña</label>
-                <input type="password" id="password" name="password" placeholder="Mínimo 6 caracteres" required>
-            </div>
+    <!-- Overlay mobile -->
+    <button id="sidebarOverlay" class="fixed inset-0 z-30 hidden bg-slate-950/50 lg:hidden" aria-label="Cerrar menú"></button>
 
-            <div class="form-group">
-                <label for="role">Rol</label>
-                <select id="role" name="role" required>
-                    <option value="">Selecciona un rol</option>
-                    <option value="Administrador">Administrador</option>
-                    <option value="Usuario">Usuario</option>
-                </select>
-            </div>
-
-            <button type="submit" class="action-btn" id="create-user-btn">
-                Crear Usuario
+    <!-- Main -->
+    <main class="min-w-0 flex-1">
+      <!-- Header -->
+      <header class="sticky top-0 z-30 border-b border-slate-200 bg-white/80 px-4 py-3 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/80 sm:px-6">
+        <div class="flex items-center justify-between gap-4">
+          <div class="flex min-w-0 items-center gap-3">
+            <button id="openSidebar" class="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 lg:hidden dark:border-white/10 dark:bg-white/10 dark:text-white">
+              <i data-lucide="menu" class="h-5 w-5"></i>
             </button>
-        </form>
 
-        <a href="Inicio.html" class="back-link">Volver al Inicio</a>
+            <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-blue-600 shadow-sm dark:border-white/10 dark:bg-white/10 dark:text-blue-300">
+              <i data-lucide="shield-check" class="h-6 w-6"></i>
+            </div>
 
-        <div class="footer">
-            <p>&copy; <span id="current-year"></span> Sistema de Inventario</p>
+            <div class="min-w-0">
+              <h2 class="truncate text-xl font-extrabold">Gestión de Usuarios</h2>
+              <p class="hidden text-sm text-slate-500 dark:text-slate-400 sm:block">Administra usuarios, roles, accesos y estados del sistema.</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button id="themeBtn" class="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 transition hover:shadow-md dark:border-white/10 dark:bg-white/10 dark:text-white" title="Cambiar tema">
+              <i id="themeIcon" data-lucide="moon" class="h-5 w-5"></i>
+            </button>
+
+            <button onclick="refreshUsers()" class="hidden items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-extrabold text-slate-700 transition hover:border-blue-200 hover:text-blue-700 hover:shadow-md dark:border-white/10 dark:bg-white/10 dark:text-white sm:inline-flex">
+              <i data-lucide="refresh-cw" class="h-4 w-4"></i>
+              Actualizar
+            </button>
+
+            <div class="hidden items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 dark:border-white/10 dark:bg-white/10 sm:flex">
+              <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-sm font-extrabold text-white" id="userInitials">U</div>
+              <div class="text-left">
+                <p id="headerUserName" class="max-w-40 truncate text-sm font-extrabold">Cargando...</p>
+                <p id="headerUserRole" class="text-xs text-slate-500 dark:text-slate-400">Usuario</p>
+              </div>
+            </div>
+          </div>
         </div>
+      </header>
+
+      <section id="usuarios" class="mx-auto max-w-[1500px] space-y-6 px-4 py-6 sm:px-6">
+        <!-- Hero -->
+        <section class="overflow-hidden rounded-[2rem] bg-blue-600 p-6 text-white shadow-strong sm:p-8">
+          <div class="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
+            <div>
+              <p class="mb-3 inline-flex rounded-full bg-white/15 px-3 py-1 text-sm font-extrabold text-blue-50">Panel administrativo</p>
+              <h1 class="text-3xl font-extrabold tracking-tight sm:text-4xl">Usuarios del sistema</h1>
+              <p class="mt-3 max-w-2xl text-sm leading-6 text-blue-100 sm:text-base">Consulta, busca, edita y activa o inhabilita usuarios registrados en Firebase.</p>
+            </div>
+            <div class="grid grid-cols-2 gap-3 sm:flex">
+              <button onclick="refreshUsers()" class="rounded-2xl bg-white px-4 py-3 text-sm font-extrabold text-blue-700 transition hover:-translate-y-0.5 hover:shadow-lg">
+                Actualizar
+              </button>
+              <button onclick="goToCreateUser()" class="rounded-2xl bg-white/15 px-4 py-3 text-sm font-extrabold text-white transition hover:-translate-y-0.5 hover:bg-white/20">
+                Crear usuario
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Stats -->
+        <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-soft dark:border-white/10 dark:bg-slate-900">
+            <div class="flex items-center justify-between">
+              <p class="text-sm font-bold text-slate-500 dark:text-slate-400">Total usuarios</p>
+              <span class="rounded-2xl bg-slate-100 p-3 text-slate-700 dark:bg-white/10 dark:text-white"><i data-lucide="users" class="h-5 w-5"></i></span>
+            </div>
+            <p id="totalUsers" class="mt-4 text-4xl font-extrabold">0</p>
+          </article>
+
+          <article class="rounded-3xl border border-emerald-200 bg-white p-5 shadow-soft dark:border-emerald-400/20 dark:bg-slate-900">
+            <div class="flex items-center justify-between">
+              <p class="text-sm font-bold text-slate-500 dark:text-slate-400">Activos</p>
+              <span class="rounded-2xl bg-emerald-50 p-3 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300"><i data-lucide="user-check" class="h-5 w-5"></i></span>
+            </div>
+            <p id="activeUsers" class="mt-4 text-4xl font-extrabold text-emerald-600 dark:text-emerald-300">0</p>
+          </article>
+
+          <article class="rounded-3xl border border-red-200 bg-white p-5 shadow-soft dark:border-red-400/20 dark:bg-slate-900">
+            <div class="flex items-center justify-between">
+              <p class="text-sm font-bold text-slate-500 dark:text-slate-400">Inhabilitados</p>
+              <span class="rounded-2xl bg-red-50 p-3 text-red-600 dark:bg-red-500/10 dark:text-red-300"><i data-lucide="user-x" class="h-5 w-5"></i></span>
+            </div>
+            <p id="inactiveUsers" class="mt-4 text-4xl font-extrabold text-red-600 dark:text-red-300">0</p>
+          </article>
+
+          <article class="rounded-3xl border border-blue-200 bg-white p-5 shadow-soft dark:border-blue-400/20 dark:bg-slate-900">
+            <div class="flex items-center justify-between">
+              <p class="text-sm font-bold text-slate-500 dark:text-slate-400">Administradores</p>
+              <span class="rounded-2xl bg-blue-50 p-3 text-blue-600 dark:bg-blue-500/10 dark:text-blue-300"><i data-lucide="shield" class="h-5 w-5"></i></span>
+            </div>
+            <p id="adminUsers" class="mt-4 text-4xl font-extrabold text-blue-600 dark:text-blue-300">0</p>
+          </article>
+        </section>
+
+        <!-- Usuarios -->
+        <section class="rounded-[2rem] border border-slate-200 bg-white shadow-soft dark:border-white/10 dark:bg-slate-900">
+          <div class="border-b border-slate-200 p-5 dark:border-white/10 sm:p-6">
+            <div class="flex flex-col justify-between gap-4 xl:flex-row xl:items-center">
+              <div>
+                <h2 class="text-xl font-extrabold">Listado de usuarios</h2>
+                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Busca por nombre, correo, rol o estado.</p>
+              </div>
+
+              <div class="flex flex-wrap gap-2">
+                <button onclick="goToCreateUser()" class="btn-primary">
+                  <i data-lucide="user-plus" class="h-4 w-4"></i>
+                  Nuevo usuario
+                </button>
+                <button onclick="refreshUsers()" class="btn-secondary">
+                  <i data-lucide="refresh-cw" class="h-4 w-4"></i>
+                  Actualizar
+                </button>
+              </div>
+            </div>
+
+            <div class="mt-5 grid gap-3 lg:grid-cols-[1.3fr_.7fr_.7fr_auto]">
+              <div class="relative">
+                <i data-lucide="search" class="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"></i>
+                <input id="searchInput" class="input-base pl-11" type="text" placeholder="Buscar por nombre, correo, rol o estado...">
+              </div>
+              <select id="roleFilter" class="input-base">
+                <option value="">Todos los roles</option>
+                <option value="Administrador">Administrador</option>
+                <option value="Supervisor">Supervisor</option>
+                <option value="Usuario">Usuario</option>
+              </select>
+              <select id="statusFilter" class="input-base">
+                <option value="">Todos los estados</option>
+                <option value="Activo">Activo</option>
+                <option value="Inhabilitado">Inhabilitado</option>
+              </select>
+              <button onclick="resetFilters()" class="btn-secondary">
+                <i data-lucide="eraser" class="h-4 w-4"></i>
+                Limpiar
+              </button>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="min-w-[1050px] w-full text-left text-sm">
+              <thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500 dark:bg-white/5 dark:text-slate-400">
+                <tr>
+                  <th class="px-4 py-3">Usuario</th>
+                  <th class="px-4 py-3">Correo</th>
+                  <th class="px-4 py-3">Rol</th>
+                  <th class="px-4 py-3">Estado</th>
+                  <th class="px-4 py-3">Contraseña</th>
+                  <th class="px-4 py-3 text-right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="usersTableBody" class="divide-y divide-slate-100 dark:divide-white/10">
+                <tr>
+                  <td colspan="6" class="px-4 py-12 text-center text-slate-500">Cargando usuarios...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <footer class="rounded-[2rem] border border-slate-200 bg-white px-5 py-4 text-center text-sm text-slate-500 shadow-soft dark:border-white/10 dark:bg-slate-900 dark:text-slate-400">
+          © <span id="footerYear"></span> Creado por <span class="font-extrabold text-slate-800 dark:text-white">Kevin Eduardo</span>
+        </footer>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal editar usuario -->
+  <div id="editModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm">
+    <div class="max-h-[92vh] w-full max-w-2xl overflow-hidden rounded-[2rem] bg-white shadow-strong dark:bg-slate-900">
+      <div class="flex items-start justify-between border-b border-slate-200 p-5 dark:border-white/10">
+        <div>
+          <h3 class="text-xl font-extrabold">Editar usuario</h3>
+          <p id="editSubtitle" class="mt-1 text-sm text-slate-500 dark:text-slate-400">Actualiza la información del usuario seleccionado.</p>
+        </div>
+        <button onclick="closeEditModal()" class="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 text-slate-600 transition hover:bg-slate-200 dark:bg-white/10 dark:text-white dark:hover:bg-white/15">
+          <i data-lucide="x" class="h-5 w-5"></i>
+        </button>
+      </div>
+
+      <form id="editForm" class="max-h-[calc(92vh-96px)] overflow-y-auto p-5">
+        <input type="hidden" id="editUserId">
+
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label for="editNombre" class="mb-1.5 block text-sm font-extrabold">Nombre</label>
+            <input type="text" id="editNombre" class="input-base" required>
+          </div>
+          <div>
+            <label for="editCorreo" class="mb-1.5 block text-sm font-extrabold">Correo</label>
+            <input type="email" id="editCorreo" class="input-base" required>
+          </div>
+          <div>
+            <label for="editRol" class="mb-1.5 block text-sm font-extrabold">Rol</label>
+            <select id="editRol" class="input-base" required>
+              <option value="Administrador">Administrador</option>
+              <option value="Usuario">Usuario</option>
+              <option value="Supervisor">Supervisor</option>
+            </select>
+          </div>
+          <div>
+            <label for="editEstado" class="mb-1.5 block text-sm font-extrabold">Estado</label>
+            <select id="editEstado" class="input-base" required>
+              <option value="Activo">Activo</option>
+              <option value="Inhabilitado">Inhabilitado</option>
+            </select>
+          </div>
+          <div class="sm:col-span-2">
+            <label for="editContrasena" class="mb-1.5 block text-sm font-extrabold">Nueva contraseña <span class="font-semibold text-slate-400">(opcional)</span></label>
+            <input type="password" id="editContrasena" class="input-base" placeholder="Dejar vacío para mantener la actual">
+            <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">Solo se actualizará si escribes una contraseña nueva.</p>
+          </div>
+        </div>
+
+        <div class="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <button type="button" onclick="closeEditModal()" class="btn-secondary">Cancelar</button>
+          <button id="saveUserBtn" type="submit" class="btn-primary">
+            <i data-lucide="save" class="h-4 w-4"></i>
+            Guardar cambios
+          </button>
+        </div>
+      </form>
     </div>
+  </div>
 
-    <!-- Particles.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/particles.js/2.0.0/particles.min.js"></script>
-    
-    <!-- Firebase SDK -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-app-compat.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-firestore-compat.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-auth-compat.min.js"></script>
+  <script>
+    /************************************************************
+     * CONFIGURACIÓN
+     ************************************************************/
+    const firebaseConfig = {
+      apiKey: "AIzaSyDycWG4lcgCk8KnIO6HLpUyabs3zqxUtFg",
+      authDomain: "controlinventarioit-2c8fc.firebaseapp.com",
+      projectId: "controlinventarioit-2c8fc",
+      storageBucket: "controlinventarioit-2c8fc.firebasestorage.app",
+      messagingSenderId: "621661032303",
+      appId: "1:621661032303:web:468a47222d01805e7de29a",
+      measurementId: "G-N6F1RQTW6B",
+    };
 
-    <script>
-        // Configuración de partículas (igual que en Index.html)
-        particlesJS('particles-js', {
-            "particles": {
-                "number": { "value": 80, "density": { "enable": true, "value_area": 800 } },
-                "color": { "value": ["#ffffff", "#667eea", "#764ba2"] },
-                "shape": { "type": "circle", "stroke": { "width": 0, "color": "#000000" } },
-                "opacity": { "value": 0.6, "random": true, "anim": { "enable": true, "speed": 1, "opacity_min": 0.1, "sync": false } },
-                "size": { "value": 3, "random": true, "anim": { "enable": true, "speed": 2, "size_min": 0.1, "sync": false } },
-                "line_linked": { "enable": true, "distance": 150, "color": "#ffffff", "opacity": 0.4, "width": 1 },
-                "move": { "enable": true, "speed": 2, "direction": "none", "random": true, "straight": false, "out_mode": "out", "bounce": false, "attract": { "enable": false, "rotateX": 600, "rotateY": 1200 } }
-            },
-            "interactivity": {
-                "detect_on": "canvas",
-                "events": { "onhover": { "enable": true, "mode": "repulse" }, "onclick": { "enable": true, "mode": "push" }, "resize": true },
-                "modes": {
-                    "grab": { "distance": 400, "line_linked": { "opacity": 1 } },
-                    "bubble": { "distance": 400, "size": 40, "duration": 2, "opacity": 8, "speed": 3 },
-                    "repulse": { "distance": 100, "duration": 0.4 },
-                    "push": { "particles_nb": 4 },
-                    "remove": { "particles_nb": 2 }
-                }
-            },
-            "retina_detect": true
-        });
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const usersCollection = db.collection("Usuario");
 
-        // Función para actualizar el año dinámicamente
-        function updateYear() {
-            const currentYear = new Date().getFullYear();
-            document.getElementById('current-year').textContent = currentYear;
+    const SESSION_KEY = "userSession";
+    const THEME_KEY = "inventoryTheme";
+
+    let allUsers = [];
+    let filteredUsers = [];
+    let unsubscribeUsers = null;
+    let usersFirstLoadDone = false;
+
+    const $ = (selector) => document.querySelector(selector);
+    const $$ = (selector) => document.querySelectorAll(selector);
+
+    /************************************************************
+     * INIT
+     ************************************************************/
+    document.addEventListener("DOMContentLoaded", () => {
+      initYears();
+      initTheme();
+      initMenus();
+      displayUserInfo(getCurrentUser());
+      bindEvents();
+      loadUsersRealtime();
+      refreshIcons();
+    });
+
+    function initYears() {
+      const year = new Date().getFullYear();
+      ["footerYear", "sidebarYear"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = year;
+      });
+    }
+
+    function refreshIcons() {
+      if (window.lucide) lucide.createIcons();
+    }
+
+    /************************************************************
+     * TEMA Y MENÚ
+     ************************************************************/
+    function initTheme() {
+      const saved = localStorage.getItem(THEME_KEY);
+      if (saved === "dark") document.documentElement.classList.add("dark");
+      updateThemeIcon();
+    }
+
+    function updateThemeIcon() {
+      const icon = $("#themeIcon");
+      if (!icon) return;
+      icon.setAttribute("data-lucide", document.documentElement.classList.contains("dark") ? "sun" : "moon");
+      refreshIcons();
+    }
+
+    function initMenus() {
+      $("#themeBtn").addEventListener("click", () => {
+        const isDark = document.documentElement.classList.toggle("dark");
+        localStorage.setItem(THEME_KEY, isDark ? "dark" : "light");
+        updateThemeIcon();
+      });
+
+      $("#openSidebar").addEventListener("click", () => {
+        $("#sidebar").classList.remove("-translate-x-full");
+        $("#sidebarOverlay").classList.remove("hidden");
+      });
+
+      $("#sidebarOverlay").addEventListener("click", closeSidebar);
+    }
+
+    function closeSidebar() {
+      $("#sidebar").classList.add("-translate-x-full");
+      $("#sidebarOverlay").classList.add("hidden");
+    }
+
+    /************************************************************
+     * SESIÓN
+     ************************************************************/
+    function getCurrentUser() {
+      try {
+        const raw = localStorage.getItem(SESSION_KEY);
+        if (raw) return JSON.parse(raw);
+        return null;
+      } catch (error) {
+        console.error(error);
+        return null;
+      }
+    }
+
+    function displayUserInfo(user) {
+      const name = user?.userName || "Admin Helpdesk";
+      const email = user?.userEmail || "helpdesk@como.com.sv";
+      const role = user?.userRole || "Administrador";
+
+      $("#headerUserName").textContent = name;
+      $("#headerUserRole").textContent = role;
+      $("#sidebarUserName").textContent = email;
+
+      const initials = name
+        .split(" ")
+        .filter(Boolean)
+        .slice(0, 2)
+        .map(part => part[0])
+        .join("")
+        .toUpperCase() || "U";
+
+      $("#userInitials").textContent = initials;
+    }
+
+    function clearSession() {
+      localStorage.removeItem(SESSION_KEY);
+      document.cookie = "session=; path=/; max-age=0";
+    }
+
+    function logout() {
+      Swal.fire({
+        title: "¿Cerrar sesión?",
+        text: "Se cerrará tu sesión actual.",
+        icon: "question",
+        showCancelButton: true,
+        confirmButtonText: "Sí, cerrar",
+        cancelButtonText: "Cancelar",
+        confirmButtonColor: "#dc2626",
+      }).then(result => {
+        if (result.isConfirmed) {
+          clearSession();
+          window.location.replace("index.html");
         }
-        document.addEventListener('DOMContentLoaded', updateYear);
-        setInterval(updateYear, 60000);
+      });
+    }
 
-        // Configuración de Firebase (debe ser la misma que en Index.html)
-        const firebaseConfig = {
-            apiKey: "AIzaSyDycWG4lcgCk8KnIO6HLpUyabs3zqxUtFg",
-            authDomain: "controlinventarioit-2c8fc.firebaseapp.com",
-            projectId: "controlinventarioit-2c8fc",
-            storageBucket: "controlinventarioit-2c8fc.firebasestorage.app",
-            messagingSenderId: "621661032303",
-            appId: "1:621661032303:web:468a47222d01805e7de29a",
-            measurementId: "G-N6F1RQTW6B"
+    function goToCreateUser() {
+      window.location.href = "Crear-usuario.html";
+    }
+
+    /************************************************************
+     * EVENTOS
+     ************************************************************/
+    function bindEvents() {
+      $("#searchInput").addEventListener("input", debounce(applyFilters, 250));
+      $("#roleFilter").addEventListener("change", applyFilters);
+      $("#statusFilter").addEventListener("change", applyFilters);
+      $("#editForm").addEventListener("submit", saveUserChanges);
+    }
+
+    /************************************************************
+     * FIRESTORE
+     ************************************************************/
+    function loadUsersRealtime() {
+      showPageLoader("Cargando usuarios...");
+
+      if (unsubscribeUsers) unsubscribeUsers();
+
+      unsubscribeUsers = usersCollection
+        .onSnapshot({ includeMetadataChanges: true }, snapshot => {
+          allUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          allUsers.sort((a, b) => String(a.Nombre || "").localeCompare(String(b.Nombre || ""), "es"));
+          applyFilters();
+
+          const dataFromServer = !snapshot.metadata.fromCache;
+          if (dataFromServer && !usersFirstLoadDone) {
+            usersFirstLoadDone = true;
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => hidePageLoader());
+            });
+          }
+        }, error => {
+          console.error(error);
+          hidePageLoader();
+          $("#usersTableBody").innerHTML = `
+            <tr>
+              <td colspan="6" class="px-4 py-12 text-center text-red-500">
+                Error al cargar usuarios: ${escapeHTML(error.message)}
+              </td>
+            </tr>
+          `;
+          showToast("error", "Base de datos", error.message || "No se pudieron cargar los usuarios.");
+        });
+    }
+
+    function refreshUsers() {
+      usersFirstLoadDone = false;
+      showPageLoader("Actualizando usuarios...");
+      loadUsersRealtime();
+    }
+
+    /************************************************************
+     * FILTROS Y RENDER
+     ************************************************************/
+    function applyFilters() {
+      const term = normalizeText($("#searchInput").value);
+      const role = $("#roleFilter").value;
+      const status = $("#statusFilter").value;
+
+      filteredUsers = allUsers.filter(user => {
+        const matchesTerm = !term || [
+          user.Nombre,
+          user.correo,
+          user.rol,
+          user.Estado,
+        ].some(value => normalizeText(value).includes(term));
+
+        const matchesRole = !role || user.rol === role;
+        const matchesStatus = !status || user.Estado === status;
+
+        return matchesTerm && matchesRole && matchesStatus;
+      });
+
+      updateStats();
+      renderUsersTable();
+    }
+
+    function updateStats() {
+      $("#totalUsers").textContent = allUsers.length;
+      $("#activeUsers").textContent = allUsers.filter(user => user.Estado === "Activo").length;
+      $("#inactiveUsers").textContent = allUsers.filter(user => user.Estado === "Inhabilitado").length;
+      $("#adminUsers").textContent = allUsers.filter(user => user.rol === "Administrador").length;
+    }
+
+    function renderUsersTable() {
+      const tbody = $("#usersTableBody");
+
+      if (!filteredUsers.length) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="px-4 py-14 text-center">
+              <div class="mx-auto max-w-sm">
+                <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-3xl bg-slate-100 text-slate-500 dark:bg-white/10">
+                  <i data-lucide="search-x" class="h-7 w-7"></i>
+                </div>
+                <p class="font-extrabold">No se encontraron usuarios</p>
+                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Prueba limpiando los filtros o actualizando la información.</p>
+              </div>
+            </td>
+          </tr>
+        `;
+        refreshIcons();
+        return;
+      }
+
+      tbody.innerHTML = filteredUsers.map(user => {
+        const active = user.Estado === "Activo";
+        return `
+          <tr class="transition hover:bg-slate-50 dark:hover:bg-white/[.03]">
+            <td class="px-4 py-4">
+              <div class="flex items-center gap-3">
+                <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-sm font-extrabold text-blue-700 dark:bg-blue-500/10 dark:text-blue-300">
+                  ${escapeHTML(getInitials(user.Nombre || "Usuario"))}
+                </div>
+                <div>
+                  <div class="font-extrabold text-slate-900 dark:text-white">${escapeHTML(user.Nombre || "N/A")}</div>
+                  <div class="text-xs text-slate-500 dark:text-slate-400">ID: ${escapeHTML(user.id || "")}</div>
+                </div>
+              </div>
+            </td>
+            <td class="px-4 py-4 text-slate-600 dark:text-slate-300">${escapeHTML(user.correo || "N/A")}</td>
+            <td class="px-4 py-4">${roleBadge(user.rol || "N/A")}</td>
+            <td class="px-4 py-4">${statusBadge(user.Estado || "N/A")}</td>
+            <td class="px-4 py-4">
+              <span class="inline-flex items-center gap-2 rounded-xl bg-slate-100 px-3 py-1.5 text-xs font-extrabold text-slate-600 dark:bg-white/10 dark:text-slate-200">
+                <i data-lucide="lock" class="h-3.5 w-3.5"></i>
+                ${user.Contraseña ? "••••••••" : "N/A"}
+              </span>
+            </td>
+            <td class="px-4 py-4">
+              <div class="flex justify-end gap-2">
+                <button onclick="editUser('${escapeAttr(user.id)}')" class="table-action bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-300 dark:hover:bg-blue-500/20" title="Editar">
+                  <i data-lucide="pencil" class="h-4 w-4"></i>
+                </button>
+                <button onclick="toggleUserStatus('${escapeAttr(user.id)}', '${escapeAttr(user.Estado || "")}' )" class="table-action ${active ? "bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-500/10 dark:text-red-300 dark:hover:bg-red-500/20" : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/20"}" title="${active ? "Inhabilitar" : "Activar"}">
+                  <i data-lucide="${active ? "user-x" : "user-check"}" class="h-4 w-4"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      refreshIcons();
+    }
+
+    function resetFilters() {
+      $("#searchInput").value = "";
+      $("#roleFilter").value = "";
+      $("#statusFilter").value = "";
+      applyFilters();
+    }
+
+    /************************************************************
+     * EDITAR / ESTADO
+     ************************************************************/
+    function editUser(userId) {
+      const user = allUsers.find(item => item.id === userId);
+      if (!user) {
+        showToast("error", "No encontrado", "No se encontró el usuario seleccionado.");
+        return;
+      }
+
+      $("#editUserId").value = userId;
+      $("#editNombre").value = user.Nombre || "";
+      $("#editCorreo").value = user.correo || "";
+      $("#editRol").value = user.rol || "Usuario";
+      $("#editEstado").value = user.Estado || "Activo";
+      $("#editContrasena").value = "";
+      $("#editSubtitle").textContent = `Editando ${user.Nombre || "usuario"}`;
+
+      document.body.classList.add("modal-open");
+      $("#editModal").classList.remove("hidden");
+      $("#editModal").classList.add("flex");
+      refreshIcons();
+    }
+
+    function closeEditModal() {
+      document.body.classList.remove("modal-open");
+      $("#editModal").classList.add("hidden");
+      $("#editModal").classList.remove("flex");
+      $("#editForm").reset();
+    }
+
+    async function saveUserChanges(event) {
+      event.preventDefault();
+
+      const userId = $("#editUserId").value;
+      const nombre = $("#editNombre").value.trim();
+      const correo = $("#editCorreo").value.trim();
+      const rol = $("#editRol").value;
+      const estado = $("#editEstado").value;
+      const nuevaContrasena = $("#editContrasena").value.trim();
+      const saveBtn = $("#saveUserBtn");
+
+      if (!nombre || !correo || !rol || !estado) {
+        showToast("warning", "Campos requeridos", "Completa todos los campos obligatorios.");
+        return;
+      }
+
+      setButtonLoading(saveBtn, true, "Guardando...");
+
+      try {
+        const updateData = {
+          Nombre: nombre,
+          correo,
+          rol,
+          Estado: estado,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
         };
 
-        // Inicializar Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-
-        // Elementos del DOM
-        const createUserForm = document.getElementById('create-user-form');
-        const nombreInput = document.getElementById('nombre');
-        const emailInput = document.getElementById('email');
-        const passwordInput = document.getElementById('password');
-        const roleSelect = document.getElementById('role');
-        const createUserBtn = document.getElementById('create-user-btn');
-        const errorMessage = document.getElementById('error-message');
-        const successMessage = document.getElementById('success-message');
-        const fullscreenLoading = document.getElementById('fullscreen-loading');
-
-        // Funciones de utilidad (copiadas de Index.html para mantener coherencia)
-        function showFullscreenLoading() {
-            fullscreenLoading.classList.add('show');
-            document.body.style.overflow = 'hidden';
+        if (nuevaContrasena) {
+          updateData.Contraseña = nuevaContrasena;
         }
 
-        function hideFullscreenLoading() {
-            fullscreenLoading.classList.remove('show');
-            document.body.style.overflow = 'auto';
-        }
+        await usersCollection.doc(userId).update(updateData);
+        showToast("success", "Actualizado", "El usuario fue actualizado correctamente.");
+        closeEditModal();
+      } catch (error) {
+        console.error(error);
+        showToast("error", "Error", error.message || "No se pudo actualizar el usuario.");
+      } finally {
+        setButtonLoading(saveBtn, false);
+      }
+    }
 
-        function updateLoadingText(mainText, subText) {
-            const loadingTextEl = fullscreenLoading.querySelector('.loading-text');
-            const loadingSubtextEl = fullscreenLoading.querySelector('.loading-subtext');
-            if (loadingTextEl) loadingTextEl.textContent = mainText;
-            if (loadingSubtextEl) loadingSubtextEl.textContent = subText;
-        }
+    async function toggleUserStatus(userId, currentStatus) {
+      const newStatus = currentStatus === "Activo" ? "Inhabilitado" : "Activo";
+      const actionText = newStatus === "Inhabilitado" ? "inhabilitar" : "activar";
 
-        function showMessage(element, message) {
-            element.textContent = message;
-            element.style.display = 'block';
-            setTimeout(() => {
-                element.style.display = 'none';
-            }, 5000);
-        }
+      const result = await Swal.fire({
+        title: `¿${capitalize(actionText)} usuario?`,
+        text: `Esta acción cambiará el estado del usuario a ${newStatus}.`,
+        icon: "question",
+        showCancelButton: true,
+        confirmButtonText: `Sí, ${actionText}`,
+        cancelButtonText: "Cancelar",
+        confirmButtonColor: newStatus === "Inhabilitado" ? "#dc2626" : "#059669",
+      });
 
-        function hideMessages() {
-            errorMessage.style.display = 'none';
-            successMessage.style.display = 'none';
-        }
+      if (!result.isConfirmed) return;
 
-        // Recuperar y verificar la sesión para permisos de administrador
-        function getCurrentSession() {
-            try {
-                const sessionData = localStorage.getItem('userSession');
-                if (sessionData) {
-                    return JSON.parse(sessionData);
-                }
-                const sessionCookie = document.cookie
-                    .split('; ')
-                    .find(row => row.startsWith('session='));
-                if (sessionCookie) {
-                    return JSON.parse(sessionCookie.split('=')[1]);
-                }
-                return null;
-            } catch (error) {
-                console.error('Error al obtener sesión:', error);
-                return null;
-            }
-        }
-
-        function checkAdminPermissions(user) {
-            return user && user.hasAdminPermission === true;
-        }
-
-        // Verificar permisos al cargar la página
-        window.addEventListener('load', async () => {
-            showFullscreenLoading();
-            updateLoadingText('Verificando Permisos', 'Asegurando el acceso de administrador...');
-
-            // Importante: Dar tiempo a que el script de Index.html se ejecute
-            await new Promise(resolve => setTimeout(resolve, 500)); 
-
-            const session = getCurrentSession();
-            
-            if (!session || !checkAdminPermissions(session)) {
-                updateLoadingText('Acceso Denegado', 'Solo los administradores pueden acceder a esta página.');
-                await new Promise(resolve => setTimeout(resolve, 2000));
-                hideFullscreenLoading();
-                window.location.href = 'Inicio.html'; // Redirigir a la página de inicio
-            } else {
-                updateLoadingText('Permisos Verificados', 'Bienvenido, Administrador.');
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                hideFullscreenLoading();
-            }
+      try {
+        await usersCollection.doc(userId).update({
+          Estado: newStatus,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
         });
+        showToast("success", "Estado actualizado", `El usuario ahora está ${newStatus}.`);
+      } catch (error) {
+        console.error(error);
+        showToast("error", "Error", error.message || "No se pudo cambiar el estado.");
+      }
+    }
 
-        // Manejar el envío del formulario para crear un nuevo usuario
-        createUserForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            hideMessages();
+    /************************************************************
+     * HELPERS UI
+     ************************************************************/
+    function showPageLoader(text = "Cargando usuarios...") {
+      const loader = $("#pageLoader");
+      if (!loader) return;
+      const title = loader.querySelector("p");
+      if (title) title.textContent = text;
+      loader.classList.remove("hidden");
+      loader.classList.add("flex");
+    }
 
-            const nombre = nombreInput.value.trim();
-            const email = emailInput.value.trim();
-            const password = passwordInput.value.trim();
-            const role = roleSelect.value;
+    function hidePageLoader() {
+      const loader = $("#pageLoader");
+      if (!loader) return;
+      loader.classList.add("hidden");
+      loader.classList.remove("flex");
+    }
 
-            if (!nombre || !email || !password || !role) {
-                showMessage(errorMessage, 'Por favor, completa todos los campos.');
-                return;
-            }
+    function setButtonLoading(button, isLoading, loadingText = "Guardando...") {
+      if (!button) return;
 
-            if (password.length < 6) {
-                showMessage(errorMessage, 'La contraseña debe tener al menos 6 caracteres.');
-                return;
-            }
+      if (isLoading) {
+        button.dataset.originalHtml = button.innerHTML;
+        button.disabled = true;
+        button.classList.add("cursor-not-allowed", "opacity-70");
+        button.innerHTML = `
+          <span class="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"></span>
+          ${loadingText}
+        `;
+      } else {
+        button.disabled = false;
+        button.classList.remove("cursor-not-allowed", "opacity-70");
+        if (button.dataset.originalHtml) {
+          button.innerHTML = button.dataset.originalHtml;
+          delete button.dataset.originalHtml;
+        }
+        refreshIcons();
+      }
+    }
 
-            showFullscreenLoading();
-            updateLoadingText('Creando Usuario', 'Guardando información en la base de datos...');
-            createUserBtn.disabled = true;
-            createUserBtn.textContent = 'Creando...';
+    function showToast(icon, title, text) {
+      Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon,
+        title,
+        text,
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+      });
+    }
 
-            try {
-                // Verificar si el correo ya existe
-                const existingUser = await db.collection('Usuario').where('correo', '==', email).limit(1).get();
-                if (!existingUser.empty) {
-                    throw new Error('El correo electrónico ya está registrado.');
-                }
+    function roleBadge(role) {
+      const map = {
+        "Administrador": "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300",
+        "Supervisor": "bg-purple-50 text-purple-700 dark:bg-purple-500/10 dark:text-purple-300",
+        "Usuario": "bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-200",
+      };
 
-                // Añadir el nuevo usuario a la colección 'Usuario'
-                await db.collection('Usuario').add({
-                    Nombre: nombre,
-                    correo: email,
-                    Contraseña: password, // NOTA: En un entorno de producción, las contraseñas DEBEN ser hasheadas.
-                    rol: role, // CAMBIO AQUI: Ahora guarda 'rol' en minúsculas para coincidir con tu BD
-                    FechaCreacion: firebase.firestore.FieldValue.serverTimestamp()
-                });
+      return `<span class="inline-flex rounded-full px-2.5 py-1 text-xs font-extrabold ${map[role] || map.Usuario}">${escapeHTML(role)}</span>`;
+    }
 
-                updateLoadingText('¡Usuario Creado!', 'El nuevo usuario ha sido registrado exitosamente.');
-                showMessage(successMessage, 'Usuario creado exitosamente. Puede crear otro o volver al inicio.');
+    function statusBadge(status) {
+      const isActive = status === "Activo";
+      const classes = isActive
+        ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
+        : "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300";
 
-                // Limpiar formulario
-                nombreInput.value = '';
-                emailInput.value = '';
-                passwordInput.value = '';
-                roleSelect.value = '';
+      return `<span class="inline-flex rounded-full px-2.5 py-1 text-xs font-extrabold ${classes}">${escapeHTML(status)}</span>`;
+    }
 
-                await new Promise(resolve => setTimeout(resolve, 1500)); // Pequeña pausa para ver el éxito
-            } catch (error) {
-                console.error('Error al crear usuario:', error);
-                updateLoadingText('Error', 'Hubo un problema al crear el usuario.');
-                showMessage(errorMessage, `Error: ${error.message}`);
-                await new Promise(resolve => setTimeout(resolve, 2000)); // Pequeña pausa para ver el error
-            } finally {
-                hideFullscreenLoading();
-                createUserBtn.disabled = false;
-                createUserBtn.textContent = 'Crear Usuario';
-            }
-        });
-    </script>
+    function getInitials(name) {
+      return String(name || "U")
+        .split(" ")
+        .filter(Boolean)
+        .slice(0, 2)
+        .map(part => part[0])
+        .join("")
+        .toUpperCase() || "U";
+    }
+
+    function normalizeText(value) {
+      return String(value ?? "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+    }
+
+    function escapeHTML(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function escapeAttr(value) {
+      return escapeHTML(value).replace(/`/g, "&#096;");
+    }
+
+    function debounce(fn, delay = 250) {
+      let timer;
+      return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn(...args), delay);
+      };
+    }
+
+    function capitalize(value) {
+      const text = String(value || "");
+      return text.charAt(0).toUpperCase() + text.slice(1);
+    }
+
+    /************************************************************
+     * GLOBALES
+     ************************************************************/
+    window.logout = logout;
+    window.refreshUsers = refreshUsers;
+    window.resetFilters = resetFilters;
+    window.editUser = editUser;
+    window.closeEditModal = closeEditModal;
+    window.toggleUserStatus = toggleUserStatus;
+    window.goToCreateUser = goToCreateUser;
+  </script>
 </body>
 </html>
