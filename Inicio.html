@@ -220,6 +220,8 @@
       color: rgb(147 197 253);
     }
 
+
+
     @media (min-width: 1024px) {
       .sidebar-collapsed #sidebar {
         width: 5.75rem;
@@ -441,10 +443,9 @@
             <div>
               <p class="mb-3 inline-flex rounded-full bg-white/15 px-3 py-1 text-sm font-bold text-blue-50">Sistema de
                 Control</p>
-              <h1 class="text-3xl font-extrabold tracking-tight sm:text-4xl">Inventario de Computadoras</h1>
-              <p class="mt-3 max-w-2xl text-sm leading-6 text-blue-100 sm:text-base">
-                Consulta, registra, edita, importa y exporta equipos desde una interfaz moderna y responsiva conectada a
-                Firestore.
+              <h1 id="heroModuleTitle" class="text-3xl font-extrabold tracking-tight sm:text-4xl">Inventario de Equipos Informáticos</h1>
+              <p id="heroModuleDescription" class="mt-3 max-w-2xl text-sm leading-6 text-blue-100 sm:text-base">
+                Consulta, registra, edita, importa y exporta equipos informáticos desde una interfaz moderna y responsiva conectada a Firestore.
               </p>
               <div class="mt-4 flex flex-wrap gap-2">
                 <div class="inline-flex items-center gap-2 rounded-2xl bg-white/15 px-4 py-2 text-sm font-extrabold text-white ring-1 ring-white/20">
@@ -478,12 +479,43 @@
           </div>
         </section>
 
+
+
+        <!-- Selector de módulo -->
+        <section id="moduleSelector" class="grid gap-4 sm:grid-cols-2">
+          <button id="btnModuleIT" type="button" onclick="setInventoryModule('it')"
+            class="rounded-[2rem] border border-slate-200 bg-white p-5 text-left shadow-soft transition hover:-translate-y-0.5 hover:shadow-strong dark:border-white/10 dark:bg-slate-900">
+            <div class="flex items-start gap-4">
+              <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-3xl bg-blue-600 text-white shadow-lg">
+                <i data-lucide="monitor-cog" class="h-7 w-7"></i>
+              </div>
+              <div>
+                <p id="moduleITTitle" class="text-lg font-extrabold text-slate-900 dark:text-white">Equipos informáticos</p>
+                <p id="moduleITDescription" class="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400">Computadoras, laptops, monitores, UPS, impresoras, routers y accesorios.</p>
+              </div>
+            </div>
+          </button>
+
+          <button id="btnModuleMobiliario" type="button" onclick="setInventoryModule('mobiliario')"
+            class="rounded-[2rem] border border-slate-200 bg-white p-5 text-left shadow-soft transition hover:-translate-y-0.5 hover:shadow-strong dark:border-white/10 dark:bg-slate-900">
+            <div class="flex items-start gap-4">
+              <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-3xl bg-emerald-600 text-white shadow-lg">
+                <i data-lucide="armchair" class="h-7 w-7"></i>
+              </div>
+              <div>
+                <p id="moduleMobiliarioTitle" class="text-lg font-extrabold text-slate-900 dark:text-white">Mobiliario / Inmobiliaria</p>
+                <p id="moduleMobiliarioDescription" class="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400">Sillas, escritorios, mesas, archivos, estantes, aires acondicionados y otros activos físicos.</p>
+              </div>
+            </div>
+          </button>
+        </section>
+
         <!-- Stats -->
         <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
           <article
             class="rounded-3xl border border-slate-200 bg-white p-5 shadow-soft dark:border-white/10 dark:bg-slate-900">
             <div class="flex items-center justify-between">
-              <p class="text-sm font-bold text-slate-500 dark:text-slate-400">Total equipos</p>
+              <p id="totalStatLabel" class="text-sm font-bold text-slate-500 dark:text-slate-400">Total equipos</p>
               <span class="rounded-2xl bg-slate-100 p-3 text-slate-700 dark:bg-white/10 dark:text-white"><i
                   data-lucide="boxes" class="h-5 w-5"></i></span>
             </div>
@@ -714,9 +746,8 @@
           <div class="border-b border-slate-200 p-5 dark:border-white/10 sm:p-6">
             <div class="flex flex-col justify-between gap-4 xl:flex-row xl:items-center">
               <div>
-                <h2 class="text-xl font-extrabold">Inventario de computadoras</h2>
-                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Busca por cualquier campo y filtra por tipo,
-                  estado o ubicación.</p>
+                <h2 id="inventoryTitle" class="text-xl font-extrabold">Inventario de equipos informáticos</h2>
+                <p id="inventorySubtitle" class="mt-1 text-sm text-slate-500 dark:text-slate-400">Busca por cualquier campo y filtra por tipo, estado o ubicación.</p>
               </div>
 
               <div class="flex flex-wrap gap-2">
@@ -1061,9 +1092,11 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const computadorasCollection = db.collection("computadoras");
+    const mobiliarioCollection = db.collection("mobiliario");
     const ubicacionesCollection = db.collection("ubicaciones");
     const estadosCollection = db.collection("estados");
     const tiposCollection = db.collection("tipos");
+    const tiposMobiliarioCollection = db.collection("tiposMobiliario");
     const systemSchemasCollection = db.collection("_systemSchemas");
     
     
@@ -1071,13 +1104,19 @@
     const SESSION_KEY = "userSession";
     const THEME_KEY = "inventoryTheme";
     const SIDEBAR_COLLAPSED_KEY = "inventorySidebarCollapsed";
+    const MODULE_KEY = "inventoryActiveModule";
 
-    const DEFAULT_EQUIPMENT_TYPES = [
-      "CPU", "Computadora de escritorio", "Laptop", "Monitor", "UPS", "Impresora", "Escáner", "Servidor",
-      "Accesorios", "Otros", "Telefono", "Access Point", "Router", "Modem", "DVR"
-    ];
+    // Los tipos deben venir SIEMPRE desde Firestore.
+    // Colecciones usadas:
+    // - tipos: equipos informáticos
+    // - tiposMobiliario: mobiliario / inmobiliaria
+    const DEFAULT_EQUIPMENT_TYPES = [];
+    const DEFAULT_FURNITURE_TYPES = [];
 
-    let EQUIPMENT_TYPES = [...DEFAULT_EQUIPMENT_TYPES];
+    let EQUIPMENT_TYPES = [];
+    let FURNITURE_TYPES = [];
+    let currentModule = localStorage.getItem(MODULE_KEY) || "it";
+    let activeCollection = currentModule === "mobiliario" ? mobiliarioCollection : computadorasCollection;
 
     const DEFAULT_STATES = [
       "Buena", "No funciona", "Muy poco rendimiento", "Excelente rendimiento"
@@ -1121,6 +1160,8 @@
       initMenus();
       initSidebarCollapse();
       fillSelects();
+      updateModuleUI();
+      toggleFieldsByModule();
       setToday();
       bindEvents();
       updateFooterYear();
@@ -1277,15 +1318,184 @@
       refreshIcons();
     }
 
+
+
+    /************************************************************
+     * MÓDULOS DE INVENTARIO
+     ************************************************************/
+    function isFurnitureModule() {
+      return currentModule === "mobiliario";
+    }
+
+    function getCurrentCollection() {
+      return isFurnitureModule() ? mobiliarioCollection : computadorasCollection;
+    }
+
+    function getCurrentTypesCollection() {
+      return isFurnitureModule() ? tiposMobiliarioCollection : tiposCollection;
+    }
+
+    function getCurrentDefaultTypes() {
+      return [];
+    }
+
+    function getCurrentTypes() {
+      return isFurnitureModule() ? FURNITURE_TYPES : EQUIPMENT_TYPES;
+    }
+
+    function getModuleConfig() {
+      if (isFurnitureModule()) {
+        return {
+          title: "Inventario de Mobiliario",
+          shortTitle: "Mobiliario",
+          itemSingular: "mobiliario",
+          itemPlural: "mobiliarios",
+          heroDescription: "Consulta, registra, edita, importa y exporta mobiliario e inmobiliaria desde una interfaz moderna y responsiva conectada a Firestore.",
+          collectionName: "mobiliario",
+          icon: "armchair",
+        };
+      }
+
+      return {
+        title: "Inventario de Equipos Informáticos",
+        shortTitle: "Equipos informáticos",
+        itemSingular: "equipo informático",
+        itemPlural: "equipos informáticos",
+        heroDescription: "Consulta, registra, edita, importa y exporta equipos informáticos desde una interfaz moderna y responsiva conectada a Firestore.",
+        collectionName: "computadoras",
+        icon: "monitor-cog",
+      };
+    }
+
+    function setInventoryModule(module) {
+      currentModule = module === "mobiliario" ? "mobiliario" : "it";
+      localStorage.setItem(MODULE_KEY, currentModule);
+      activeCollection = getCurrentCollection();
+
+      allComputers = [];
+      filteredComputers = [];
+      currentPage = 1;
+      inventoryFirstLoadDone = false;
+
+      updateModuleUI();
+      toggleFieldsByModule();
+      fillSelects();
+      loadTypesRealtime();
+      loadInventoryRealtime();
+    }
+
+    function updateModuleUI() {
+      const config = getModuleConfig();
+      const itBtn = $("#btnModuleIT");
+      const mobBtn = $("#btnModuleMobiliario");
+
+      const inactiveClass = "rounded-[2rem] border border-slate-200 bg-white p-5 text-left shadow-soft transition hover:-translate-y-0.5 hover:shadow-strong focus:outline-none dark:border-white/10 dark:bg-slate-900";
+      const activeITClass = "rounded-[2rem] border border-blue-500 bg-blue-600 p-5 text-left shadow-strong transition hover:-translate-y-0.5 focus:outline-none";
+      const activeMobClass = "rounded-[2rem] border border-emerald-500 bg-emerald-600 p-5 text-left shadow-strong transition hover:-translate-y-0.5 focus:outline-none";
+
+      const itActive = !isFurnitureModule();
+      const mobActive = isFurnitureModule();
+
+      if (itBtn) itBtn.className = itActive ? activeITClass : inactiveClass;
+      if (mobBtn) mobBtn.className = mobActive ? activeMobClass : inactiveClass;
+
+      setModuleTextState("moduleITTitle", "moduleITDescription", itActive);
+      setModuleTextState("moduleMobiliarioTitle", "moduleMobiliarioDescription", mobActive);
+
+      const heroTitle = $("#heroModuleTitle");
+      const heroDescription = $("#heroModuleDescription");
+      const inventoryTitle = $("#inventoryTitle");
+      const inventorySubtitle = $("#inventorySubtitle");
+      const totalStatLabel = $("#totalStatLabel");
+
+      if (heroTitle) heroTitle.textContent = config.title;
+      if (heroDescription) heroDescription.textContent = config.heroDescription;
+      if (inventoryTitle) inventoryTitle.textContent = config.title;
+      if (inventorySubtitle) inventorySubtitle.textContent = `Busca por cualquier campo y filtra por tipo, estado o ubicación. Colección activa: ${config.collectionName}.`;
+      if (totalStatLabel) totalStatLabel.textContent = isFurnitureModule() ? "Total mobiliario" : "Total equipos";
+
+    function setModuleTextState(titleId, descriptionId, active) {
+      const title = document.getElementById(titleId);
+      const description = document.getElementById(descriptionId);
+
+      if (title) {
+        title.className = active
+          ? "text-lg font-extrabold text-white"
+          : "text-lg font-extrabold text-slate-900 dark:text-white";
+      }
+
+      if (description) {
+        description.className = active
+          ? "mt-1 text-sm leading-6 text-white/85"
+          : "mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400";
+      }
+    }
+
+      document.querySelectorAll("[data-module-item]").forEach(element => {
+        element.textContent = config.itemSingular;
+      });
+
+      refreshIcons();
+    }
+
+    function toggleFieldsByModule() {
+      const furniture = isFurnitureModule();
+
+      const modalTipoLabel = document.querySelector('label[for="modalTipoEquipo"]') || document.querySelector('#modalTipoEquipo')?.closest('div')?.querySelector('label');
+      const quickTipoLabel = document.querySelector('label[for="tipoEquipo"]') || document.querySelector('#tipoEquipo')?.closest('div')?.querySelector('label');
+
+      if (modalTipoLabel) modalTipoLabel.textContent = furniture ? "Tipo de mobiliario" : "Tipo de equipo";
+      if (quickTipoLabel) quickTipoLabel.textContent = furniture ? "Tipo de mobiliario" : "Tipo de equipo";
+
+      const technicalInputs = [
+        "#procesador", "#ram", "#almacenamiento",
+        "#modalProcesador", "#modalRam", "#modalAlmacenamiento"
+      ];
+
+      technicalInputs.forEach(selector => {
+        const input = document.querySelector(selector);
+        if (!input) return;
+        const wrapper = input.closest("div");
+        if (wrapper) wrapper.classList.toggle("hidden", furniture);
+        input.required = !furniture;
+        if (furniture) input.value = "";
+      });
+
+      ["#quickDesktopFields", "#modalDesktopFields"].forEach(selector => {
+        const section = document.querySelector(selector);
+        if (section) section.classList.toggle("hidden", true);
+      });
+
+      const quickSave = $("#saveQuickBtn");
+      const modalSave = $("#modalSaveBtn");
+      if (quickSave && !quickSave.disabled) {
+        quickSave.innerHTML = furniture
+          ? `<i data-lucide="save" class="h-4 w-4"></i> Guardar mobiliario`
+          : `<i data-lucide="save" class="h-4 w-4"></i> Guardar equipo`;
+      }
+      if (modalSave && !modalSave.disabled) {
+        modalSave.innerHTML = `<i data-lucide="save" class="h-4 w-4"></i> Guardar cambios`;
+      }
+
+      refreshIcons();
+    }
+
+
     /************************************************************
      * SELECTS
      ************************************************************/
     function optionHTML(items, placeholder = "Seleccione") {
-      return `<option value="">${placeholder}</option>` + items.map(item => `<option value="${escapeAttr(item)}">${item}</option>`).join("");
+      if (!Array.isArray(items) || !items.length) {
+        return `<option value="">No hay registros en base</option>`;
+      }
+
+      return `<option value="">${placeholder}</option>` + items
+        .map(item => `<option value="${escapeAttr(item)}">${escapeHTML(item)}</option>`)
+        .join("");
     }
 
     function fillSelects() {
-      const typeOptions = optionHTML(EQUIPMENT_TYPES, "Seleccione tipo");
+      const typeOptions = optionHTML(getCurrentTypes(), "Seleccione tipo");
       const stateOptions = optionHTML(STATES, "Seleccione estado");
       const locationOptions = optionHTML(LOCATIONS, "Seleccione ubicación");
 
@@ -1297,9 +1507,9 @@
       $("#modalEstado").innerHTML = stateOptions;
       $("#modalUbicacion").innerHTML = locationOptions;
 
-      $("#filterTipo").innerHTML = `<option value="">Todos los tipos</option>` + EQUIPMENT_TYPES.map(item => `<option value="${escapeAttr(item)}">${item}</option>`).join("");
-      $("#filterEstado").innerHTML = `<option value="">Todos los estados</option>` + STATES.map(item => `<option value="${escapeAttr(item)}">${item}</option>`).join("");
-      $("#filterUbicacion").innerHTML = `<option value="">Todas las ubicaciones</option>` + LOCATIONS.map(item => `<option value="${escapeAttr(item)}">${item}</option>`).join("");
+      $("#filterTipo").innerHTML = `<option value="">Todos los tipos</option>` + getCurrentTypes().map(item => `<option value="${escapeAttr(item)}">${escapeHTML(item)}</option>`).join("");
+      $("#filterEstado").innerHTML = `<option value="">Todos los estados</option>` + STATES.map(item => `<option value="${escapeAttr(item)}">${escapeHTML(item)}</option>`).join("");
+      $("#filterUbicacion").innerHTML = `<option value="">Todas las ubicaciones</option>` + LOCATIONS.map(item => `<option value="${escapeAttr(item)}">${escapeHTML(item)}</option>`).join("");
     }
 
     function setToday() {
@@ -1497,7 +1707,7 @@
       const container = isQuick ? $("#quickDesktopFields") : $("#modalDesktopFields");
       if (!typeSelect || !container) return;
 
-      const enabled = isDesktopComputerType(typeSelect.value);
+      const enabled = !isFurnitureModule() && isDesktopComputerType(typeSelect.value);
       container.classList.toggle("hidden", !enabled);
 
       container.querySelectorAll("input, textarea").forEach(input => {
@@ -1635,6 +1845,7 @@
         fecha: $("#fecha").value,
         precioEstimado: Number($("#precioEstimado").value || 0),
         notas: $("#notas").value.trim(),
+        moduloInventario: currentModule,
         ...getDesktopDetails("quick"),
       };
 
@@ -1674,6 +1885,7 @@
         fecha: $("#modalFecha").value,
         precioEstimado: Number($("#modalPrecioEstimado").value || 0),
         notas: $("#modalNotas").value.trim(),
+        moduloInventario: currentModule,
         ...getDesktopDetails("modal"),
       };
 
@@ -1688,12 +1900,12 @@
 
     async function saveComputerData(computer, id = null, photoFiles = [], existingPhotos = null) {
       if (!computer.codigo || !computer.tipoEquipo || !computer.marca || !computer.modelo || !computer.estado || !computer.ubicacion || !computer.fecha) {
-        showToast("warning", "Campos requeridos", "Completa todos los campos obligatorios.");
+        showToast("warning", "Campos requeridos", `Completa todos los campos obligatorios del ${getModuleConfig().itemSingular}.`);
         return false;
       }
 
       try {
-        const duplicated = await computadorasCollection.where("codigo", "==", computer.codigo).get();
+        const duplicated = await activeCollection.where("codigo", "==", computer.codigo).get();
         const hasDuplicate = duplicated.docs.some(doc => doc.id !== id);
 
         if (hasDuplicate) {
@@ -1702,7 +1914,7 @@
         }
 
         if (id) {
-          const docRef = computadorasCollection.doc(id);
+          const docRef = activeCollection.doc(id);
 
           await docRef.update({
             ...computer,
@@ -1720,7 +1932,7 @@
 
           showToast("success", "Actualizado", "El equipo fue actualizado correctamente.");
         } else {
-          const docRef = await computadorasCollection.add({
+          const docRef = await activeCollection.add({
             ...computer,
             fotos: [],
             activo: true,
@@ -1753,7 +1965,7 @@
       $("#computerModal").classList.add("flex");
 
       if (computer) {
-        $("#modalTitle").textContent = "Editar computadora";
+        $("#modalTitle").textContent = isFurnitureModule() ? "Editar mobiliario" : "Editar equipo informático";
         $("#modalSubtitle").textContent = `Editando el código ${computer.codigo || ""}`;
         $("#editId").value = computer.id;
         $("#modalCodigo").value = computer.codigo || "";
@@ -1774,8 +1986,8 @@
         $("#modalFotosEquipo").value = "";
         renderModalPhotoPreview();
       } else {
-        $("#modalTitle").textContent = "Nueva computadora";
-        $("#modalSubtitle").textContent = "Completa la información del equipo.";
+        $("#modalTitle").textContent = isFurnitureModule() ? "Nuevo mobiliario" : "Nuevo equipo informático";
+        $("#modalSubtitle").textContent = isFurnitureModule() ? "Completa la información del mobiliario." : "Completa la información del equipo.";
         $("#computerForm").reset();
         $("#editId").value = "";
         $("#modalFecha").value = new Date().toISOString().split("T")[0];
@@ -1828,7 +2040,7 @@
       if (!result.isConfirmed) return;
 
       try {
-        await computadorasCollection.doc(id).delete();
+        await activeCollection.doc(id).delete();
         showToast("success", "Eliminado", "El equipo fue eliminado correctamente.");
       } catch (error) {
         console.error(error);
@@ -1842,6 +2054,9 @@
     async function initializeDatabaseAndInventory() {
       try {
         inventoryFirstLoadDone = false;
+        activeCollection = getCurrentCollection();
+        updateModuleUI();
+        toggleFieldsByModule();
         showRecordsLoader("Cargando registros...");
 
         await ensureDatabaseStructure();
@@ -1861,6 +2076,25 @@
     async function ensureDatabaseStructure() {
       await Promise.all([
         ensureCollectionSchema("computadoras", {
+          codigo: "",
+          tipoEquipo: "",
+          marca: "",
+          modelo: "",
+          procesador: "",
+          ram: 0,
+          almacenamiento: 0,
+          estado: "",
+          ubicacion: "",
+          fecha: "",
+          precioEstimado: 0,
+          notas: "",
+          fotos: [],
+          createdAt: null,
+          createdBy: "",
+          updatedAt: null,
+          updatedBy: "",
+        }),
+        ensureCollectionSchema("mobiliario", {
           codigo: "",
           tipoEquipo: "",
           marca: "",
@@ -1903,6 +2137,14 @@
           createdAt: null,
           createdBy: "",
         }),
+        ensureCollectionSchema("tiposMobiliario", {
+          nombre: "",
+          nombreNormalizado: "",
+          esBase: true,
+          activo: true,
+          createdAt: null,
+          createdBy: "",
+        }),
       ]);
     }
 
@@ -1929,10 +2171,12 @@
     }
 
     async function syncDefaultCatalogsToFirestore() {
+      // Solo estados y ubicaciones se precargan como base del sistema.
+      // Los tipos de equipo y mobiliario NO se precargan desde arreglos del HTML;
+      // deben existir en Firestore o crearse con el botón + Nuevo.
       await Promise.all([
         seedCatalogCollection(ubicacionesCollection, DEFAULT_LOCATIONS),
         seedCatalogCollection(estadosCollection, DEFAULT_STATES),
-        seedCatalogCollection(tiposCollection, DEFAULT_EQUIPMENT_TYPES),
       ]);
     }
 
@@ -2224,33 +2468,48 @@
     function loadTypesRealtime() {
       if (unsubscribeTypes) unsubscribeTypes();
 
-      unsubscribeTypes = tiposCollection
+      const selectedTypesCollection = getCurrentTypesCollection();
+
+      unsubscribeTypes = selectedTypesCollection
         .orderBy("nombre", "asc")
         .onSnapshot(snapshot => {
-          const customTypes = snapshot.docs
+          const databaseTypes = snapshot.docs
             .map(doc => doc.data())
             .filter(item => item.activo !== false)
             .map(item => item.nombre)
             .filter(Boolean);
 
-          EQUIPMENT_TYPES = customTypes.length
-            ? mergeUniqueTypes([], customTypes)
-            : [...DEFAULT_EQUIPMENT_TYPES];
+          const orderedTypes = mergeUniqueTypes([], databaseTypes);
+
+          if (isFurnitureModule()) {
+            FURNITURE_TYPES = orderedTypes;
+          } else {
+            EQUIPMENT_TYPES = orderedTypes;
+          }
+
           fillSelects();
+          toggleFieldsByModule();
           applyFilters();
           refreshIcons();
         }, error => {
           console.error(error);
-          EQUIPMENT_TYPES = [...DEFAULT_EQUIPMENT_TYPES];
+
+          if (isFurnitureModule()) {
+            FURNITURE_TYPES = [];
+          } else {
+            EQUIPMENT_TYPES = [];
+          }
+
           fillSelects();
-          showToast("warning", "Tipos", "No se pudieron cargar los tipos personalizados.");
+          toggleFieldsByModule();
+          showToast("warning", "Tipos", "No se pudieron cargar los tipos desde Firestore.");
         });
     }
 
     async function openAddTypeModal(targetSelectId = "tipoEquipo") {
       const result = await Swal.fire({
-        title: "Nuevo tipo de equipo",
-        text: "Escribe el nombre del nuevo tipo.",
+        title: isFurnitureModule() ? "Nuevo tipo de mobiliario" : "Nuevo tipo de equipo",
+        text: isFurnitureModule() ? "Escribe el nombre del nuevo tipo de mobiliario." : "Escribe el nombre del nuevo tipo de equipo.",
         input: "text",
         inputPlaceholder: "Ejemplo: Tablet",
         showCancelButton: true,
@@ -2268,7 +2527,7 @@
             return "El tipo debe tener al menos 2 caracteres.";
           }
 
-          const exists = EQUIPMENT_TYPES.some(type => normalizeText(type) === normalizeText(typeName));
+          const exists = getCurrentTypes().some(type => normalizeText(type) === normalizeText(typeName));
           if (exists) {
             return "Ese tipo ya existe.";
           }
@@ -2294,7 +2553,7 @@
       });
 
       try {
-        await tiposCollection.add({
+        await getCurrentTypesCollection().add({
           nombre: typeName,
           nombreNormalizado: normalizeText(typeName),
           esBase: false,
@@ -2303,7 +2562,11 @@
           createdBy: getCurrentUser()?.userEmail || "",
         });
 
-        EQUIPMENT_TYPES = mergeUniqueTypes(EQUIPMENT_TYPES, [typeName]);
+        if (isFurnitureModule()) {
+          FURNITURE_TYPES = mergeUniqueTypes(FURNITURE_TYPES, [typeName]);
+        } else {
+          EQUIPMENT_TYPES = mergeUniqueTypes(EQUIPMENT_TYPES, [typeName]);
+        }
         fillSelects();
 
         const targetSelect = document.getElementById(targetSelectId);
@@ -2332,7 +2595,7 @@
       lastInventorySnapshotSize = 0;
       showRecordsLoader("Cargando registros en tiempo real...");
 
-      unsubscribeInventory = computadorasCollection
+      unsubscribeInventory = activeCollection
         .orderBy("createdAt", "desc")
         .onSnapshot({ includeMetadataChanges: true }, snapshot => {
           const previousTotal = allComputers.length;
@@ -2879,7 +3142,7 @@
             url: dataUrl,
             base64: dataUrl,
             storageType: "base64",
-            path: `firestore-base64/computadoras/${computerId}/${Date.now()}_${createUniqueId()}`,
+            path: `firestore-base64/${getModuleConfig().collectionName}/${computerId}/${Date.now()}_${createUniqueId()}`,
             nombre: file.name || `foto_${Date.now()}.jpg`,
             tipo: "image/jpeg",
             tamanioOriginal: file.size || 0,
@@ -3197,7 +3460,7 @@
               continue;
             }
 
-            const exists = await computadorasCollection.where("codigo", "==", codigo).limit(1).get();
+            const exists = await activeCollection.where("codigo", "==", codigo).limit(1).get();
 
             if (!exists.empty) {
               skipped++;
@@ -3218,11 +3481,12 @@
               precioEstimado: Number(item.precioEstimado || 0),
               notas: item.notas || "",
               fotos: Array.isArray(item.fotos) ? item.fotos : [],
+              moduloInventario: currentModule,
               createdAt: firebase.firestore.FieldValue.serverTimestamp(),
               createdBy: getCurrentUser()?.userEmail || "",
             };
 
-            batch.set(computadorasCollection.doc(), computer);
+            batch.set(activeCollection.doc(), computer);
             imported++;
 
             if (imported % 450 === 0) {
@@ -3272,7 +3536,7 @@
       const rows = data.map(item => headers.map(header => csvCell(item[header] ?? "")).join(","));
       const csv = [headers.join(","), ...rows].join("\n");
 
-      downloadFile(csv, `inventario_computadoras_${todayFileName()}.csv`, "text/csv;charset=utf-8;");
+      downloadFile(csv, `inventario_${getModuleConfig().collectionName}_${todayFileName()}.csv`, "text/csv;charset=utf-8;");
       showToast("success", "Exportado", "El archivo CSV fue generado correctamente.");
     }
 
@@ -3288,7 +3552,7 @@
         id, codigo, tipoEquipo, marca, modelo, procesador, ram, almacenamiento, estado, ubicacion, fecha, precioEstimado, notas, marcaUps, especificacionesUps, marcaTeclado, especificacionesTeclado, marcaMouse, especificacionesMouse, marcaMonitor, especificacionesMonitor
       }));
 
-      downloadFile(JSON.stringify(cleanData, null, 2), `inventario_computadoras_${todayFileName()}.json`, "application/json;charset=utf-8;");
+      downloadFile(JSON.stringify(cleanData, null, 2), `inventario_${getModuleConfig().collectionName}_${todayFileName()}.json`, "application/json;charset=utf-8;");
       showToast("success", "Exportado", "El archivo JSON fue generado correctamente.");
     }
 
@@ -3349,7 +3613,7 @@
 
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Inventario");
-      XLSX.writeFile(workbook, `inventario_computadoras_${todayFileName()}.xlsx`);
+      XLSX.writeFile(workbook, `inventario_${getModuleConfig().collectionName}_${todayFileName()}.xlsx`);
 
       showToast("success", "Exportado", "El archivo Excel fue generado correctamente.");
     }
@@ -3374,7 +3638,7 @@
         format: "a4",
       });
 
-      const title = "Inventario de Computadoras";
+      const title = getModuleConfig().title;
       const exportDate = new Date().toLocaleDateString("es-SV");
 
       doc.setFontSize(16);
@@ -3464,7 +3728,7 @@
         },
       });
 
-      doc.save(`inventario_computadoras_${todayFileName()}.pdf`);
+      doc.save(`inventario_${getModuleConfig().collectionName}_${todayFileName()}.pdf`);
       showToast("success", "Exportado", "El archivo PDF fue generado correctamente.");
     }
 
@@ -3619,6 +3883,7 @@
     window.hideRecordsLoader = hideRecordsLoader;
     window.openAboutSystem = openAboutSystem;
     window.toggleDesktopFields = toggleDesktopFields;
+    window.setInventoryModule = setInventoryModule;
     window.openCamera = openCamera;
     window.closeCamera = closeCamera;
     window.capturePhotoFromCamera = capturePhotoFromCamera;
