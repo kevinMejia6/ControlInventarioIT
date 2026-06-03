@@ -17,7 +17,6 @@
   <!-- Firebase SDK Compat -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-app-compat.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-firestore-compat.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-storage-compat.min.js"></script>
 
   <!-- SweetAlert2 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.10.8/sweetalert2.min.css">
@@ -265,6 +264,14 @@
       <div class="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-white/20 border-t-blue-400"></div>
       <p class="text-lg font-bold">Cargando inventario...</p>
       <p class="mt-1 text-sm text-slate-300">Validando sesión y conectando con Firebase</p>
+    </div>
+  </div>
+
+  <!-- Loading de registros estilo overlay -->
+  <div id="recordsLoader" class="fixed inset-0 z-[9998] hidden items-center justify-center bg-slate-950/55 p-4 backdrop-blur-[3px]">
+    <div class="inline-flex items-center gap-3 rounded-2xl bg-slate-950 px-6 py-4 text-white shadow-strong dark:bg-slate-900">
+      <span class="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white"></span>
+      <span id="recordsLoaderText" class="text-sm font-extrabold sm:text-base">Cargando registros...</span>
     </div>
   </div>
 
@@ -582,6 +589,45 @@
               <label class="mb-1.5 block text-sm font-bold">Notas</label>
               <input id="notas" class="input-base" type="text" placeholder="Notas adicionales">
             </div>
+            <div id="quickDesktopFields" class="hidden lg:col-span-4 rounded-3xl border border-blue-200 bg-blue-50/70 p-4 dark:border-blue-400/20 dark:bg-blue-500/10">
+              <div class="mb-4 flex items-start gap-3">
+                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white">
+                  <i data-lucide="monitor" class="h-5 w-5"></i>
+                </div>
+                <div>
+                  <h3 class="font-extrabold text-blue-900 dark:text-blue-100">Componentes de computadora de escritorio</h3>
+                  <p class="mt-1 text-sm text-blue-700/80 dark:text-blue-200/80">Estos campos se habilitan solo cuando el tipo es Computadora de escritorio.</p>
+                </div>
+              </div>
+
+              <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <div class="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-900/60">
+                  <label class="mb-1.5 block text-sm font-bold">Marca UPS</label>
+                  <input id="quickMarcaUps" class="input-base desktop-extra-input" type="text" placeholder="APC, Forza...">
+                  <label class="mb-1.5 mt-3 block text-sm font-bold">Especificaciones UPS</label>
+                  <textarea id="quickSpecsUps" rows="3" class="input-base desktop-extra-input" placeholder="VA, watts, estado, batería..."></textarea>
+                </div>
+                <div class="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-900/60">
+                  <label class="mb-1.5 block text-sm font-bold">Marca teclado</label>
+                  <input id="quickMarcaTeclado" class="input-base desktop-extra-input" type="text" placeholder="Logitech, HP...">
+                  <label class="mb-1.5 mt-3 block text-sm font-bold">Especificaciones teclado</label>
+                  <textarea id="quickSpecsTeclado" rows="3" class="input-base desktop-extra-input" placeholder="USB, inalámbrico, estado..."></textarea>
+                </div>
+                <div class="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-900/60">
+                  <label class="mb-1.5 block text-sm font-bold">Marca mouse</label>
+                  <input id="quickMarcaMouse" class="input-base desktop-extra-input" type="text" placeholder="Logitech, Dell...">
+                  <label class="mb-1.5 mt-3 block text-sm font-bold">Especificaciones mouse</label>
+                  <textarea id="quickSpecsMouse" rows="3" class="input-base desktop-extra-input" placeholder="USB, inalámbrico, estado..."></textarea>
+                </div>
+                <div class="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-900/60">
+                  <label class="mb-1.5 block text-sm font-bold">Marca monitor</label>
+                  <input id="quickMarcaMonitor" class="input-base desktop-extra-input" type="text" placeholder="Dell, HP, Samsung...">
+                  <label class="mb-1.5 mt-3 block text-sm font-bold">Especificaciones monitor</label>
+                  <textarea id="quickSpecsMonitor" rows="3" class="input-base desktop-extra-input" placeholder="Tamaño, resolución, puertos, estado..."></textarea>
+                </div>
+              </div>
+            </div>
+
             <div class="lg:col-span-4">
               <label class="mb-1.5 block text-sm font-bold">Fotos del equipo</label>
               <div class="grid gap-2 sm:grid-cols-[1fr_auto]">
@@ -591,7 +637,7 @@
                   Tomar foto
                 </button>
               </div>
-              <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">Puedes seleccionar varias imágenes o tomar fotos desde la cámara. Máximo 5 MB por foto.</p>
+              <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">Puedes seleccionar varias imágenes o tomar fotos desde la cámara. Se guardan en Base64 dentro de Firestore. Recomendado: máximo 3 fotos livianas por equipo.</p>
               <div id="quickPhotoPreview" class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6"></div>
             </div>
             <div class="flex items-end lg:col-span-4">
@@ -831,6 +877,45 @@
             <label class="mb-1.5 block text-sm font-bold">Notas adicionales</label>
             <textarea id="modalNotas" rows="3" class="input-base"></textarea>
           </div>
+          <div id="modalDesktopFields" class="hidden sm:col-span-2 lg:col-span-4 rounded-3xl border border-blue-200 bg-blue-50/70 p-4 dark:border-blue-400/20 dark:bg-blue-500/10">
+            <div class="mb-4 flex items-start gap-3">
+              <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white">
+                <i data-lucide="monitor" class="h-5 w-5"></i>
+              </div>
+              <div>
+                <h3 class="font-extrabold text-blue-900 dark:text-blue-100">Componentes de computadora de escritorio</h3>
+                <p class="mt-1 text-sm text-blue-700/80 dark:text-blue-200/80">Estos campos se habilitan solo cuando el tipo es Computadora de escritorio.</p>
+              </div>
+            </div>
+
+            <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <div class="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-900/60">
+                <label class="mb-1.5 block text-sm font-bold">Marca UPS</label>
+                <input id="modalMarcaUps" class="input-base desktop-extra-input" type="text" placeholder="APC, Forza...">
+                <label class="mb-1.5 mt-3 block text-sm font-bold">Especificaciones UPS</label>
+                <textarea id="modalSpecsUps" rows="3" class="input-base desktop-extra-input" placeholder="VA, watts, estado, batería..."></textarea>
+              </div>
+              <div class="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-900/60">
+                <label class="mb-1.5 block text-sm font-bold">Marca teclado</label>
+                <input id="modalMarcaTeclado" class="input-base desktop-extra-input" type="text" placeholder="Logitech, HP...">
+                <label class="mb-1.5 mt-3 block text-sm font-bold">Especificaciones teclado</label>
+                <textarea id="modalSpecsTeclado" rows="3" class="input-base desktop-extra-input" placeholder="USB, inalámbrico, estado..."></textarea>
+              </div>
+              <div class="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-900/60">
+                <label class="mb-1.5 block text-sm font-bold">Marca mouse</label>
+                <input id="modalMarcaMouse" class="input-base desktop-extra-input" type="text" placeholder="Logitech, Dell...">
+                <label class="mb-1.5 mt-3 block text-sm font-bold">Especificaciones mouse</label>
+                <textarea id="modalSpecsMouse" rows="3" class="input-base desktop-extra-input" placeholder="USB, inalámbrico, estado..."></textarea>
+              </div>
+              <div class="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-900/60">
+                <label class="mb-1.5 block text-sm font-bold">Marca monitor</label>
+                <input id="modalMarcaMonitor" class="input-base desktop-extra-input" type="text" placeholder="Dell, HP, Samsung...">
+                <label class="mb-1.5 mt-3 block text-sm font-bold">Especificaciones monitor</label>
+                <textarea id="modalSpecsMonitor" rows="3" class="input-base desktop-extra-input" placeholder="Tamaño, resolución, puertos, estado..."></textarea>
+              </div>
+            </div>
+          </div>
+
           <div class="sm:col-span-2 lg:col-span-4">
             <label class="mb-1.5 block text-sm font-bold">Fotos del equipo</label>
             <div class="grid gap-2 sm:grid-cols-[1fr_auto]">
@@ -840,7 +925,7 @@
                 Tomar foto
               </button>
             </div>
-            <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">Puedes agregar varias fotos o tomar fotos desde la cámara. En edición, las fotos actuales se conservan salvo que las elimines.</p>
+            <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">Puedes agregar varias fotos o tomar fotos desde la cámara. En edición, las fotos actuales se conservan salvo que las elimines. Se guardan en Base64 dentro de Firestore.</p>
             <div id="modalPhotoPreview" class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6"></div>
           </div>
         </div>
@@ -886,6 +971,35 @@
   </div>
 
 
+  <!-- Modal detalle del equipo -->
+  <div id="detailModal" class="fixed inset-0 z-[55] hidden items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm">
+    <div class="max-h-[92vh] w-full max-w-6xl overflow-hidden rounded-[2rem] bg-white shadow-strong dark:bg-slate-900">
+      <div class="flex items-start justify-between border-b border-slate-200 p-5 dark:border-white/10">
+        <div>
+          <p class="mb-2 inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-extrabold text-blue-700 dark:bg-blue-500/10 dark:text-blue-300">Detalle del registro</p>
+          <h3 id="detailTitle" class="text-2xl font-extrabold">Detalle del equipo</h3>
+          <p id="detailSubtitle" class="mt-1 text-sm text-slate-500 dark:text-slate-400">Información completa del equipo seleccionado.</p>
+        </div>
+        <button onclick="closeDetailModal()" class="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 text-slate-600 transition hover:bg-slate-200 dark:bg-white/10 dark:text-white dark:hover:bg-white/15">
+          <i data-lucide="x" class="h-5 w-5"></i>
+        </button>
+      </div>
+
+      <div class="max-h-[calc(92vh-96px)] overflow-y-auto p-5">
+        <div id="detailContent" class="space-y-5"></div>
+
+        <div class="mt-6 flex flex-col-reverse gap-3 border-t border-slate-200 pt-5 dark:border-white/10 sm:flex-row sm:justify-end">
+          <button type="button" onclick="closeDetailModal()" class="btn-secondary">Cerrar</button>
+          <button id="detailEditBtn" type="button" class="btn-primary">
+            <i data-lucide="pencil" class="h-4 w-4"></i>
+            Editar equipo
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
   <script>
     /************************************************************
      * CONFIGURACIÓN
@@ -902,7 +1016,6 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    const storage = firebase.storage();
     const computadorasCollection = db.collection("computadoras");
     const ubicacionesCollection = db.collection("ubicaciones");
     const estadosCollection = db.collection("estados");
@@ -916,7 +1029,7 @@
     const SIDEBAR_COLLAPSED_KEY = "inventorySidebarCollapsed";
 
     const DEFAULT_EQUIPMENT_TYPES = [
-      "CPU", "Laptop", "Monitor", "UPS", "Impresora", "Escáner", "Servidor",
+      "CPU", "Computadora de escritorio", "Laptop", "Monitor", "UPS", "Impresora", "Escáner", "Servidor",
       "Accesorios", "Otros", "Telefono", "Access Point", "Router", "Modem", "DVR"
     ];
 
@@ -979,6 +1092,22 @@
 
     function hidePageLoader() {
       $("#pageLoader").classList.add("hidden");
+    }
+
+    function showRecordsLoader(message = "Cargando registros...") {
+      const loader = $("#recordsLoader");
+      const text = $("#recordsLoaderText");
+      if (!loader) return;
+      if (text) text.textContent = message;
+      loader.classList.remove("hidden");
+      loader.classList.add("flex");
+    }
+
+    function hideRecordsLoader() {
+      const loader = $("#recordsLoader");
+      if (!loader) return;
+      loader.classList.add("hidden");
+      loader.classList.remove("flex");
     }
 
     /************************************************************
@@ -1271,6 +1400,141 @@
         modalSelectedPhotos = validatePhotoFiles(Array.from(event.target.files || []));
         renderModalPhotoPreview();
       });
+
+      $("#tipoEquipo").addEventListener("change", () => toggleDesktopFields("quick"));
+      $("#modalTipoEquipo").addEventListener("change", () => toggleDesktopFields("modal"));
+      toggleDesktopFields("quick");
+      toggleDesktopFields("modal");
+    }
+
+    /************************************************************
+     * CAMPOS ESPECIALES PARA COMPUTADORA DE ESCRITORIO
+     ************************************************************/
+    function isDesktopComputerType(value) {
+      const normalized = normalizeText(value);
+      return normalized.includes("escritorio") || normalized.includes("desktop");
+    }
+
+    function toggleDesktopFields(context) {
+      const isQuick = context === "quick";
+      const typeSelect = isQuick ? $("#tipoEquipo") : $("#modalTipoEquipo");
+      const container = isQuick ? $("#quickDesktopFields") : $("#modalDesktopFields");
+      if (!typeSelect || !container) return;
+
+      const enabled = isDesktopComputerType(typeSelect.value);
+      container.classList.toggle("hidden", !enabled);
+
+      container.querySelectorAll("input, textarea").forEach(input => {
+        input.disabled = !enabled;
+        if (!enabled) input.value = "";
+      });
+
+      refreshIcons();
+    }
+
+    function getDesktopDetails(context) {
+      const isQuick = context === "quick";
+      const typeValue = isQuick ? $("#tipoEquipo").value : $("#modalTipoEquipo").value;
+
+      if (!isDesktopComputerType(typeValue)) {
+        return {
+          marcaUps: "",
+          especificacionesUps: "",
+          marcaTeclado: "",
+          especificacionesTeclado: "",
+          marcaMouse: "",
+          especificacionesMouse: "",
+          marcaMonitor: "",
+          especificacionesMonitor: "",
+        };
+      }
+
+      const prefix = isQuick ? "quick" : "modal";
+      return {
+        marcaUps: $(`#${prefix}MarcaUps`)?.value.trim() || "",
+        especificacionesUps: $(`#${prefix}SpecsUps`)?.value.trim() || "",
+        marcaTeclado: $(`#${prefix}MarcaTeclado`)?.value.trim() || "",
+        especificacionesTeclado: $(`#${prefix}SpecsTeclado`)?.value.trim() || "",
+        marcaMouse: $(`#${prefix}MarcaMouse`)?.value.trim() || "",
+        especificacionesMouse: $(`#${prefix}SpecsMouse`)?.value.trim() || "",
+        marcaMonitor: $(`#${prefix}MarcaMonitor`)?.value.trim() || "",
+        especificacionesMonitor: $(`#${prefix}SpecsMonitor`)?.value.trim() || "",
+      };
+    }
+
+    function setDesktopDetails(context, computer = {}) {
+      const prefix = context === "quick" ? "quick" : "modal";
+      const fields = {
+        MarcaUps: computer.marcaUps || "",
+        SpecsUps: computer.especificacionesUps || "",
+        MarcaTeclado: computer.marcaTeclado || "",
+        SpecsTeclado: computer.especificacionesTeclado || "",
+        MarcaMouse: computer.marcaMouse || "",
+        SpecsMouse: computer.especificacionesMouse || "",
+        MarcaMonitor: computer.marcaMonitor || "",
+        SpecsMonitor: computer.especificacionesMonitor || "",
+      };
+
+      Object.entries(fields).forEach(([suffix, value]) => {
+        const element = $(`#${prefix}${suffix}`);
+        if (element) element.value = value;
+      });
+
+      toggleDesktopFields(context);
+    }
+
+    function hasDesktopDetails(computer = {}) {
+      return [
+        computer.marcaUps,
+        computer.especificacionesUps,
+        computer.marcaTeclado,
+        computer.especificacionesTeclado,
+        computer.marcaMouse,
+        computer.especificacionesMouse,
+        computer.marcaMonitor,
+        computer.especificacionesMonitor,
+      ].some(value => String(value || "").trim());
+    }
+
+    function renderDesktopDetailsSection(computer = {}) {
+      if (!isDesktopComputerType(computer.tipoEquipo) && !hasDesktopDetails(computer)) return "";
+
+      return `
+        <section class="rounded-3xl border border-blue-200 bg-blue-50/70 p-5 dark:border-blue-400/20 dark:bg-blue-500/10">
+          <div class="mb-4 flex items-center gap-3">
+            <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-600 text-white">
+              <i data-lucide="monitor" class="h-5 w-5"></i>
+            </div>
+            <div>
+              <h4 class="text-lg font-extrabold text-blue-900 dark:text-blue-100">Componentes de escritorio</h4>
+              <p class="text-sm text-blue-700/80 dark:text-blue-200/80">UPS, teclado, mouse y monitor asociados al equipo.</p>
+            </div>
+          </div>
+          <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            ${desktopComponentCard("UPS", computer.marcaUps, computer.especificacionesUps, "battery-charging")}
+            ${desktopComponentCard("Teclado", computer.marcaTeclado, computer.especificacionesTeclado, "keyboard")}
+            ${desktopComponentCard("Mouse", computer.marcaMouse, computer.especificacionesMouse, "mouse-pointer-2")}
+            ${desktopComponentCard("Monitor", computer.marcaMonitor, computer.especificacionesMonitor, "monitor")}
+          </div>
+        </section>
+      `;
+    }
+
+    function desktopComponentCard(title, brand, specs, icon = "circle") {
+      return `
+        <article class="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-900/60">
+          <div class="mb-3 flex items-center gap-2">
+            <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-white">
+              <i data-lucide="${icon}" class="h-4 w-4"></i>
+            </span>
+            <h5 class="font-extrabold">${escapeHTML(title)}</h5>
+          </div>
+          <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Marca</p>
+          <p class="mt-1 font-bold text-slate-800 dark:text-slate-100">${escapeHTML(brand || "No registrada")}</p>
+          <p class="mt-3 text-xs font-bold uppercase tracking-wide text-slate-400">Especificaciones</p>
+          <p class="mt-1 whitespace-pre-line text-sm leading-5 text-slate-600 dark:text-slate-300">${escapeHTML(specs || "No registradas")}</p>
+        </article>
+      `;
     }
 
     /************************************************************
@@ -1295,6 +1559,7 @@
         fecha: $("#fecha").value,
         precioEstimado: Number($("#precioEstimado").value || 0),
         notas: $("#notas").value.trim(),
+        ...getDesktopDetails("quick"),
       };
 
       try {
@@ -1305,6 +1570,7 @@
           $("#fotosEquipo").value = "";
           quickSelectedPhotos = [];
           renderSelectedPhotoPreview("quickPhotoPreview", quickSelectedPhotos, "quick");
+          setDesktopDetails("quick", {});
           setToday();
         }
       } finally {
@@ -1332,6 +1598,7 @@
         fecha: $("#modalFecha").value,
         precioEstimado: Number($("#modalPrecioEstimado").value || 0),
         notas: $("#modalNotas").value.trim(),
+        ...getDesktopDetails("modal"),
       };
 
       try {
@@ -1359,13 +1626,22 @@
         }
 
         if (id) {
-          const uploadedPhotos = await uploadComputerPhotos(photoFiles, id);
-          await computadorasCollection.doc(id).update({
+          const docRef = computadorasCollection.doc(id);
+
+          await docRef.update({
             ...computer,
-            fotos: [...(existingPhotos || []), ...uploadedPhotos],
+            fotos: existingPhotos || [],
             updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
             updatedBy: getCurrentUser()?.userEmail || "",
           });
+
+          const base64Photos = await convertPhotoFilesToBase64(photoFiles, id, existingPhotos || []);
+          await docRef.update({
+            fotos: [...(existingPhotos || []), ...base64Photos],
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedBy: getCurrentUser()?.userEmail || "",
+          });
+
           showToast("success", "Actualizado", "El equipo fue actualizado correctamente.");
         } else {
           const docRef = await computadorasCollection.add({
@@ -1376,10 +1652,10 @@
             createdBy: getCurrentUser()?.userEmail || "",
           });
 
-          const uploadedPhotos = await uploadComputerPhotos(photoFiles, docRef.id);
-          if (uploadedPhotos.length) {
+          const base64Photos = await convertPhotoFilesToBase64(photoFiles, docRef.id, []);
+          if (base64Photos.length) {
             await docRef.update({
-              fotos: uploadedPhotos,
+              fotos: base64Photos,
               updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
               updatedBy: getCurrentUser()?.userEmail || "",
             });
@@ -1416,6 +1692,7 @@
         $("#modalFecha").value = computer.fecha || new Date().toISOString().split("T")[0];
         $("#modalPrecioEstimado").value = computer.precioEstimado ?? "";
         $("#modalNotas").value = computer.notas || "";
+        setDesktopDetails("modal", computer);
         modalExistingPhotos = Array.isArray(computer.fotos) ? [...computer.fotos] : [];
         modalSelectedPhotos = [];
         $("#modalFotosEquipo").value = "";
@@ -1426,6 +1703,7 @@
         $("#computerForm").reset();
         $("#editId").value = "";
         $("#modalFecha").value = new Date().toISOString().split("T")[0];
+        setDesktopDetails("modal", {});
         modalExistingPhotos = [];
         modalSelectedPhotos = [];
         $("#modalFotosEquipo").value = "";
@@ -1487,6 +1765,9 @@
      ************************************************************/
     async function initializeDatabaseAndInventory() {
       try {
+        inventoryFirstLoadDone = false;
+        showRecordsLoader("Cargando registros...");
+
         await ensureDatabaseStructure();
         await syncDefaultCatalogsToFirestore();
 
@@ -1971,16 +2252,34 @@
     function loadInventoryRealtime() {
       if (unsubscribeInventory) unsubscribeInventory();
 
+      inventoryFirstLoadDone = false;
+      showRecordsLoader("Cargando registros...");
+
       unsubscribeInventory = computadorasCollection
         .orderBy("createdAt", "desc")
-        .onSnapshot(snapshot => {
+        .onSnapshot({ includeMetadataChanges: true }, snapshot => {
           allComputers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
           applyFilters();
-          hidePageLoader();
+
+          // Mantener el loading visible hasta recibir la respuesta real del servidor.
+          // Firestore puede enviar primero una lectura rápida desde caché; esa no cuenta como carga completa.
+          const dataFromServer = !snapshot.metadata.fromCache;
+
+          if (dataFromServer && !inventoryFirstLoadDone) {
+            inventoryFirstLoadDone = true;
+
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                hidePageLoader();
+                hideRecordsLoader();
+              });
+            });
+          }
         }, error => {
           console.error(error);
           $("#results").innerHTML = `<tr><td colspan="13" class="px-4 py-10 text-center text-red-500">Error al cargar registros: ${escapeHTML(error.message)}</td></tr>`;
           hidePageLoader();
+          hideRecordsLoader();
         });
     }
 
@@ -2007,6 +2306,14 @@
           item.fecha,
           item.precioEstimado,
           item.notas,
+          item.marcaUps,
+          item.especificacionesUps,
+          item.marcaTeclado,
+          item.especificacionesTeclado,
+          item.marcaMouse,
+          item.especificacionesMouse,
+          item.marcaMonitor,
+          item.especificacionesMonitor,
         ].some(value => normalizeText(value).includes(term));
 
         const matchesTipo = !tipo || item.tipoEquipo === tipo;
@@ -2083,6 +2390,9 @@
           <td class="px-4 py-4">${photosBadge(item.fotos || [])}</td>
           <td class="px-4 py-4">
             <div class="flex justify-end gap-2">
+              <button onclick="viewComputerDetail('${item.id}')" class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-700 transition hover:bg-slate-200 dark:bg-white/10 dark:text-white dark:hover:bg-white/15" title="Ver detalle">
+                <i data-lucide="eye" class="h-4 w-4"></i>
+              </button>
               <button onclick="editComputer('${item.id}')" class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-300 dark:hover:bg-blue-500/20" title="Editar">
                 <i data-lucide="pencil" class="h-4 w-4"></i>
               </button>
@@ -2096,6 +2406,199 @@
 
       updatePagination(startIndex + 1, endIndex, total, totalPages);
       refreshIcons();
+    }
+
+
+    function viewComputerDetail(id) {
+      const computer = allComputers.find(item => item.id === id);
+
+      if (!computer) {
+        showToast("error", "No encontrado", "No se encontró el registro seleccionado.");
+        return;
+      }
+
+      const modal = $("#detailModal");
+      const content = $("#detailContent");
+      const editBtn = $("#detailEditBtn");
+
+      $("#detailTitle").textContent = `${computer.codigo || "Sin código"} - ${computer.marca || ""} ${computer.modelo || ""}`.trim();
+      $("#detailSubtitle").textContent = `Registro ID: ${computer.id || ""}`;
+
+      const photos = Array.isArray(computer.fotos) ? computer.fotos : [];
+      const createdAt = formatFirestoreDateTime(computer.createdAt);
+      const updatedAt = formatFirestoreDateTime(computer.updatedAt);
+
+      content.innerHTML = `
+        <div class="grid gap-4 lg:grid-cols-[1fr_.8fr]">
+          <section class="rounded-3xl border border-slate-200 bg-slate-50 p-5 dark:border-white/10 dark:bg-white/5">
+            <div class="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <h4 class="text-lg font-extrabold">Información del equipo</h4>
+                <p class="text-sm text-slate-500 dark:text-slate-400">Datos técnicos y administrativos.</p>
+              </div>
+              ${statusBadge(computer.estado || "Sin estado")}
+            </div>
+            <div class="grid gap-3 sm:grid-cols-2">
+              ${detailField("Código", computer.codigo, "hash")}
+              ${detailField("Tipo de equipo", computer.tipoEquipo, "monitor-cog")}
+              ${detailField("Marca", computer.marca, "badge-check")}
+              ${detailField("Modelo", computer.modelo, "laptop")}
+              ${detailField("Procesador", computer.procesador, "cpu")}
+              ${detailField("RAM", `${Number(computer.ram || 0)} GB`, "memory-stick")}
+              ${detailField("Almacenamiento", `${Number(computer.almacenamiento || 0)} GB`, "hard-drive")}
+              ${detailField("Ubicación", computer.ubicacion, "map-pin")}
+              ${detailField("Fecha ingreso", formatDate(computer.fecha), "calendar")}
+              ${detailField("Precio estimado", formatMoney(computer.precioEstimado), "dollar-sign")}
+            </div>
+          </section>
+
+          <section class="rounded-3xl border border-slate-200 bg-slate-50 p-5 dark:border-white/10 dark:bg-white/5">
+            <h4 class="text-lg font-extrabold">Resumen</h4>
+            <div class="mt-4 space-y-3">
+              ${detailMiniStat("Fotos", photos.length, "image")}
+              ${detailMiniStat("Estado", computer.estado || "Sin estado", "activity")}
+              ${detailMiniStat("Creado por", computer.createdBy || "No disponible", "user")}
+              ${detailMiniStat("Actualizado por", computer.updatedBy || "No disponible", "user-check")}
+            </div>
+          </section>
+        </div>
+
+        ${renderDesktopDetailsSection(computer)}
+
+        <section class="rounded-3xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-slate-900">
+          <h4 class="text-lg font-extrabold">Notas adicionales</h4>
+          <p class="mt-3 whitespace-pre-line rounded-2xl bg-slate-50 p-4 text-sm leading-6 text-slate-600 dark:bg-white/5 dark:text-slate-300">${escapeHTML(computer.notas || "Sin notas registradas.")}</p>
+        </section>
+
+        <section class="rounded-3xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-slate-900">
+          <div class="mb-4 flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
+            <div>
+              <h4 class="text-lg font-extrabold">Fotos del equipo</h4>
+              <p class="text-sm text-slate-500 dark:text-slate-400">Haz clic sobre una foto para verla en grande.</p>
+            </div>
+            <span class="inline-flex w-fit rounded-full bg-blue-50 px-3 py-1 text-xs font-extrabold text-blue-700 dark:bg-blue-500/10 dark:text-blue-300">${photos.length} foto${photos.length === 1 ? "" : "s"}</span>
+          </div>
+          ${renderDetailPhotos(photos)}
+        </section>
+
+        <section class="rounded-3xl border border-slate-200 bg-slate-50 p-5 dark:border-white/10 dark:bg-white/5">
+          <h4 class="text-lg font-extrabold">Auditoría</h4>
+          <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            ${detailField("Creado por", computer.createdBy || "No disponible", "user")}
+            ${detailField("Creado el", createdAt || "No disponible", "clock")}
+            ${detailField("Actualizado por", computer.updatedBy || "No disponible", "user-check")}
+            ${detailField("Actualizado el", updatedAt || "No disponible", "clock-3")}
+          </div>
+        </section>
+      `;
+
+      editBtn.onclick = () => {
+        closeDetailModal();
+        openComputerModal(computer);
+      };
+
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+      refreshIcons();
+    }
+
+    function closeDetailModal() {
+      const modal = $("#detailModal");
+      if (!modal) return;
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    }
+
+    function detailField(label, value, icon = "circle") {
+      const displayValue = value === undefined || value === null || value === "" ? "No disponible" : value;
+
+      return `
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-slate-900">
+          <div class="mb-2 flex items-center gap-2 text-xs font-extrabold uppercase tracking-wide text-slate-400">
+            <i data-lucide="${escapeAttr(icon)}" class="h-4 w-4"></i>
+            ${escapeHTML(label)}
+          </div>
+          <div class="break-words text-sm font-extrabold text-slate-800 dark:text-white">${escapeHTML(displayValue)}</div>
+        </div>
+      `;
+    }
+
+    function detailMiniStat(label, value, icon = "circle") {
+      return `
+        <div class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-slate-900">
+          <span class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300">
+            <i data-lucide="${escapeAttr(icon)}" class="h-5 w-5"></i>
+          </span>
+          <div class="min-w-0">
+            <p class="text-xs font-bold text-slate-500 dark:text-slate-400">${escapeHTML(label)}</p>
+            <p class="truncate text-sm font-extrabold text-slate-900 dark:text-white" title="${escapeAttr(value)}">${escapeHTML(value)}</p>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderDetailPhotos(photos) {
+      if (!Array.isArray(photos) || !photos.length) {
+        return `
+          <div class="rounded-3xl border border-dashed border-slate-300 p-8 text-center dark:border-white/10">
+            <div class="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-3xl bg-slate-100 text-slate-500 dark:bg-white/10 dark:text-slate-300">
+              <i data-lucide="image-off" class="h-7 w-7"></i>
+            </div>
+            <p class="font-extrabold">Este equipo no tiene fotos</p>
+            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Puedes agregar fotos desde el botón Editar.</p>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          ${photos.map((photo, index) => `
+            <a href="${escapeAttr(photo.url || "#")}" target="_blank" rel="noopener" class="group overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 transition hover:-translate-y-0.5 hover:shadow-soft dark:border-white/10 dark:bg-white/5">
+              <img src="${escapeAttr(photo.url || "")}" alt="${escapeAttr(photo.nombre || `Foto ${index + 1}`)}" class="h-36 w-full object-cover transition group-hover:scale-105">
+              <div class="p-3">
+                <p class="truncate text-xs font-extrabold" title="${escapeAttr(photo.nombre || `Foto ${index + 1}`)}">${escapeHTML(photo.nombre || `Foto ${index + 1}`)}</p>
+                <p class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">${formatPhotoSize(photo)}</p>
+              </div>
+            </a>
+          `).join("")}
+        </div>
+      `;
+    }
+
+    function formatPhotoSize(photo) {
+      const bytes = Number(photo?.tamanioOriginal || photo?.tamanioBase64 || photo?.size || 0);
+      if (!bytes) return "Base64";
+      if (bytes < 1024) return `${bytes} B`;
+      if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+      return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    }
+
+    function formatFirestoreDateTime(value) {
+      if (!value) return "";
+
+      try {
+        let date;
+
+        if (typeof value.toDate === "function") {
+          date = value.toDate();
+        } else if (value.seconds) {
+          date = new Date(value.seconds * 1000);
+        } else {
+          date = new Date(value);
+        }
+
+        if (Number.isNaN(date.getTime())) return "";
+
+        return date.toLocaleString("es-SV", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+      } catch (error) {
+        return "";
+      }
     }
 
     function updatePagination(start, end, total, totalPages) {
@@ -2180,7 +2683,7 @@
 
     function validatePhotoFiles(files) {
       const validFiles = [];
-      const maxSize = 5 * 1024 * 1024;
+      const maxSize = 8 * 1024 * 1024;
 
       for (const file of files) {
         if (!file.type.startsWith("image/")) {
@@ -2189,7 +2692,7 @@
         }
 
         if (file.size > maxSize) {
-          showToast("warning", "Imagen demasiado grande", `${file.name} supera los 5 MB.`);
+          showToast("warning", "Imagen demasiado grande", `${file.name} supera los 8 MB.`);
           continue;
         }
 
@@ -2199,35 +2702,78 @@
       return validFiles;
     }
 
-    async function uploadComputerPhotos(files, computerId) {
+    async function convertPhotoFilesToBase64(files, computerId, existingPhotos = []) {
       if (!files || !files.length) return [];
 
-      const uploadedPhotos = [];
+      const convertedPhotos = [];
+      const maxTotalBase64Length = 850000; // Firestore permite 1 MiB por documento; dejamos margen para el resto de campos.
+      let currentTotalLength = (existingPhotos || []).reduce((total, photo) => total + String(photo?.url || "").length, 0);
 
       for (const file of files) {
-        const extension = file.name.split(".").pop() || "jpg";
-        const safeName = file.name
-          .replace(/\.[^/.]+$/, "")
-          .replace(/[^a-zA-Z0-9_-]/g, "_")
-          .slice(0, 60);
+        try {
+          const dataUrl = await compressImageToBase64(file, 900, 0.68);
 
-        const path = `computadoras/${computerId}/${Date.now()}_${crypto.randomUUID()}_${safeName}.${extension}`;
-        const ref = storage.ref(path);
-        const snapshot = await ref.put(file);
-        const url = await snapshot.ref.getDownloadURL();
+          if (currentTotalLength + dataUrl.length > maxTotalBase64Length) {
+            showToast(
+              "warning",
+              "Límite de fotos",
+              "Una o más fotos no se agregaron porque Firestore solo permite documentos de hasta 1 MiB. Usa menos fotos o fotos más pequeñas."
+            );
+            continue;
+          }
 
-        uploadedPhotos.push({
-          url,
-          path,
-          nombre: file.name,
-          tipo: file.type,
-          tamanio: file.size,
-          uploadedAt: new Date().toISOString(),
-          uploadedBy: getCurrentUser()?.userEmail || "",
-        });
+          currentTotalLength += dataUrl.length;
+
+          convertedPhotos.push({
+            url: dataUrl,
+            base64: dataUrl,
+            storageType: "base64",
+            path: `firestore-base64/computadoras/${computerId}/${Date.now()}_${createUniqueId()}`,
+            nombre: file.name || `foto_${Date.now()}.jpg`,
+            tipo: "image/jpeg",
+            tamanioOriginal: file.size || 0,
+            tamanioBase64: dataUrl.length,
+            uploadedAt: new Date().toISOString(),
+            uploadedBy: getCurrentUser()?.userEmail || "",
+          });
+        } catch (error) {
+          console.error("Error al convertir foto a Base64:", error);
+          showToast("warning", "Foto omitida", `${file.name || "Una foto"} no se pudo procesar.`);
+        }
       }
 
-      return uploadedPhotos;
+      return convertedPhotos;
+    }
+
+    function compressImageToBase64(file, maxWidth = 900, quality = 0.68) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+
+        reader.onerror = () => reject(new Error("No se pudo leer la imagen."));
+        reader.onload = () => {
+          const img = new Image();
+
+          img.onerror = () => reject(new Error("No se pudo cargar la imagen."));
+          img.onload = () => {
+            const scale = Math.min(1, maxWidth / img.width);
+            const width = Math.max(1, Math.round(img.width * scale));
+            const height = Math.max(1, Math.round(img.height * scale));
+
+            const canvas = document.createElement("canvas");
+            canvas.width = width;
+            canvas.height = height;
+
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, width, height);
+
+            resolve(canvas.toDataURL("image/jpeg", quality));
+          };
+
+          img.src = reader.result;
+        };
+
+        reader.readAsDataURL(file);
+      });
     }
 
     function renderSelectedPhotoPreview(containerId, files, source = "quick") {
@@ -2244,7 +2790,7 @@
 
         return `
           <div class="photo-preview-card">
-            <img src="${url}" alt="${escapeAttr(file.name)}" onload="URL.revokeObjectURL(this.src)">
+            <img src="${url}" alt="${escapeAttr(file.name)}">
             <button type="button" class="photo-remove-btn" onclick="removeSelectedPhoto('${source}', ${index})" title="Quitar foto">
               <i data-lucide="x" class="h-4 w-4"></i>
             </button>
@@ -2282,7 +2828,7 @@
 
         return `
           <div class="photo-preview-card">
-            <img src="${url}" alt="${escapeAttr(file.name)}" onload="URL.revokeObjectURL(this.src)">
+            <img src="${url}" alt="${escapeAttr(file.name)}">
             <button type="button" class="photo-remove-btn" onclick="removeSelectedPhoto('modal', ${index})" title="Quitar foto">
               <i data-lucide="x" class="h-4 w-4"></i>
             </button>
@@ -2571,7 +3117,7 @@
         return;
       }
 
-      const headers = ["codigo", "tipoEquipo", "marca", "modelo", "procesador", "ram", "almacenamiento", "estado", "ubicacion", "fecha", "precioEstimado", "notas"];
+      const headers = ["codigo", "tipoEquipo", "marca", "modelo", "procesador", "ram", "almacenamiento", "estado", "ubicacion", "fecha", "precioEstimado", "notas", "marcaUps", "especificacionesUps", "marcaTeclado", "especificacionesTeclado", "marcaMouse", "especificacionesMouse", "marcaMonitor", "especificacionesMonitor"];
       const rows = data.map(item => headers.map(header => csvCell(item[header] ?? "")).join(","));
       const csv = [headers.join(","), ...rows].join("\n");
 
@@ -2587,8 +3133,8 @@
         return;
       }
 
-      const cleanData = data.map(({ id, codigo, tipoEquipo, marca, modelo, procesador, ram, almacenamiento, estado, ubicacion, fecha, precioEstimado, notas }) => ({
-        id, codigo, tipoEquipo, marca, modelo, procesador, ram, almacenamiento, estado, ubicacion, fecha, precioEstimado, notas
+      const cleanData = data.map(({ id, codigo, tipoEquipo, marca, modelo, procesador, ram, almacenamiento, estado, ubicacion, fecha, precioEstimado, notas, marcaUps, especificacionesUps, marcaTeclado, especificacionesTeclado, marcaMouse, especificacionesMouse, marcaMonitor, especificacionesMonitor }) => ({
+        id, codigo, tipoEquipo, marca, modelo, procesador, ram, almacenamiento, estado, ubicacion, fecha, precioEstimado, notas, marcaUps, especificacionesUps, marcaTeclado, especificacionesTeclado, marcaMouse, especificacionesMouse, marcaMonitor, especificacionesMonitor
       }));
 
       downloadFile(JSON.stringify(cleanData, null, 2), `inventario_computadoras_${todayFileName()}.json`, "application/json;charset=utf-8;");
@@ -2780,7 +3326,7 @@
       document.body.appendChild(a);
       a.click();
       a.remove();
-      URL.revokeObjectURL(url);
+      if (window.URL && typeof URL.revokeObjectURL === "function") URL.revokeObjectURL(url);
     }
 
     /************************************************************
@@ -2904,6 +3450,8 @@
     window.openComputerModal = openComputerModal;
     window.closeComputerModal = closeComputerModal;
     window.editComputer = editComputer;
+    window.viewComputerDetail = viewComputerDetail;
+    window.closeDetailModal = closeDetailModal;
     window.deleteComputer = deleteComputer;
     window.removeSelectedPhoto = removeSelectedPhoto;
     window.removeExistingPhoto = removeExistingPhoto;
@@ -2916,6 +3464,9 @@
     window.exportExcel = exportExcel;
     window.exportPDF = exportPDF;
     window.resetFilters = resetFilters;
+    window.showRecordsLoader = showRecordsLoader;
+    window.hideRecordsLoader = hideRecordsLoader;
+    window.toggleDesktopFields = toggleDesktopFields;
     window.openCamera = openCamera;
     window.closeCamera = closeCamera;
     window.capturePhotoFromCamera = capturePhotoFromCamera;
