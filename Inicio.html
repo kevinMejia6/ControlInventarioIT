@@ -27,8 +27,6 @@
 
   <!-- Exportar Excel -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <!-- Exportar Excel con imágenes -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 
   <!-- Exportar PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -448,9 +446,15 @@
                 Consulta, registra, edita, importa y exporta equipos desde una interfaz moderna y responsiva conectada a
                 Firestore.
               </p>
-              <div class="mt-4 inline-flex items-center gap-2 rounded-2xl bg-white/15 px-4 py-2 text-sm font-extrabold text-white ring-1 ring-white/20">
-                <i data-lucide="code-2" class="h-4 w-4"></i>
-                Sistema creado por Kevin Eduardo
+              <div class="mt-4 flex flex-wrap gap-2">
+                <div class="inline-flex items-center gap-2 rounded-2xl bg-white/15 px-4 py-2 text-sm font-extrabold text-white ring-1 ring-white/20">
+                  <i data-lucide="code-2" class="h-4 w-4"></i>
+                  Sistema creado por Kevin Eduardo
+                </div>
+                <div id="liveSyncStatus" class="inline-flex items-center gap-2 rounded-2xl bg-emerald-400/20 px-4 py-2 text-sm font-extrabold text-white ring-1 ring-emerald-200/30">
+                  <span class="h-2.5 w-2.5 animate-pulse rounded-full bg-emerald-300"></span>
+                  Tiempo real activo
+                </div>
               </div>
             </div>
             <div class="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-2">
@@ -1085,6 +1089,8 @@
     let unsubscribeLocations = null;
     let unsubscribeStates = null;
     let unsubscribeTypes = null;
+    let inventoryFirstLoadDone = false;
+    let lastInventorySnapshotSize = 0;
     let quickSelectedPhotos = [];
     let modalSelectedPhotos = [];
     let modalExistingPhotos = [];
@@ -2310,20 +2316,27 @@
       if (unsubscribeInventory) unsubscribeInventory();
 
       inventoryFirstLoadDone = false;
-      showRecordsLoader("Cargando registros...");
+      lastInventorySnapshotSize = 0;
+      showRecordsLoader("Cargando registros en tiempo real...");
 
       unsubscribeInventory = computadorasCollection
         .orderBy("createdAt", "desc")
         .onSnapshot({ includeMetadataChanges: true }, snapshot => {
+          const previousTotal = allComputers.length;
+          const changes = snapshot.docChanges();
+
           allComputers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-          applyFilters();
 
-          // Mantener el loading visible hasta recibir la respuesta real del servidor.
-          // Firestore puede enviar primero una lectura rápida desde caché; esa no cuenta como carga completa.
+          // Se actualiza la tabla, filtros, métricas y paginación automáticamente.
+          // resetPage=false evita regresar siempre a la página 1 cada vez que otro usuario registra algo.
+          applyFilters(false);
+
           const dataFromServer = !snapshot.metadata.fromCache;
+          updateLiveSyncStatus(snapshot);
 
-          if (dataFromServer && !inventoryFirstLoadDone) {
+          if (!inventoryFirstLoadDone && dataFromServer) {
             inventoryFirstLoadDone = true;
+            lastInventorySnapshotSize = snapshot.size;
 
             requestAnimationFrame(() => {
               requestAnimationFrame(() => {
@@ -2331,19 +2344,77 @@
                 hideRecordsLoader();
               });
             });
+
+            return;
+          }
+
+          // Después de la primera carga, notificamos cambios reales de otros usuarios o pestañas.
+          if (inventoryFirstLoadDone && dataFromServer) {
+            notifyRealtimeChanges(changes, previousTotal);
+            lastInventorySnapshotSize = snapshot.size;
           }
         }, error => {
           console.error(error);
-          $("#results").innerHTML = `<tr><td colspan="13" class="px-4 py-10 text-center text-red-500">Error al cargar registros: ${escapeHTML(error.message)}</td></tr>`;
+          $("#results").innerHTML = `<tr><td colspan="13" class="px-4 py-10 text-center text-red-500">Error al cargar registros en tiempo real: ${escapeHTML(error.message)}</td></tr>`;
+          updateLiveSyncStatus(null, true);
           hidePageLoader();
           hideRecordsLoader();
         });
     }
 
+    function updateLiveSyncStatus(snapshot = null, hasError = false) {
+      const status = $("#liveSyncStatus");
+      if (!status) return;
+
+      if (hasError) {
+        status.className = "inline-flex items-center gap-2 rounded-2xl bg-red-400/20 px-4 py-2 text-sm font-extrabold text-white ring-1 ring-red-200/30";
+        status.innerHTML = `<span class="h-2.5 w-2.5 rounded-full bg-red-300"></span> Tiempo real desconectado`;
+        return;
+      }
+
+      const fromCache = snapshot?.metadata?.fromCache;
+      const pendingWrites = snapshot?.metadata?.hasPendingWrites;
+      const time = new Date().toLocaleTimeString("es-SV", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+
+      const label = pendingWrites
+        ? "Sincronizando cambios..."
+        : fromCache
+          ? "Mostrando caché local"
+          : `Tiempo real activo · ${time}`;
+
+      status.className = "inline-flex items-center gap-2 rounded-2xl bg-emerald-400/20 px-4 py-2 text-sm font-extrabold text-white ring-1 ring-emerald-200/30";
+      status.innerHTML = `<span class="h-2.5 w-2.5 animate-pulse rounded-full bg-emerald-300"></span> ${label}`;
+    }
+
+    function notifyRealtimeChanges(changes = [], previousTotal = 0) {
+      const relevantChanges = changes.filter(change => !change.doc.metadata.hasPendingWrites);
+
+      const added = relevantChanges.filter(change => change.type === "added").length;
+      const modified = relevantChanges.filter(change => change.type === "modified").length;
+      const removed = relevantChanges.filter(change => change.type === "removed").length;
+
+      if (added > 0 && previousTotal > 0) {
+        showToast("success", "Inventario actualizado", `${added} registro${added === 1 ? "" : "s"} nuevo${added === 1 ? "" : "s"} agregado${added === 1 ? "" : "s"} en tiempo real.`);
+        return;
+      }
+
+      if (modified > 0) {
+        showToast("info", "Inventario actualizado", `${modified} registro${modified === 1 ? "" : "s"} modificado${modified === 1 ? "" : "s"} en tiempo real.`);
+        return;
+      }
+
+      if (removed > 0) {
+        showToast("warning", "Inventario actualizado", `${removed} registro${removed === 1 ? "" : "s"} eliminado${removed === 1 ? "" : "s"} en tiempo real.`);
+      }
+    }
+
     /************************************************************
      * FILTROS / RENDER
      ************************************************************/
-    function applyFilters() {
+    function applyFilters(resetPage = true) {
       const term = normalizeText($("#searchInput").value);
       const tipo = $("#filterTipo").value;
       const estado = $("#filterEstado").value;
@@ -2380,7 +2451,7 @@
         return matchesTerm && matchesTipo && matchesEstado && matchesUbicacion;
       });
 
-      currentPage = 1;
+      if (resetPage) currentPage = 1;
       updateStatistics();
       renderTable();
     }
@@ -3218,81 +3289,11 @@
         "Fecha": formatDate(item.fecha),
         "Precio estimado": Number(item.precioEstimado || 0),
         "Notas": item.notas || "",
-
-        // Nuevos campos para computadora de escritorio
-        "Marca UPS": item.marcaUps || "",
-        "Especificaciones UPS": item.especificacionesUps || "",
-        "Marca teclado": item.marcaTeclado || "",
-        "Especificaciones teclado": item.especificacionesTeclado || "",
-        "Marca mouse": item.marcaMouse || "",
-        "Especificaciones mouse": item.especificacionesMouse || "",
-        "Marca monitor": item.marcaMonitor || "",
-        "Especificaciones monitor": item.especificacionesMonitor || "",
-
         "Fotos": Array.isArray(item.fotos) ? item.fotos.length : 0,
       }));
     }
 
-    function getExcelExportColumns() {
-      return [
-        { header: "Código", key: "Código", width: 16 },
-        { header: "Tipo", key: "Tipo", width: 24 },
-        { header: "Marca", key: "Marca", width: 18 },
-        { header: "Modelo", key: "Modelo", width: 22 },
-        { header: "Procesador", key: "Procesador", width: 30 },
-        { header: "RAM", key: "RAM", width: 12 },
-        { header: "Almacenamiento", key: "Almacenamiento", width: 18 },
-        { header: "Estado", key: "Estado", width: 24 },
-        { header: "Ubicación", key: "Ubicación", width: 24 },
-        { header: "Fecha", key: "Fecha", width: 14 },
-        { header: "Precio estimado", key: "Precio estimado", width: 18 },
-        { header: "Notas", key: "Notas", width: 38 },
-        { header: "Marca UPS", key: "Marca UPS", width: 18 },
-        { header: "Especificaciones UPS", key: "Especificaciones UPS", width: 34 },
-        { header: "Marca teclado", key: "Marca teclado", width: 18 },
-        { header: "Especificaciones teclado", key: "Especificaciones teclado", width: 34 },
-        { header: "Marca mouse", key: "Marca mouse", width: 18 },
-        { header: "Especificaciones mouse", key: "Especificaciones mouse", width: 34 },
-        { header: "Marca monitor", key: "Marca monitor", width: 18 },
-        { header: "Especificaciones monitor", key: "Especificaciones monitor", width: 34 },
-        { header: "Cantidad fotos", key: "Fotos", width: 16 },
-        { header: "Foto 1", key: "Foto 1", width: 18 },
-        { header: "Foto 2", key: "Foto 2", width: 18 },
-        { header: "Foto 3", key: "Foto 3", width: 18 },
-      ];
-    }
-
-    function getPhotoUrl(photo) {
-      if (!photo) return "";
-      if (typeof photo === "string") return photo;
-      return photo.url || photo.base64 || "";
-    }
-
-    function getImageExtensionFromDataUrl(dataUrl) {
-      const value = String(dataUrl || "").toLowerCase();
-
-      if (value.startsWith("data:image/png")) return "png";
-      if (value.startsWith("data:image/jpg") || value.startsWith("data:image/jpeg")) return "jpeg";
-      if (value.startsWith("data:image/webp")) return "webp";
-
-      return "jpeg";
-    }
-
-    function getPdfImageFormat(dataUrl) {
-      const value = String(dataUrl || "").toLowerCase();
-
-      if (value.startsWith("data:image/png")) return "PNG";
-      if (value.startsWith("data:image/webp")) return "WEBP";
-
-      return "JPEG";
-    }
-
-    function isEmbeddableBase64Image(dataUrl) {
-      return /^data:image\/(png|jpe?g|webp);base64,/i.test(String(dataUrl || ""));
-    }
-
-    async function exportExcel() {
-      const rawData = getExportData();
+    function exportExcel() {
       const data = getCleanExportData();
 
       if (!data.length) {
@@ -3300,111 +3301,37 @@
         return;
       }
 
-      if (!window.ExcelJS) {
-        showToast("error", "Librería no cargada", "No se pudo cargar ExcelJS para insertar imágenes en Excel.");
+      if (!window.XLSX) {
+        showToast("error", "Librería no cargada", "No se pudo cargar la librería de Excel.");
         return;
       }
 
-      const workbook = new ExcelJS.Workbook();
-      workbook.creator = "Inventario IT";
-      workbook.created = new Date();
+      const worksheet = XLSX.utils.json_to_sheet(data);
 
-      const worksheet = workbook.addWorksheet("Inventario", {
-        views: [{ state: "frozen", ySplit: 1 }],
-      });
+      worksheet["!cols"] = [
+        { wch: 16 },
+        { wch: 18 },
+        { wch: 18 },
+        { wch: 22 },
+        { wch: 28 },
+        { wch: 12 },
+        { wch: 18 },
+        { wch: 24 },
+        { wch: 24 },
+        { wch: 14 },
+        { wch: 18 },
+        { wch: 35 },
+        { wch: 10 },
+      ];
 
-      worksheet.columns = getExcelExportColumns();
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Inventario");
+      XLSX.writeFile(workbook, `inventario_computadoras_${todayFileName()}.xlsx`);
 
-      worksheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
-      worksheet.getRow(1).fill = {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "FF2563EB" },
-      };
-      worksheet.getRow(1).alignment = {
-        vertical: "middle",
-        horizontal: "center",
-        wrapText: true,
-      };
-
-      data.forEach((row, index) => {
-        const excelRow = worksheet.addRow({
-          ...row,
-          "Foto 1": "",
-          "Foto 2": "",
-          "Foto 3": "",
-        });
-
-        excelRow.height = 84;
-
-        excelRow.eachCell((cell) => {
-          cell.alignment = {
-            vertical: "middle",
-            horizontal: "left",
-            wrapText: true,
-          };
-        });
-
-        const photos = Array.isArray(rawData[index]?.fotos) ? rawData[index].fotos.slice(0, 3) : [];
-        photos.forEach((photo, photoIndex) => {
-          const photoUrl = getPhotoUrl(photo);
-          if (!isEmbeddableBase64Image(photoUrl)) return;
-
-          try {
-            const imageId = workbook.addImage({
-              base64: photoUrl,
-              extension: getImageExtensionFromDataUrl(photoUrl),
-            });
-
-            const colIndex = 21 + photoIndex; // Foto 1 inicia en columna V: índice base cero 21
-            const rowNumber = index + 2;
-
-            worksheet.addImage(imageId, {
-              tl: { col: colIndex + 0.12, row: rowNumber - 1 + 0.15 },
-              ext: { width: 90, height: 70 },
-              editAs: "oneCell",
-            });
-          } catch (error) {
-            console.warn("No se pudo insertar una foto en Excel:", error);
-          }
-        });
-      });
-
-      worksheet.autoFilter = {
-        from: { row: 1, column: 1 },
-        to: { row: 1, column: worksheet.columns.length },
-      };
-
-      worksheet.eachRow((row) => {
-        row.eachCell((cell) => {
-          cell.border = {
-            top: { style: "thin", color: { argb: "FFE2E8F0" } },
-            left: { style: "thin", color: { argb: "FFE2E8F0" } },
-            bottom: { style: "thin", color: { argb: "FFE2E8F0" } },
-            right: { style: "thin", color: { argb: "FFE2E8F0" } },
-          };
-        });
-      });
-
-      const buffer = await workbook.xlsx.writeBuffer();
-      const blob = new Blob([buffer], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      });
-
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `inventario_computadoras_${todayFileName()}.xlsx`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-
-      showToast("success", "Exportado", "El archivo Excel fue generado con campos nuevos y fotos.");
+      showToast("success", "Exportado", "El archivo Excel fue generado correctamente.");
     }
 
     function exportPDF() {
-      const rawData = getExportData();
       const data = getCleanExportData();
 
       if (!data.length) {
@@ -3426,7 +3353,6 @@
 
       const title = "Inventario de Computadoras";
       const exportDate = new Date().toLocaleDateString("es-SV");
-      const pageWidth = doc.internal.pageSize.width || doc.internal.pageSize.getWidth();
 
       doc.setFontSize(16);
       doc.setFont("helvetica", "bold");
@@ -3440,7 +3366,8 @@
       const headers = [[
         "Código",
         "Tipo",
-        "Marca / Modelo",
+        "Marca",
+        "Modelo",
         "Procesador",
         "RAM",
         "Almacen.",
@@ -3448,29 +3375,24 @@
         "Ubicación",
         "Fecha",
         "Precio",
-        "UPS",
-        "Teclado",
-        "Mouse",
-        "Monitor",
+        "Notas",
         "Fotos",
       ]];
 
-      const body = rawData.map(item => [
-        item.codigo || "",
-        item.tipoEquipo || "",
-        `${item.marca || ""} ${item.modelo || ""}`.trim(),
-        item.procesador || "",
-        `${Number(item.ram || 0)} GB`,
-        `${Number(item.almacenamiento || 0)} GB`,
-        item.estado || "",
-        item.ubicacion || "",
-        formatDate(item.fecha),
-        formatMoney(item.precioEstimado),
-        joinBrandAndSpecs(item.marcaUps, item.especificacionesUps),
-        joinBrandAndSpecs(item.marcaTeclado, item.especificacionesTeclado),
-        joinBrandAndSpecs(item.marcaMouse, item.especificacionesMouse),
-        joinBrandAndSpecs(item.marcaMonitor, item.especificacionesMonitor),
-        Array.isArray(item.fotos) ? item.fotos.length : 0,
+      const body = data.map(item => [
+        item["Código"],
+        item["Tipo"],
+        item["Marca"],
+        item["Modelo"],
+        item["Procesador"],
+        item["RAM"],
+        item["Almacenamiento"],
+        item["Estado"],
+        item["Ubicación"],
+        item["Fecha"],
+        formatMoney(item["Precio estimado"]),
+        item["Notas"],
+        item["Fotos"],
       ]);
 
       doc.autoTable({
@@ -3478,10 +3400,9 @@
         body,
         startY: 32,
         styles: {
-          fontSize: 6,
-          cellPadding: 1.6,
+          fontSize: 7,
+          cellPadding: 2,
           overflow: "linebreak",
-          valign: "middle",
         },
         headStyles: {
           fillColor: [37, 99, 235],
@@ -3492,120 +3413,37 @@
           fillColor: [245, 247, 250],
         },
         columnStyles: {
-          0: { cellWidth: 16 },
-          1: { cellWidth: 18 },
-          2: { cellWidth: 24 },
-          3: { cellWidth: 26 },
-          4: { cellWidth: 11 },
+          0: { cellWidth: 18 },
+          1: { cellWidth: 20 },
+          2: { cellWidth: 20 },
+          3: { cellWidth: 24 },
+          4: { cellWidth: 32 },
           5: { cellWidth: 14 },
-          6: { cellWidth: 20 },
-          7: { cellWidth: 20 },
-          8: { cellWidth: 13 },
+          6: { cellWidth: 18 },
+          7: { cellWidth: 28 },
+          8: { cellWidth: 28 },
           9: { cellWidth: 16 },
-          10: { cellWidth: 20 },
-          11: { cellWidth: 20 },
-          12: { cellWidth: 20 },
-          13: { cellWidth: 20 },
-          14: { cellWidth: 10 },
+          10: { cellWidth: 18 },
+          11: { cellWidth: 36 },
+          12: { cellWidth: 12 },
         },
         didDrawPage: function () {
           const pageSize = doc.internal.pageSize;
           const pageHeight = pageSize.height || pageSize.getHeight();
-          const currentPageWidth = pageSize.width || pageSize.getWidth();
+          const pageWidth = pageSize.width || pageSize.getWidth();
 
           doc.setFontSize(8);
           doc.text(
             `Página ${doc.internal.getNumberOfPages()}`,
-            currentPageWidth - 25,
+            pageWidth - 25,
             pageHeight - 8
           );
         },
       });
 
-      addPdfPhotoAnnex(doc, rawData);
-
       doc.save(`inventario_computadoras_${todayFileName()}.pdf`);
-      showToast("success", "Exportado", "El archivo PDF fue generado con campos nuevos y fotos.");
+      showToast("success", "Exportado", "El archivo PDF fue generado correctamente.");
     }
-
-    function joinBrandAndSpecs(brand, specs) {
-      const cleanBrand = String(brand || "").trim();
-      const cleanSpecs = String(specs || "").trim();
-
-      if (cleanBrand && cleanSpecs) return `${cleanBrand}: ${cleanSpecs}`;
-      return cleanBrand || cleanSpecs || "";
-    }
-
-    function addPdfPhotoAnnex(doc, records) {
-      const recordsWithPhotos = records.filter(item => Array.isArray(item.fotos) && item.fotos.length);
-      if (!recordsWithPhotos.length) return;
-
-      const pageWidth = doc.internal.pageSize.width || doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.height || doc.internal.pageSize.getHeight();
-
-      doc.addPage("a4", "landscape");
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(15);
-      doc.text("Anexo fotográfico", 14, 15);
-
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(9);
-      doc.text("Fotos guardadas en cada registro del inventario.", 14, 21);
-
-      let x = 14;
-      let y = 30;
-      const cardW = 86;
-      const cardH = 58;
-      const gap = 6;
-
-      recordsWithPhotos.forEach((item) => {
-        const photos = item.fotos.slice(0, 6);
-
-        photos.forEach((photo, photoIndex) => {
-          const photoUrl = getPhotoUrl(photo);
-          if (!isEmbeddableBase64Image(photoUrl)) return;
-
-          if (x + cardW > pageWidth - 12) {
-            x = 14;
-            y += cardH + gap;
-          }
-
-          if (y + cardH > pageHeight - 14) {
-            doc.addPage("a4", "landscape");
-            x = 14;
-            y = 16;
-          }
-
-          doc.setDrawColor(226, 232, 240);
-          doc.roundedRect(x, y, cardW, cardH, 2, 2);
-
-          doc.setFont("helvetica", "bold");
-          doc.setFontSize(7);
-          doc.text(`${item.codigo || "Sin código"} - Foto ${photoIndex + 1}`, x + 3, y + 5, {
-            maxWidth: cardW - 6,
-          });
-
-          doc.setFont("helvetica", "normal");
-          doc.setFontSize(6);
-          doc.text(`${item.marca || ""} ${item.modelo || ""}`.trim(), x + 3, y + 9, {
-            maxWidth: cardW - 6,
-          });
-
-          try {
-            doc.addImage(photoUrl, getPdfImageFormat(photoUrl), x + 3, y + 12, cardW - 6, cardH - 16, undefined, "FAST");
-          } catch (error) {
-            console.warn("No se pudo insertar una foto en PDF:", error);
-            doc.setFontSize(7);
-            doc.text("No se pudo insertar esta foto.", x + 3, y + 28, {
-              maxWidth: cardW - 6,
-            });
-          }
-
-          x += cardW + gap;
-        });
-      });
-    }
-
 
     function downloadFile(content, filename, mimeType) {
       const blob = new Blob([content], { type: mimeType });
