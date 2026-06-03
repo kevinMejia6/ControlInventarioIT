@@ -309,7 +309,7 @@
           <i data-lucide="table-2" class="h-5 w-5"></i>
           <span class="sidebar-collapse-hide">Inventario</span>
         </a>
-        <a href="#import-section" class="sidebar-link">
+        <a href="#import-section" class="sidebar-link hidden">
           <i data-lucide="upload" class="h-5 w-5"></i>
           <span class="sidebar-collapse-hide">Importar JSON</span>
         </a>
@@ -335,6 +335,12 @@
           <i data-lucide="log-out" class="h-4 w-4"></i>
           Cerrar sesión
         </button>
+
+        <div class="mt-4 border-t border-slate-200 pt-4 text-center dark:border-white/10">
+          <p class="text-[11px] font-extrabold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">Creado por</p>
+          <p class="mt-1 text-sm font-extrabold text-slate-700 dark:text-slate-100">Kevin Eduardo</p>
+          <p class="mt-1 text-xs font-semibold text-slate-500 dark:text-slate-400">© <span class="currentYear"></span> Inventario IT</p>
+        </div>
       </div>
     </aside>
 
@@ -408,6 +414,14 @@
                   </button>
                 </div>
 
+                <div class="border-b border-slate-200 py-2 dark:border-white/10">
+                  <button onclick="openAboutSystem()"
+                    class="flex w-full items-center gap-2 px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-white/10">
+                    <i data-lucide="info" class="h-4 w-4"></i>
+                    Acerca del sistema
+                  </button>
+                </div>
+
                 <button onclick="logout()"
                   class="flex w-full items-center gap-2 px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-500/10">
                   <i data-lucide="log-out" class="h-4 w-4"></i>
@@ -432,6 +446,10 @@
                 Consulta, registra, edita, importa y exporta equipos desde una interfaz moderna y responsiva conectada a
                 Firestore.
               </p>
+              <div class="mt-4 inline-flex items-center gap-2 rounded-2xl bg-white/15 px-4 py-2 text-sm font-extrabold text-white ring-1 ring-white/20">
+                <i data-lucide="code-2" class="h-4 w-4"></i>
+                Sistema creado por Kevin Eduardo
+              </div>
             </div>
             <div class="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-2">
               <button onclick="openComputerModal()"
@@ -787,6 +805,13 @@
             </div>
           </div>
         </section>
+
+        <!-- Footer -->
+        <footer class="rounded-[2rem] border border-slate-200 bg-white px-5 py-5 text-center shadow-soft dark:border-white/10 dark:bg-slate-900 sm:px-6">
+          <p class="text-sm font-bold text-slate-600 dark:text-slate-300">
+            © <span class="currentYear"></span> Creado por Kevin Eduardo
+          </p>
+        </footer>
       </section>
     </main>
   </div>
@@ -1077,6 +1102,7 @@
       fillSelects();
       setToday();
       bindEvents();
+      updateFooterYear();
 
       const authenticated = checkAuthentication();
       if (authenticated) {
@@ -1088,6 +1114,35 @@
 
     function refreshIcons() {
       if (window.lucide) lucide.createIcons();
+    }
+
+    function updateFooterYear() {
+      document.querySelectorAll(".currentYear").forEach((yearElement) => {
+        yearElement.textContent = new Date().getFullYear();
+      });
+    }
+
+    function openAboutSystem() {
+      const currentYear = new Date().getFullYear();
+
+      Swal.fire({
+        title: "Inventario IT",
+        html: `
+          <div class="text-center">
+            <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-blue-600 text-white shadow-lg">
+              <i data-lucide="monitor-cog" class="h-8 w-8"></i>
+            </div>
+            <p class="text-base font-extrabold text-slate-800">Sistema creado por Kevin Eduardo</p>
+            <p class="mt-2 text-sm text-slate-500">Control profesional de inventario de computadoras.</p>
+            <div class="mt-4 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-bold text-slate-600">
+              © ${currentYear} Creado por Kevin Eduardo
+            </div>
+          </div>
+        `,
+        confirmButtonText: "Cerrar",
+        confirmButtonColor: "#2563eb",
+        didOpen: () => refreshIcons(),
+      });
     }
 
     function hidePageLoader() {
@@ -3466,6 +3521,7 @@
     window.resetFilters = resetFilters;
     window.showRecordsLoader = showRecordsLoader;
     window.hideRecordsLoader = hideRecordsLoader;
+    window.openAboutSystem = openAboutSystem;
     window.toggleDesktopFields = toggleDesktopFields;
     window.openCamera = openCamera;
     window.closeCamera = closeCamera;
