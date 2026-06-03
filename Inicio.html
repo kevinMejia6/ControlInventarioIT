@@ -5,6 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Inventario de Computadoras | Panel Profesional</title>
+  <!-- VERSION PREMIUM: zoom-photo-icon profesional activo -->
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -254,7 +255,6 @@
         transition: all .25s ease;
       }
     }
-
   </style>
 </head>
 
@@ -270,8 +270,10 @@
   </div>
 
   <!-- Loading de registros estilo overlay -->
-  <div id="recordsLoader" class="fixed inset-0 z-[9998] hidden items-center justify-center bg-slate-950/55 p-4 backdrop-blur-[3px]">
-    <div class="inline-flex items-center gap-3 rounded-2xl bg-slate-950 px-6 py-4 text-white shadow-strong dark:bg-slate-900">
+  <div id="recordsLoader"
+    class="fixed inset-0 z-[9998] hidden items-center justify-center bg-slate-950/55 p-4 backdrop-blur-[3px]">
+    <div
+      class="inline-flex items-center gap-3 rounded-2xl bg-slate-950 px-6 py-4 text-white shadow-strong dark:bg-slate-900">
       <span class="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white"></span>
       <span id="recordsLoaderText" class="text-sm font-extrabold sm:text-base">Cargando registros...</span>
     </div>
@@ -317,7 +319,8 @@
         </a>
 
         <div data-admin-only="true" class="hidden pt-4">
-          <p class="sidebar-collapse-hide mb-2 px-4 text-xs font-extrabold uppercase tracking-widest text-slate-400">Administrador</p>
+          <p class="sidebar-collapse-hide mb-2 px-4 text-xs font-extrabold uppercase tracking-widest text-slate-400">
+            Administrador</p>
           <button onclick="redirectToCreateUser()" class="sidebar-link w-full">
             <i data-lucide="user-plus" class="h-5 w-5"></i>
             <span class="sidebar-collapse-hide">Crear usuario</span>
@@ -329,7 +332,8 @@
         </div>
       </nav>
 
-      <div class="sidebar-collapse-hide mt-8 rounded-3xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/5">
+      <div
+        class="sidebar-collapse-hide mt-8 rounded-3xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/5">
         <p class="text-sm font-bold">Sesión activa</p>
         <p id="sidebarUserName" class="mt-1 truncate text-sm text-slate-500 dark:text-slate-400">Cargando...</p>
         <button onclick="logout()"
@@ -339,9 +343,11 @@
         </button>
 
         <div class="mt-4 border-t border-slate-200 pt-4 text-center dark:border-white/10">
-          <p class="text-[11px] font-extrabold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">Creado por</p>
+          <p class="text-[11px] font-extrabold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">Creado
+            por</p>
           <p class="mt-1 text-sm font-extrabold text-slate-700 dark:text-slate-100">Kevin Eduardo</p>
-          <p class="mt-1 text-xs font-semibold text-slate-500 dark:text-slate-400">© <span class="currentYear"></span> Inventario IT</p>
+          <p class="mt-1 text-xs font-semibold text-slate-500 dark:text-slate-400">© <span class="currentYear"></span>
+            Inventario IT</p>
         </div>
       </div>
     </aside>
@@ -443,16 +449,20 @@
             <div>
               <p class="mb-3 inline-flex rounded-full bg-white/15 px-3 py-1 text-sm font-bold text-blue-50">Sistema de
                 Control</p>
-              <h1 id="heroModuleTitle" class="text-3xl font-extrabold tracking-tight sm:text-4xl">Inventario de Equipos Informáticos</h1>
+              <h1 id="heroModuleTitle" class="text-3xl font-extrabold tracking-tight sm:text-4xl">Inventario de Equipos
+                Informáticos</h1>
               <p id="heroModuleDescription" class="mt-3 max-w-2xl text-sm leading-6 text-blue-100 sm:text-base">
-                Consulta, registra, edita, importa y exporta equipos informáticos desde una interfaz moderna y responsiva conectada a Firestore.
+                Consulta, registra, edita, importa y exporta equipos informáticos desde una interfaz moderna y
+                responsiva conectada a Firestore.
               </p>
               <div class="mt-4 flex flex-wrap gap-2">
-                <div class="inline-flex items-center gap-2 rounded-2xl bg-white/15 px-4 py-2 text-sm font-extrabold text-white ring-1 ring-white/20">
+                <div
+                  class="inline-flex items-center gap-2 rounded-2xl bg-white/15 px-4 py-2 text-sm font-extrabold text-white ring-1 ring-white/20">
                   <i data-lucide="code-2" class="h-4 w-4"></i>
                   Sistema creado por Kevin Eduardo
                 </div>
-                <div id="liveSyncStatus" class="inline-flex items-center gap-2 rounded-2xl bg-emerald-400/20 px-4 py-2 text-sm font-extrabold text-white ring-1 ring-emerald-200/30">
+                <div id="liveSyncStatus"
+                  class="inline-flex items-center gap-2 rounded-2xl bg-emerald-400/20 px-4 py-2 text-sm font-extrabold text-white ring-1 ring-emerald-200/30">
                   <span class="h-2.5 w-2.5 animate-pulse rounded-full bg-emerald-300"></span>
                   Tiempo real activo
                 </div>
@@ -486,12 +496,15 @@
           <button id="btnModuleIT" type="button" onclick="setInventoryModule('it')"
             class="rounded-[2rem] border border-slate-200 bg-white p-5 text-left shadow-soft transition hover:-translate-y-0.5 hover:shadow-strong dark:border-white/10 dark:bg-slate-900">
             <div class="flex items-start gap-4">
-              <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-3xl bg-blue-600 text-white shadow-lg">
+              <div
+                class="flex h-14 w-14 shrink-0 items-center justify-center rounded-3xl bg-blue-600 text-white shadow-lg">
                 <i data-lucide="monitor-cog" class="h-7 w-7"></i>
               </div>
               <div>
-                <p id="moduleITTitle" class="text-lg font-extrabold text-slate-900 dark:text-white">Equipos informáticos</p>
-                <p id="moduleITDescription" class="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400">Computadoras, laptops, monitores, UPS, impresoras, routers y accesorios.</p>
+                <p id="moduleITTitle" class="text-lg font-extrabold text-slate-900 dark:text-white">Equipos informáticos
+                </p>
+                <p id="moduleITDescription" class="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400">
+                  Computadoras, laptops, monitores, UPS, impresoras, routers y accesorios.</p>
               </div>
             </div>
           </button>
@@ -499,12 +512,15 @@
           <button id="btnModuleMobiliario" type="button" onclick="setInventoryModule('mobiliario')"
             class="rounded-[2rem] border border-slate-200 bg-white p-5 text-left shadow-soft transition hover:-translate-y-0.5 hover:shadow-strong dark:border-white/10 dark:bg-slate-900">
             <div class="flex items-start gap-4">
-              <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-3xl bg-emerald-600 text-white shadow-lg">
+              <div
+                class="flex h-14 w-14 shrink-0 items-center justify-center rounded-3xl bg-emerald-600 text-white shadow-lg">
                 <i data-lucide="armchair" class="h-7 w-7"></i>
               </div>
               <div>
-                <p id="moduleMobiliarioTitle" class="text-lg font-extrabold text-slate-900 dark:text-white">Mobiliario / Inmobiliaria</p>
-                <p id="moduleMobiliarioDescription" class="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400">Sillas, escritorios, mesas, archivos, estantes, aires acondicionados y otros activos físicos.</p>
+                <p id="moduleMobiliarioTitle" class="text-lg font-extrabold text-slate-900 dark:text-white">Mobiliario /
+                  Inmobiliaria</p>
+                <p id="moduleMobiliarioDescription" class="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400">
+                  Sillas, escritorios, mesas, archivos, estantes, aires acondicionados y otros activos físicos.</p>
               </div>
             </div>
           </button>
@@ -586,7 +602,8 @@
             <div>
               <div class="mb-1.5 flex items-center justify-between gap-2">
                 <label class="block text-sm font-bold">Tipo</label>
-                <button type="button" onclick="openAddTypeModal('tipoEquipo')" class="inline-flex items-center gap-1 rounded-xl bg-blue-50 px-2.5 py-1 text-xs font-extrabold text-blue-700 transition hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-300 dark:hover:bg-blue-500/20">
+                <button type="button" onclick="openAddTypeModal('tipoEquipo')"
+                  class="inline-flex items-center gap-1 rounded-xl bg-blue-50 px-2.5 py-1 text-xs font-extrabold text-blue-700 transition hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-300 dark:hover:bg-blue-500/20">
                   <i data-lucide="plus" class="h-3.5 w-3.5"></i>
                   Nuevo
                 </button>
@@ -616,7 +633,8 @@
             <div>
               <div class="mb-1.5 flex items-center justify-between gap-2">
                 <label class="block text-sm font-bold">Estado</label>
-                <button type="button" onclick="openAddStateModal('estado')" class="inline-flex items-center gap-1 rounded-xl bg-blue-50 px-2.5 py-1 text-xs font-extrabold text-blue-700 transition hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-300 dark:hover:bg-blue-500/20">
+                <button type="button" onclick="openAddStateModal('estado')"
+                  class="inline-flex items-center gap-1 rounded-xl bg-blue-50 px-2.5 py-1 text-xs font-extrabold text-blue-700 transition hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-300 dark:hover:bg-blue-500/20">
                   <i data-lucide="plus" class="h-3.5 w-3.5"></i>
                   Nuevo
                 </button>
@@ -626,7 +644,8 @@
             <div>
               <div class="mb-1.5 flex items-center justify-between gap-2">
                 <label class="block text-sm font-bold">Ubicación</label>
-                <button type="button" onclick="openAddLocationModal('ubicacion')" class="inline-flex items-center gap-1 rounded-xl bg-blue-50 px-2.5 py-1 text-xs font-extrabold text-blue-700 transition hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-300 dark:hover:bg-blue-500/20">
+                <button type="button" onclick="openAddLocationModal('ubicacion')"
+                  class="inline-flex items-center gap-1 rounded-xl bg-blue-50 px-2.5 py-1 text-xs font-extrabold text-blue-700 transition hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-300 dark:hover:bg-blue-500/20">
                   <i data-lucide="plus" class="h-3.5 w-3.5"></i>
                   Nueva
                 </button>
@@ -645,41 +664,52 @@
               <label class="mb-1.5 block text-sm font-bold">Notas</label>
               <input id="notas" class="input-base" type="text" placeholder="Notas adicionales">
             </div>
-            <div id="quickDesktopFields" class="hidden lg:col-span-4 rounded-3xl border border-blue-200 bg-blue-50/70 p-4 dark:border-blue-400/20 dark:bg-blue-500/10">
+            <div id="quickDesktopFields"
+              class="hidden lg:col-span-4 rounded-3xl border border-blue-200 bg-blue-50/70 p-4 dark:border-blue-400/20 dark:bg-blue-500/10">
               <div class="mb-4 flex items-start gap-3">
                 <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white">
                   <i data-lucide="monitor" class="h-5 w-5"></i>
                 </div>
                 <div>
-                  <h3 class="font-extrabold text-blue-900 dark:text-blue-100">Componentes de computadora de escritorio</h3>
-                  <p class="mt-1 text-sm text-blue-700/80 dark:text-blue-200/80">Estos campos se habilitan solo cuando el tipo es Computadora de escritorio.</p>
+                  <h3 class="font-extrabold text-blue-900 dark:text-blue-100">Componentes de computadora de escritorio
+                  </h3>
+                  <p class="mt-1 text-sm text-blue-700/80 dark:text-blue-200/80">Estos campos se habilitan solo cuando
+                    el tipo es Computadora de escritorio.</p>
                 </div>
               </div>
 
               <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                 <div class="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-900/60">
                   <label class="mb-1.5 block text-sm font-bold">Marca UPS</label>
-                  <input id="quickMarcaUps" class="input-base desktop-extra-input" type="text" placeholder="APC, Forza...">
+                  <input id="quickMarcaUps" class="input-base desktop-extra-input" type="text"
+                    placeholder="APC, Forza...">
                   <label class="mb-1.5 mt-3 block text-sm font-bold">Especificaciones UPS</label>
-                  <textarea id="quickSpecsUps" rows="3" class="input-base desktop-extra-input" placeholder="VA, watts, estado, batería..."></textarea>
+                  <textarea id="quickSpecsUps" rows="3" class="input-base desktop-extra-input"
+                    placeholder="VA, watts, estado, batería..."></textarea>
                 </div>
                 <div class="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-900/60">
                   <label class="mb-1.5 block text-sm font-bold">Marca teclado</label>
-                  <input id="quickMarcaTeclado" class="input-base desktop-extra-input" type="text" placeholder="Logitech, HP...">
+                  <input id="quickMarcaTeclado" class="input-base desktop-extra-input" type="text"
+                    placeholder="Logitech, HP...">
                   <label class="mb-1.5 mt-3 block text-sm font-bold">Especificaciones teclado</label>
-                  <textarea id="quickSpecsTeclado" rows="3" class="input-base desktop-extra-input" placeholder="USB, inalámbrico, estado..."></textarea>
+                  <textarea id="quickSpecsTeclado" rows="3" class="input-base desktop-extra-input"
+                    placeholder="USB, inalámbrico, estado..."></textarea>
                 </div>
                 <div class="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-900/60">
                   <label class="mb-1.5 block text-sm font-bold">Marca mouse</label>
-                  <input id="quickMarcaMouse" class="input-base desktop-extra-input" type="text" placeholder="Logitech, Dell...">
+                  <input id="quickMarcaMouse" class="input-base desktop-extra-input" type="text"
+                    placeholder="Logitech, Dell...">
                   <label class="mb-1.5 mt-3 block text-sm font-bold">Especificaciones mouse</label>
-                  <textarea id="quickSpecsMouse" rows="3" class="input-base desktop-extra-input" placeholder="USB, inalámbrico, estado..."></textarea>
+                  <textarea id="quickSpecsMouse" rows="3" class="input-base desktop-extra-input"
+                    placeholder="USB, inalámbrico, estado..."></textarea>
                 </div>
                 <div class="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-900/60">
                   <label class="mb-1.5 block text-sm font-bold">Marca monitor</label>
-                  <input id="quickMarcaMonitor" class="input-base desktop-extra-input" type="text" placeholder="Dell, HP, Samsung...">
+                  <input id="quickMarcaMonitor" class="input-base desktop-extra-input" type="text"
+                    placeholder="Dell, HP, Samsung...">
                   <label class="mb-1.5 mt-3 block text-sm font-bold">Especificaciones monitor</label>
-                  <textarea id="quickSpecsMonitor" rows="3" class="input-base desktop-extra-input" placeholder="Tamaño, resolución, puertos, estado..."></textarea>
+                  <textarea id="quickSpecsMonitor" rows="3" class="input-base desktop-extra-input"
+                    placeholder="Tamaño, resolución, puertos, estado..."></textarea>
                 </div>
               </div>
             </div>
@@ -687,13 +717,17 @@
             <div class="lg:col-span-4">
               <label class="mb-1.5 block text-sm font-bold">Fotos del equipo</label>
               <div class="grid gap-2 sm:grid-cols-[1fr_auto]">
-                <input id="fotosEquipo" class="input-base file:mr-3 file:rounded-xl file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:font-bold file:text-blue-700 dark:file:bg-blue-500/10 dark:file:text-blue-300" type="file" accept="image/*" capture="environment" multiple>
+                <input id="fotosEquipo"
+                  class="input-base file:mr-3 file:rounded-xl file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:font-bold file:text-blue-700 dark:file:bg-blue-500/10 dark:file:text-blue-300"
+                  type="file" accept="image/*" capture="environment" multiple>
                 <button type="button" onclick="openCamera('quick')" class="btn-secondary whitespace-nowrap">
                   <i data-lucide="camera" class="h-4 w-4"></i>
                   Tomar foto
                 </button>
               </div>
-              <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">Puedes seleccionar varias imágenes o tomar fotos desde la cámara. Se guardan en Base64 dentro de Firestore. Recomendado: máximo 3 fotos livianas por equipo.</p>
+              <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">Puedes seleccionar varias imágenes o tomar
+                fotos desde la cámara. Se guardan en Base64 dentro de Firestore. Recomendado: máximo 3 fotos livianas
+                por equipo.</p>
               <div id="quickPhotoPreview" class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6"></div>
             </div>
             <div class="flex items-end lg:col-span-4">
@@ -747,7 +781,8 @@
             <div class="flex flex-col justify-between gap-4 xl:flex-row xl:items-center">
               <div>
                 <h2 id="inventoryTitle" class="text-xl font-extrabold">Inventario de equipos informáticos</h2>
-                <p id="inventorySubtitle" class="mt-1 text-sm text-slate-500 dark:text-slate-400">Busca por cualquier campo y filtra por tipo, estado o ubicación.</p>
+                <p id="inventorySubtitle" class="mt-1 text-sm text-slate-500 dark:text-slate-400">Busca por cualquier
+                  campo y filtra por tipo, estado o ubicación.</p>
               </div>
 
               <div class="flex flex-wrap gap-2">
@@ -857,7 +892,8 @@
         </section>
 
         <!-- Footer -->
-        <footer class="rounded-[2rem] border border-slate-200 bg-white px-5 py-5 text-center shadow-soft dark:border-white/10 dark:bg-slate-900 sm:px-6">
+        <footer
+          class="rounded-[2rem] border border-slate-200 bg-white px-5 py-5 text-center shadow-soft dark:border-white/10 dark:bg-slate-900 sm:px-6">
           <p class="text-sm font-bold text-slate-600 dark:text-slate-300">
             © <span class="currentYear"></span> Creado por Kevin Eduardo
           </p>
@@ -869,7 +905,8 @@
   <!-- Modal crear/editar -->
   <div id="computerModal"
     class="fixed inset-0 z-50 hidden items-stretch justify-stretch bg-slate-950/70 p-0 backdrop-blur-sm">
-    <div class="h-screen max-h-screen w-screen max-w-none overflow-hidden rounded-none bg-white shadow-strong dark:bg-slate-900">
+    <div
+      class="h-screen max-h-screen w-screen max-w-none overflow-hidden rounded-none bg-white shadow-strong dark:bg-slate-900">
       <div class="flex items-start justify-between border-b border-slate-200 p-5 dark:border-white/10">
         <div>
           <h3 id="modalTitle" class="text-xl font-extrabold">Nueva computadora</h3>
@@ -893,7 +930,8 @@
           <div>
             <div class="mb-1.5 flex items-center justify-between gap-2">
               <label class="block text-sm font-bold">Tipo de equipo</label>
-              <button type="button" onclick="openAddTypeModal('modalTipoEquipo')" class="inline-flex items-center gap-1 rounded-xl bg-blue-50 px-2.5 py-1 text-xs font-extrabold text-blue-700 transition hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-300 dark:hover:bg-blue-500/20">
+              <button type="button" onclick="openAddTypeModal('modalTipoEquipo')"
+                class="inline-flex items-center gap-1 rounded-xl bg-blue-50 px-2.5 py-1 text-xs font-extrabold text-blue-700 transition hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-300 dark:hover:bg-blue-500/20">
                 <i data-lucide="plus" class="h-3.5 w-3.5"></i>
                 Nuevo
               </button>
@@ -923,7 +961,8 @@
           <div>
             <div class="mb-1.5 flex items-center justify-between gap-2">
               <label class="block text-sm font-bold">Estado</label>
-              <button type="button" onclick="openAddStateModal('modalEstado')" class="inline-flex items-center gap-1 rounded-xl bg-blue-50 px-2.5 py-1 text-xs font-extrabold text-blue-700 transition hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-300 dark:hover:bg-blue-500/20">
+              <button type="button" onclick="openAddStateModal('modalEstado')"
+                class="inline-flex items-center gap-1 rounded-xl bg-blue-50 px-2.5 py-1 text-xs font-extrabold text-blue-700 transition hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-300 dark:hover:bg-blue-500/20">
                 <i data-lucide="plus" class="h-3.5 w-3.5"></i>
                 Nuevo
               </button>
@@ -933,7 +972,8 @@
           <div>
             <div class="mb-1.5 flex items-center justify-between gap-2">
               <label class="block text-sm font-bold">Ubicación</label>
-              <button type="button" onclick="openAddLocationModal('modalUbicacion')" class="inline-flex items-center gap-1 rounded-xl bg-blue-50 px-2.5 py-1 text-xs font-extrabold text-blue-700 transition hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-300 dark:hover:bg-blue-500/20">
+              <button type="button" onclick="openAddLocationModal('modalUbicacion')"
+                class="inline-flex items-center gap-1 rounded-xl bg-blue-50 px-2.5 py-1 text-xs font-extrabold text-blue-700 transition hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-300 dark:hover:bg-blue-500/20">
                 <i data-lucide="plus" class="h-3.5 w-3.5"></i>
                 Nueva
               </button>
@@ -952,41 +992,52 @@
             <label class="mb-1.5 block text-sm font-bold">Notas adicionales</label>
             <textarea id="modalNotas" rows="3" class="input-base"></textarea>
           </div>
-          <div id="modalDesktopFields" class="hidden sm:col-span-2 lg:col-span-4 rounded-3xl border border-blue-200 bg-blue-50/70 p-4 dark:border-blue-400/20 dark:bg-blue-500/10">
+          <div id="modalDesktopFields"
+            class="hidden sm:col-span-2 lg:col-span-4 rounded-3xl border border-blue-200 bg-blue-50/70 p-4 dark:border-blue-400/20 dark:bg-blue-500/10">
             <div class="mb-4 flex items-start gap-3">
               <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white">
                 <i data-lucide="monitor" class="h-5 w-5"></i>
               </div>
               <div>
-                <h3 class="font-extrabold text-blue-900 dark:text-blue-100">Componentes de computadora de escritorio</h3>
-                <p class="mt-1 text-sm text-blue-700/80 dark:text-blue-200/80">Estos campos se habilitan solo cuando el tipo es Computadora de escritorio.</p>
+                <h3 class="font-extrabold text-blue-900 dark:text-blue-100">Componentes de computadora de escritorio
+                </h3>
+                <p class="mt-1 text-sm text-blue-700/80 dark:text-blue-200/80">Estos campos se habilitan solo cuando el
+                  tipo es Computadora de escritorio.</p>
               </div>
             </div>
 
             <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               <div class="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-900/60">
                 <label class="mb-1.5 block text-sm font-bold">Marca UPS</label>
-                <input id="modalMarcaUps" class="input-base desktop-extra-input" type="text" placeholder="APC, Forza...">
+                <input id="modalMarcaUps" class="input-base desktop-extra-input" type="text"
+                  placeholder="APC, Forza...">
                 <label class="mb-1.5 mt-3 block text-sm font-bold">Especificaciones UPS</label>
-                <textarea id="modalSpecsUps" rows="3" class="input-base desktop-extra-input" placeholder="VA, watts, estado, batería..."></textarea>
+                <textarea id="modalSpecsUps" rows="3" class="input-base desktop-extra-input"
+                  placeholder="VA, watts, estado, batería..."></textarea>
               </div>
               <div class="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-900/60">
                 <label class="mb-1.5 block text-sm font-bold">Marca teclado</label>
-                <input id="modalMarcaTeclado" class="input-base desktop-extra-input" type="text" placeholder="Logitech, HP...">
+                <input id="modalMarcaTeclado" class="input-base desktop-extra-input" type="text"
+                  placeholder="Logitech, HP...">
                 <label class="mb-1.5 mt-3 block text-sm font-bold">Especificaciones teclado</label>
-                <textarea id="modalSpecsTeclado" rows="3" class="input-base desktop-extra-input" placeholder="USB, inalámbrico, estado..."></textarea>
+                <textarea id="modalSpecsTeclado" rows="3" class="input-base desktop-extra-input"
+                  placeholder="USB, inalámbrico, estado..."></textarea>
               </div>
               <div class="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-900/60">
                 <label class="mb-1.5 block text-sm font-bold">Marca mouse</label>
-                <input id="modalMarcaMouse" class="input-base desktop-extra-input" type="text" placeholder="Logitech, Dell...">
+                <input id="modalMarcaMouse" class="input-base desktop-extra-input" type="text"
+                  placeholder="Logitech, Dell...">
                 <label class="mb-1.5 mt-3 block text-sm font-bold">Especificaciones mouse</label>
-                <textarea id="modalSpecsMouse" rows="3" class="input-base desktop-extra-input" placeholder="USB, inalámbrico, estado..."></textarea>
+                <textarea id="modalSpecsMouse" rows="3" class="input-base desktop-extra-input"
+                  placeholder="USB, inalámbrico, estado..."></textarea>
               </div>
               <div class="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-900/60">
                 <label class="mb-1.5 block text-sm font-bold">Marca monitor</label>
-                <input id="modalMarcaMonitor" class="input-base desktop-extra-input" type="text" placeholder="Dell, HP, Samsung...">
+                <input id="modalMarcaMonitor" class="input-base desktop-extra-input" type="text"
+                  placeholder="Dell, HP, Samsung...">
                 <label class="mb-1.5 mt-3 block text-sm font-bold">Especificaciones monitor</label>
-                <textarea id="modalSpecsMonitor" rows="3" class="input-base desktop-extra-input" placeholder="Tamaño, resolución, puertos, estado..."></textarea>
+                <textarea id="modalSpecsMonitor" rows="3" class="input-base desktop-extra-input"
+                  placeholder="Tamaño, resolución, puertos, estado..."></textarea>
               </div>
             </div>
           </div>
@@ -994,13 +1045,17 @@
           <div class="sm:col-span-2 lg:col-span-4">
             <label class="mb-1.5 block text-sm font-bold">Fotos del equipo</label>
             <div class="grid gap-2 sm:grid-cols-[1fr_auto]">
-              <input id="modalFotosEquipo" class="input-base file:mr-3 file:rounded-xl file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:font-bold file:text-blue-700 dark:file:bg-blue-500/10 dark:file:text-blue-300" type="file" accept="image/*" capture="environment" multiple>
+              <input id="modalFotosEquipo"
+                class="input-base file:mr-3 file:rounded-xl file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:font-bold file:text-blue-700 dark:file:bg-blue-500/10 dark:file:text-blue-300"
+                type="file" accept="image/*" capture="environment" multiple>
               <button type="button" onclick="openCamera('modal')" class="btn-secondary whitespace-nowrap">
                 <i data-lucide="camera" class="h-4 w-4"></i>
                 Tomar foto
               </button>
             </div>
-            <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">Puedes agregar varias fotos o tomar fotos desde la cámara. En edición, las fotos actuales se conservan salvo que las elimines. Se guardan en Base64 dentro de Firestore.</p>
+            <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">Puedes agregar varias fotos o tomar fotos desde
+              la cámara. En edición, las fotos actuales se conservan salvo que las elimines. Se guardan en Base64 dentro
+              de Firestore.</p>
             <div id="modalPhotoPreview" class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6"></div>
           </div>
         </div>
@@ -1017,22 +1072,29 @@
   </div>
 
   <!-- Modal cámara -->
-  <div id="cameraModal" class="fixed inset-0 z-[60] hidden items-stretch justify-stretch bg-slate-950/80 p-0 backdrop-blur-sm">
-    <div class="h-screen max-h-screen w-screen max-w-none overflow-hidden rounded-none bg-white shadow-strong dark:bg-slate-900">
+  <div id="cameraModal"
+    class="fixed inset-0 z-[60] hidden items-stretch justify-stretch bg-slate-950/80 p-0 backdrop-blur-sm">
+    <div
+      class="h-screen max-h-screen w-screen max-w-none overflow-hidden rounded-none bg-white shadow-strong dark:bg-slate-900">
       <div class="flex items-start justify-between border-b border-slate-200 p-5 dark:border-white/10">
         <div>
           <h3 class="text-xl font-extrabold">Tomar foto del equipo</h3>
-          <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Captura una o varias fotos y luego cierra la cámara.</p>
+          <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Captura una o varias fotos y luego cierra la
+            cámara.</p>
         </div>
-        <button type="button" onclick="closeCamera()" class="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 text-slate-600 transition hover:bg-slate-200 dark:bg-white/10 dark:text-white dark:hover:bg-white/15">
+        <button type="button" onclick="closeCamera()"
+          class="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 text-slate-600 transition hover:bg-slate-200 dark:bg-white/10 dark:text-white dark:hover:bg-white/15">
           <i data-lucide="x" class="h-5 w-5"></i>
         </button>
       </div>
 
       <div class="flex h-[calc(100vh-96px)] flex-col gap-4 overflow-y-auto p-5 sm:p-6">
-        <video id="cameraVideo" class="min-h-0 flex-1 rounded-3xl bg-slate-950 object-contain" autoplay playsinline muted></video>
+        <video id="cameraVideo" class="min-h-0 flex-1 rounded-3xl bg-slate-950 object-contain" autoplay playsinline
+          muted></video>
         <canvas id="cameraCanvas" class="hidden"></canvas>
-        <p id="cameraStatus" class="hidden rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm font-bold text-amber-700 dark:border-amber-400/20 dark:bg-amber-500/10 dark:text-amber-200"></p>
+        <p id="cameraStatus"
+          class="hidden rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm font-bold text-amber-700 dark:border-amber-400/20 dark:bg-amber-500/10 dark:text-amber-200">
+        </p>
 
         <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <button type="button" onclick="closeCamera()" class="btn-secondary">Cerrar cámara</button>
@@ -1047,15 +1109,21 @@
 
 
   <!-- Modal detalle del equipo -->
-  <div id="detailModal" class="fixed inset-0 z-[55] hidden items-stretch justify-stretch bg-slate-950/70 p-0 backdrop-blur-sm">
-    <div class="h-screen max-h-screen w-screen max-w-none overflow-hidden rounded-none bg-white shadow-strong dark:bg-slate-900">
+  <div id="detailModal"
+    class="fixed inset-0 z-[55] hidden items-stretch justify-stretch bg-slate-950/70 p-0 backdrop-blur-sm">
+    <div
+      class="h-screen max-h-screen w-screen max-w-none overflow-hidden rounded-none bg-white shadow-strong dark:bg-slate-900">
       <div class="flex items-start justify-between border-b border-slate-200 p-5 dark:border-white/10">
         <div>
-          <p class="mb-2 inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-extrabold text-blue-700 dark:bg-blue-500/10 dark:text-blue-300">Detalle del registro</p>
+          <p
+            class="mb-2 inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-extrabold text-blue-700 dark:bg-blue-500/10 dark:text-blue-300">
+            Detalle del registro</p>
           <h3 id="detailTitle" class="text-2xl font-extrabold">Detalle del equipo</h3>
-          <p id="detailSubtitle" class="mt-1 text-sm text-slate-500 dark:text-slate-400">Información completa del equipo seleccionado.</p>
+          <p id="detailSubtitle" class="mt-1 text-sm text-slate-500 dark:text-slate-400">Información completa del equipo
+            seleccionado.</p>
         </div>
-        <button onclick="closeDetailModal()" class="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 text-slate-600 transition hover:bg-slate-200 dark:bg-white/10 dark:text-white dark:hover:bg-white/15">
+        <button onclick="closeDetailModal()"
+          class="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 text-slate-600 transition hover:bg-slate-200 dark:bg-white/10 dark:text-white dark:hover:bg-white/15">
           <i data-lucide="x" class="h-5 w-5"></i>
         </button>
       </div>
@@ -1063,7 +1131,8 @@
       <div class="h-[calc(100vh-96px)] overflow-y-auto p-5 sm:p-6">
         <div id="detailContent" class="space-y-5"></div>
 
-        <div class="mt-6 flex flex-col-reverse gap-3 border-t border-slate-200 pt-5 dark:border-white/10 sm:flex-row sm:justify-end">
+        <div
+          class="mt-6 flex flex-col-reverse gap-3 border-t border-slate-200 pt-5 dark:border-white/10 sm:flex-row sm:justify-end">
           <button type="button" onclick="closeDetailModal()" class="btn-secondary">Cerrar</button>
           <button id="detailEditBtn" type="button" class="btn-primary">
             <i data-lucide="pencil" class="h-4 w-4"></i>
@@ -1074,6 +1143,27 @@
     </div>
   </div>
 
+
+
+
+  <!-- Modal visor de foto en pantalla completa -->
+  <div id="photoViewerModal"
+    class="fixed inset-0 z-[80] hidden items-center justify-center bg-slate-950/90 p-4 backdrop-blur-sm">
+    <button type="button" onclick="closePhotoViewer()"
+      class="absolute right-4 top-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 text-white transition hover:bg-white/20"
+      title="Cerrar visor">
+      <i data-lucide="x" class="h-6 w-6"></i>
+    </button>
+
+    <div class="flex max-h-[95vh] w-full max-w-6xl flex-col items-center gap-4">
+      <img id="photoViewerImage" src="" alt="Foto ampliada"
+        class="max-h-[82vh] w-auto max-w-full rounded-3xl object-contain shadow-strong">
+      <div class="max-w-full rounded-2xl bg-white/10 px-4 py-3 text-center text-white">
+        <p id="photoViewerTitle" class="truncate text-sm font-extrabold">Foto del equipo</p>
+        <p id="photoViewerSize" class="mt-1 text-xs text-white/70"></p>
+      </div>
+    </div>
+  </div>
 
   <script>
     /************************************************************
@@ -1098,8 +1188,8 @@
     const tiposCollection = db.collection("tipos");
     const tiposMobiliarioCollection = db.collection("tiposMobiliario");
     const systemSchemasCollection = db.collection("_systemSchemas");
-    
-    
+
+
 
     const SESSION_KEY = "userSession";
     const THEME_KEY = "inventoryTheme";
@@ -1130,9 +1220,9 @@
 
     let LOCATIONS = [...DEFAULT_LOCATIONS];
 
-        /************************************************************
-     * ESTADO GLOBAL
-     ************************************************************/
+    /************************************************************
+ * ESTADO GLOBAL
+ ************************************************************/
     let allComputers = [];
     let filteredComputers = [];
     let currentPage = 1;
@@ -1414,22 +1504,22 @@
       if (inventorySubtitle) inventorySubtitle.textContent = `Busca por cualquier campo y filtra por tipo, estado o ubicación. Colección activa: ${config.collectionName}.`;
       if (totalStatLabel) totalStatLabel.textContent = isFurnitureModule() ? "Total mobiliario" : "Total equipos";
 
-    function setModuleTextState(titleId, descriptionId, active) {
-      const title = document.getElementById(titleId);
-      const description = document.getElementById(descriptionId);
+      function setModuleTextState(titleId, descriptionId, active) {
+        const title = document.getElementById(titleId);
+        const description = document.getElementById(descriptionId);
 
-      if (title) {
-        title.className = active
-          ? "text-lg font-extrabold text-white"
-          : "text-lg font-extrabold text-slate-900 dark:text-white";
-      }
+        if (title) {
+          title.className = active
+            ? "text-lg font-extrabold text-white"
+            : "text-lg font-extrabold text-slate-900 dark:text-white";
+        }
 
-      if (description) {
-        description.className = active
-          ? "mt-1 text-sm leading-6 text-white/85"
-          : "mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400";
+        if (description) {
+          description.className = active
+            ? "mt-1 text-sm leading-6 text-white/85"
+            : "mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400";
+        }
       }
-    }
 
       document.querySelectorAll("[data-module-item]").forEach(element => {
         element.textContent = config.itemSingular;
@@ -1689,6 +1779,13 @@
 
       $("#tipoEquipo").addEventListener("change", () => toggleDesktopFields("quick"));
       $("#modalTipoEquipo").addEventListener("change", () => toggleDesktopFields("modal"));
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          closePhotoViewer();
+        }
+      });
+
       toggleDesktopFields("quick");
       toggleDesktopFields("modal");
     }
@@ -2954,29 +3051,96 @@
     function renderDetailPhotos(photos) {
       if (!Array.isArray(photos) || !photos.length) {
         return `
-          <div class="rounded-3xl border border-dashed border-slate-300 p-8 text-center dark:border-white/10">
-            <div class="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-3xl bg-slate-100 text-slate-500 dark:bg-white/10 dark:text-slate-300">
-              <i data-lucide="image-off" class="h-7 w-7"></i>
-            </div>
-            <p class="font-extrabold">Este equipo no tiene fotos</p>
-            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Puedes agregar fotos desde el botón Editar.</p>
-          </div>
-        `;
+      <div class="rounded-3xl border border-dashed border-slate-300 p-8 text-center dark:border-white/10">
+        <div class="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-3xl bg-slate-100 text-slate-500 dark:bg-white/10 dark:text-slate-300">
+          <i data-lucide="image-off" class="h-7 w-7"></i>
+        </div>
+        <p class="font-extrabold">Este equipo no tiene fotos</p>
+        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Puedes agregar fotos desde el botón Editar.</p>
+      </div>
+    `;
       }
 
       return `
-        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-          ${photos.map((photo, index) => `
-            <a href="${escapeAttr(photo.url || "#")}" target="_blank" rel="noopener" class="group overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 transition hover:-translate-y-0.5 hover:shadow-soft dark:border-white/10 dark:bg-white/5">
-              <img src="${escapeAttr(photo.url || "")}" alt="${escapeAttr(photo.nombre || `Foto ${index + 1}`)}" class="h-36 w-full object-cover transition group-hover:scale-105">
-              <div class="p-3">
-                <p class="truncate text-xs font-extrabold" title="${escapeAttr(photo.nombre || `Foto ${index + 1}`)}">${escapeHTML(photo.nombre || `Foto ${index + 1}`)}</p>
-                <p class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">${formatPhotoSize(photo)}</p>
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
+      ${photos.map((photo, index) => `
+        <button
+          type="button"
+          onclick="openPhotoViewer('${escapeAttr(photo.url || "")}', '${escapeAttr(photo.nombre || `Foto ${index + 1}`)}', '${escapeAttr(formatPhotoSize(photo))}')"
+          class="group relative overflow-hidden rounded-[1.35rem] border border-slate-200 bg-white text-left shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-blue-200 hover:shadow-[0_18px_45px_rgba(15,23,42,.16)] focus:outline-none focus:ring-4 focus:ring-blue-500/20 dark:border-white/10 dark:bg-slate-900 dark:hover:border-blue-400/40"
+        >
+          <div class="relative h-44 overflow-hidden bg-slate-100 dark:bg-slate-800">
+            <img
+              src="${escapeAttr(photo.url || "")}"
+              alt="${escapeAttr(photo.nombre || `Foto ${index + 1}`)}"
+              class="h-full w-full object-cover transition duration-500 ease-out group-hover:scale-110"
+            >
+
+            <!-- Degradado moderno -->
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-950/65 via-slate-950/10 to-transparent opacity-0 transition duration-300 group-hover:opacity-100"></div>
+
+           
+
+            <!-- Botón circular inferior derecho -->
+            <div class="absolute bottom-3 right-3 flex h-10 w-10 translate-y-2 items-center justify-center rounded-2xl bg-blue-600 text-white opacity-0 shadow-xl shadow-blue-900/30 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
+              <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15 3h6v6"></path>
+                <path d="M9 21H3v-6"></path>
+                <path d="M21 3l-7 7"></path>
+                <path d="M3 21l7-7"></path>
+              </svg>
+            </div>
+          </div>
+
+          <div class="border-t border-slate-100 p-4 dark:border-white/10">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <p class="truncate text-sm font-extrabold text-slate-900 dark:text-white" title="${escapeAttr(photo.nombre || `Foto ${index + 1}`)}">
+                  ${escapeHTML(photo.nombre || `Foto ${index + 1}`)}
+                </p>
+                <p class="mt-1 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                  ${formatPhotoSize(photo)}
+                </p>
               </div>
-            </a>
-          `).join("")}
-        </div>
-      `;
+            </div>
+          </div>
+        </button>
+      `).join("")}
+    </div>
+  `;
+    }
+
+    function openPhotoViewer(url, title = "Foto del equipo", size = "") {
+      if (!url) {
+        showToast("warning", "Sin imagen", "No se encontró la URL de la foto.");
+        return;
+      }
+
+      const modal = $("#photoViewerModal");
+      const image = $("#photoViewerImage");
+      const titleElement = $("#photoViewerTitle");
+      const sizeElement = $("#photoViewerSize");
+
+      if (!modal || !image) return;
+
+      image.src = url;
+      image.alt = title || "Foto ampliada";
+      if (titleElement) titleElement.textContent = title || "Foto del equipo";
+      if (sizeElement) sizeElement.textContent = size || "";
+
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+      refreshIcons();
+    }
+
+    function closePhotoViewer() {
+      const modal = $("#photoViewerModal");
+      const image = $("#photoViewerImage");
+
+      if (!modal) return;
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+      if (image) image.src = "";
     }
 
     function formatPhotoSize(photo) {
@@ -3887,6 +4051,8 @@
     window.openCamera = openCamera;
     window.closeCamera = closeCamera;
     window.capturePhotoFromCamera = capturePhotoFromCamera;
+    window.openPhotoViewer = openPhotoViewer;
+    window.closePhotoViewer = closePhotoViewer;
   </script>
 </body>
 
