@@ -726,8 +726,7 @@
                 </button>
               </div>
               <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">Puedes seleccionar varias imágenes o tomar
-                fotos desde la cámara. Se guardan en Base64 dentro de Firestore. Recomendado: máximo 3 fotos livianas
-                por equipo.</p>
+                fotos desde la cámara. Se guardan en Base64 dentro de Firestore. Puedes agregar más fotos, pero deben ser livianas para no superar el límite de Firestore.</p>
               <div id="quickPhotoPreview" class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6"></div>
             </div>
             <div class="flex items-end lg:col-span-4">
@@ -1768,12 +1767,24 @@
       $("#importJsonBtn").addEventListener("click", importJSON);
 
       $("#fotosEquipo").addEventListener("change", (event) => {
-        quickSelectedPhotos = validatePhotoFiles(Array.from(event.target.files || []));
+        const newFiles = validatePhotoFiles(Array.from(event.target.files || []));
+        quickSelectedPhotos = addUniquePhotoFiles(quickSelectedPhotos, newFiles);
+
+        // Importante: limpiar el input permite volver a seleccionar/agregar más fotos
+        // sin reemplazar las que ya estaban en la vista previa.
+        event.target.value = "";
+
         renderSelectedPhotoPreview("quickPhotoPreview", quickSelectedPhotos, "quick");
       });
 
       $("#modalFotosEquipo").addEventListener("change", (event) => {
-        modalSelectedPhotos = validatePhotoFiles(Array.from(event.target.files || []));
+        const newFiles = validatePhotoFiles(Array.from(event.target.files || []));
+        modalSelectedPhotos = addUniquePhotoFiles(modalSelectedPhotos, newFiles);
+
+        // Importante: limpiar el input permite agregar una 4ta, 5ta, etc. foto
+        // sin editar/reemplazar la tercera foto seleccionada anteriormente.
+        event.target.value = "";
+
         renderModalPhotoPreview();
       });
 
@@ -3280,16 +3291,32 @@
       return validFiles;
     }
 
+    function addUniquePhotoFiles(currentFiles = [], newFiles = []) {
+      const photoMap = new Map();
+
+      [...currentFiles, ...newFiles].forEach(file => {
+        if (!file) return;
+
+        // Evita duplicados cuando el usuario vuelve a seleccionar la misma foto.
+        const key = `${file.name}_${file.size}_${file.lastModified}`;
+        if (!photoMap.has(key)) {
+          photoMap.set(key, file);
+        }
+      });
+
+      return Array.from(photoMap.values());
+    }
+
     async function convertPhotoFilesToBase64(files, computerId, existingPhotos = []) {
       if (!files || !files.length) return [];
 
       const convertedPhotos = [];
-      const maxTotalBase64Length = 850000; // Firestore permite 1 MiB por documento; dejamos margen para el resto de campos.
+      const maxTotalBase64Length = 950000; // Firestore permite 1 MiB por documento; dejamos margen para el resto de campos.
       let currentTotalLength = (existingPhotos || []).reduce((total, photo) => total + String(photo?.url || "").length, 0);
 
       for (const file of files) {
         try {
-          const dataUrl = await compressImageToBase64(file, 900, 0.68);
+          const dataUrl = await compressImageToBase64(file, 700, 0.55);
 
           if (currentTotalLength + dataUrl.length > maxTotalBase64Length) {
             showToast(
