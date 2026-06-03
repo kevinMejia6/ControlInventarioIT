@@ -414,6 +414,63 @@
     </main>
   </div>
 
+  <!-- Modal crear usuario -->
+  <div id="createModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm">
+    <div class="max-h-[92vh] w-full max-w-2xl overflow-hidden rounded-[2rem] bg-white shadow-strong dark:bg-slate-900">
+      <div class="flex items-start justify-between border-b border-slate-200 p-5 dark:border-white/10">
+        <div>
+          <h3 class="text-xl font-extrabold">Crear nuevo usuario</h3>
+          <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Registra un usuario nuevo directamente desde gestión de usuarios.</p>
+        </div>
+        <button onclick="closeCreateUserModal()" type="button" class="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 text-slate-600 transition hover:bg-slate-200 dark:bg-white/10 dark:text-white dark:hover:bg-white/15">
+          <i data-lucide="x" class="h-5 w-5"></i>
+        </button>
+      </div>
+
+      <form id="createUserForm" class="max-h-[calc(92vh-96px)] overflow-y-auto p-5">
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label for="createNombre" class="mb-1.5 block text-sm font-extrabold">Nombre completo</label>
+            <input type="text" id="createNombre" class="input-base" placeholder="Nombre y apellido" required>
+          </div>
+          <div>
+            <label for="createCorreo" class="mb-1.5 block text-sm font-extrabold">Correo electrónico</label>
+            <input type="email" id="createCorreo" class="input-base" placeholder="ejemplo@dominio.com" required>
+          </div>
+          <div>
+            <label for="createRol" class="mb-1.5 block text-sm font-extrabold">Rol</label>
+            <select id="createRol" class="input-base" required>
+              <option value="">Seleccione rol</option>
+              <option value="Administrador">Administrador</option>
+              <option value="Supervisor">Supervisor</option>
+              <option value="Usuario">Usuario</option>
+            </select>
+          </div>
+          <div>
+            <label for="createEstado" class="mb-1.5 block text-sm font-extrabold">Estado</label>
+            <select id="createEstado" class="input-base" required>
+              <option value="Activo">Activo</option>
+              <option value="Inhabilitado">Inhabilitado</option>
+            </select>
+          </div>
+          <div class="sm:col-span-2">
+            <label for="createContrasena" class="mb-1.5 block text-sm font-extrabold">Contraseña</label>
+            <input type="password" id="createContrasena" class="input-base" placeholder="Mínimo 6 caracteres" required>
+            <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">La contraseña debe tener al menos 6 caracteres.</p>
+          </div>
+        </div>
+
+        <div class="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <button type="button" onclick="closeCreateUserModal()" class="btn-secondary">Cancelar</button>
+          <button id="createUserBtn" type="submit" class="btn-primary">
+            <i data-lucide="user-plus" class="h-4 w-4"></i>
+            Crear usuario
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Modal editar usuario -->
   <div id="editModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm">
     <div class="max-h-[92vh] w-full max-w-2xl overflow-hidden rounded-[2rem] bg-white shadow-strong dark:bg-slate-900">
@@ -619,7 +676,7 @@
     }
 
     function goToCreateUser() {
-      window.location.href = "Crear-usuario.html";
+      openCreateUserModal();
     }
 
     /************************************************************
@@ -630,6 +687,7 @@
       $("#roleFilter").addEventListener("change", applyFilters);
       $("#statusFilter").addEventListener("change", applyFilters);
       $("#editForm").addEventListener("submit", saveUserChanges);
+      $("#createUserForm").addEventListener("submit", createUserFromModal);
     }
 
     /************************************************************
@@ -773,6 +831,79 @@
       $("#roleFilter").value = "";
       $("#statusFilter").value = "";
       applyFilters();
+    }
+
+    /************************************************************
+     * CREAR USUARIO
+     ************************************************************/
+    function openCreateUserModal() {
+      const form = $("#createUserForm");
+      if (form) form.reset();
+      const estado = $("#createEstado");
+      if (estado) estado.value = "Activo";
+
+      document.body.classList.add("modal-open");
+      $("#createModal").classList.remove("hidden");
+      $("#createModal").classList.add("flex");
+      refreshIcons();
+    }
+
+    function closeCreateUserModal() {
+      document.body.classList.remove("modal-open");
+      $("#createModal").classList.add("hidden");
+      $("#createModal").classList.remove("flex");
+      $("#createUserForm").reset();
+    }
+
+    async function createUserFromModal(event) {
+      event.preventDefault();
+
+      const nombre = $("#createNombre").value.trim();
+      const correo = $("#createCorreo").value.trim().toLowerCase();
+      const rol = $("#createRol").value;
+      const estado = $("#createEstado").value || "Activo";
+      const contrasena = $("#createContrasena").value.trim();
+      const saveBtn = $("#createUserBtn");
+
+      if (!nombre || !correo || !rol || !estado || !contrasena) {
+        showToast("warning", "Campos requeridos", "Completa todos los campos obligatorios.");
+        return;
+      }
+
+      if (contrasena.length < 6) {
+        showToast("warning", "Contraseña inválida", "La contraseña debe tener al menos 6 caracteres.");
+        return;
+      }
+
+      setButtonLoading(saveBtn, true, "Creando...");
+
+      try {
+        const exists = await usersCollection.where("correo", "==", correo).limit(1).get();
+
+        if (!exists.empty) {
+          showToast("warning", "Correo duplicado", "Ya existe un usuario registrado con ese correo.");
+          return;
+        }
+
+        await usersCollection.add({
+          Nombre: nombre,
+          correo,
+          Contraseña: contrasena,
+          rol,
+          Estado: estado,
+          FechaCreacion: firebase.firestore.FieldValue.serverTimestamp(),
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          createdBy: getCurrentUser()?.userEmail || "",
+        });
+
+        showToast("success", "Usuario creado", "El usuario fue creado correctamente.");
+        closeCreateUserModal();
+      } catch (error) {
+        console.error(error);
+        showToast("error", "Error", error.message || "No se pudo crear el usuario.");
+      } finally {
+        setButtonLoading(saveBtn, false);
+      }
     }
 
     /************************************************************
@@ -1002,6 +1133,8 @@
     window.closeEditModal = closeEditModal;
     window.toggleUserStatus = toggleUserStatus;
     window.goToCreateUser = goToCreateUser;
+    window.openCreateUserModal = openCreateUserModal;
+    window.closeCreateUserModal = closeCreateUserModal;
   </script>
 </body>
 </html>
