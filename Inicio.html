@@ -17,6 +17,7 @@
   <!-- Firebase SDK Compat -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-app-compat.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-firestore-compat.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-storage-compat.min.js"></script>
 
   <!-- SweetAlert2 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.10.8/sweetalert2.min.css">
@@ -105,6 +106,47 @@
     .dark .input-base option {
       color: #0f172a;
     }
+
+
+    .photo-preview-card {
+      position: relative;
+      overflow: hidden;
+      border-radius: 1rem;
+      border: 1px solid rgb(226 232 240);
+      background: rgb(248 250 252);
+    }
+
+    .dark .photo-preview-card {
+      border-color: rgba(255, 255, 255, .10);
+      background: rgba(255, 255, 255, .05);
+    }
+
+    .photo-preview-card img {
+      height: 7rem;
+      width: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .photo-remove-btn {
+      position: absolute;
+      right: .5rem;
+      top: .5rem;
+      display: inline-flex;
+      height: 1.75rem;
+      width: 1.75rem;
+      align-items: center;
+      justify-content: center;
+      border-radius: .75rem;
+      background: rgba(15, 23, 42, .75);
+      color: white;
+      transition: .2s ease;
+    }
+
+    .photo-remove-btn:hover {
+      background: rgb(220 38 38);
+    }
+
 
     .btn-primary {
       display: inline-flex;
@@ -540,6 +582,18 @@
               <label class="mb-1.5 block text-sm font-bold">Notas</label>
               <input id="notas" class="input-base" type="text" placeholder="Notas adicionales">
             </div>
+            <div class="lg:col-span-4">
+              <label class="mb-1.5 block text-sm font-bold">Fotos del equipo</label>
+              <div class="grid gap-2 sm:grid-cols-[1fr_auto]">
+                <input id="fotosEquipo" class="input-base file:mr-3 file:rounded-xl file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:font-bold file:text-blue-700 dark:file:bg-blue-500/10 dark:file:text-blue-300" type="file" accept="image/*" capture="environment" multiple>
+                <button type="button" onclick="openCamera('quick')" class="btn-secondary whitespace-nowrap">
+                  <i data-lucide="camera" class="h-4 w-4"></i>
+                  Tomar foto
+                </button>
+              </div>
+              <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">Puedes seleccionar varias imágenes o tomar fotos desde la cámara. Máximo 5 MB por foto.</p>
+              <div id="quickPhotoPreview" class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6"></div>
+            </div>
             <div class="flex items-end lg:col-span-4">
               <button id="saveQuickBtn" type="submit" class="btn-primary w-full sm:w-auto">
                 <i data-lucide="save" class="h-4 w-4"></i>
@@ -644,12 +698,13 @@
                   <th class="px-4 py-3">Fecha</th>
                   <th class="px-4 py-3">Precio estimado</th>
                   <th class="px-4 py-3">Notas</th>
+                  <th class="px-4 py-3">Fotos</th>
                   <th class="px-4 py-3 text-right">Acciones</th>
                 </tr>
               </thead>
               <tbody id="results" class="divide-y divide-slate-100 dark:divide-white/10">
                 <tr>
-                  <td colspan="12" class="px-4 py-10 text-center text-slate-500">Cargando registros...</td>
+                  <td colspan="13" class="px-4 py-10 text-center text-slate-500">Cargando registros...</td>
                 </tr>
               </tbody>
             </table>
@@ -776,6 +831,18 @@
             <label class="mb-1.5 block text-sm font-bold">Notas adicionales</label>
             <textarea id="modalNotas" rows="3" class="input-base"></textarea>
           </div>
+          <div class="sm:col-span-2 lg:col-span-4">
+            <label class="mb-1.5 block text-sm font-bold">Fotos del equipo</label>
+            <div class="grid gap-2 sm:grid-cols-[1fr_auto]">
+              <input id="modalFotosEquipo" class="input-base file:mr-3 file:rounded-xl file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:font-bold file:text-blue-700 dark:file:bg-blue-500/10 dark:file:text-blue-300" type="file" accept="image/*" capture="environment" multiple>
+              <button type="button" onclick="openCamera('modal')" class="btn-secondary whitespace-nowrap">
+                <i data-lucide="camera" class="h-4 w-4"></i>
+                Tomar foto
+              </button>
+            </div>
+            <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">Puedes agregar varias fotos o tomar fotos desde la cámara. En edición, las fotos actuales se conservan salvo que las elimines.</p>
+            <div id="modalPhotoPreview" class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6"></div>
+          </div>
         </div>
 
         <div class="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
@@ -788,6 +855,36 @@
       </form>
     </div>
   </div>
+
+  <!-- Modal cámara -->
+  <div id="cameraModal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm">
+    <div class="w-full max-w-3xl overflow-hidden rounded-[2rem] bg-white shadow-strong dark:bg-slate-900">
+      <div class="flex items-start justify-between border-b border-slate-200 p-5 dark:border-white/10">
+        <div>
+          <h3 class="text-xl font-extrabold">Tomar foto del equipo</h3>
+          <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Captura una o varias fotos y luego cierra la cámara.</p>
+        </div>
+        <button type="button" onclick="closeCamera()" class="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 text-slate-600 transition hover:bg-slate-200 dark:bg-white/10 dark:text-white dark:hover:bg-white/15">
+          <i data-lucide="x" class="h-5 w-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4 p-5">
+        <video id="cameraVideo" class="camera-video" autoplay playsinline muted></video>
+        <canvas id="cameraCanvas" class="hidden"></canvas>
+        <p id="cameraStatus" class="hidden rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm font-bold text-amber-700 dark:border-amber-400/20 dark:bg-amber-500/10 dark:text-amber-200"></p>
+
+        <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <button type="button" onclick="closeCamera()" class="btn-secondary">Cerrar cámara</button>
+          <button id="capturePhotoBtn" type="button" onclick="capturePhotoFromCamera()" class="btn-primary">
+            <i data-lucide="camera" class="h-4 w-4"></i>
+            Capturar foto
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 
   <script>
     /************************************************************
@@ -805,6 +902,7 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
+    const storage = firebase.storage();
     const computadorasCollection = db.collection("computadoras");
     const ubicacionesCollection = db.collection("ubicaciones");
     const estadosCollection = db.collection("estados");
@@ -847,6 +945,11 @@
     let unsubscribeLocations = null;
     let unsubscribeStates = null;
     let unsubscribeTypes = null;
+    let quickSelectedPhotos = [];
+    let modalSelectedPhotos = [];
+    let modalExistingPhotos = [];
+    let cameraStream = null;
+    let cameraTarget = "quick";
 
     const $ = (selector) => document.querySelector(selector);
     const $$ = (selector) => document.querySelectorAll(selector);
@@ -1158,6 +1261,16 @@
 
       $("#jsonFileInput").addEventListener("change", previewJSON);
       $("#importJsonBtn").addEventListener("click", importJSON);
+
+      $("#fotosEquipo").addEventListener("change", (event) => {
+        quickSelectedPhotos = validatePhotoFiles(Array.from(event.target.files || []));
+        renderSelectedPhotoPreview("quickPhotoPreview", quickSelectedPhotos, "quick");
+      });
+
+      $("#modalFotosEquipo").addEventListener("change", (event) => {
+        modalSelectedPhotos = validatePhotoFiles(Array.from(event.target.files || []));
+        renderModalPhotoPreview();
+      });
     }
 
     /************************************************************
@@ -1185,10 +1298,13 @@
       };
 
       try {
-        const result = await saveComputerData(computer);
+        const result = await saveComputerData(computer, null, quickSelectedPhotos);
 
         if (result) {
           $("#quickForm").reset();
+          $("#fotosEquipo").value = "";
+          quickSelectedPhotos = [];
+          renderSelectedPhotoPreview("quickPhotoPreview", quickSelectedPhotos, "quick");
           setToday();
         }
       } finally {
@@ -1219,7 +1335,7 @@
       };
 
       try {
-        const result = await saveComputerData(computer, id);
+        const result = await saveComputerData(computer, id, modalSelectedPhotos, modalExistingPhotos);
 
         if (result) closeComputerModal();
       } finally {
@@ -1227,7 +1343,7 @@
       }
     }
 
-    async function saveComputerData(computer, id = null) {
+    async function saveComputerData(computer, id = null, photoFiles = [], existingPhotos = null) {
       if (!computer.codigo || !computer.tipoEquipo || !computer.marca || !computer.modelo || !computer.estado || !computer.ubicacion || !computer.fecha) {
         showToast("warning", "Campos requeridos", "Completa todos los campos obligatorios.");
         return false;
@@ -1243,19 +1359,32 @@
         }
 
         if (id) {
+          const uploadedPhotos = await uploadComputerPhotos(photoFiles, id);
           await computadorasCollection.doc(id).update({
             ...computer,
+            fotos: [...(existingPhotos || []), ...uploadedPhotos],
             updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
             updatedBy: getCurrentUser()?.userEmail || "",
           });
           showToast("success", "Actualizado", "El equipo fue actualizado correctamente.");
         } else {
-          await computadorasCollection.add({
+          const docRef = await computadorasCollection.add({
             ...computer,
+            fotos: [],
             activo: true,
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
             createdBy: getCurrentUser()?.userEmail || "",
           });
+
+          const uploadedPhotos = await uploadComputerPhotos(photoFiles, docRef.id);
+          if (uploadedPhotos.length) {
+            await docRef.update({
+              fotos: uploadedPhotos,
+              updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+              updatedBy: getCurrentUser()?.userEmail || "",
+            });
+          }
+
           showToast("success", "Guardado", "El equipo fue registrado correctamente.");
         }
 
@@ -1287,12 +1416,20 @@
         $("#modalFecha").value = computer.fecha || new Date().toISOString().split("T")[0];
         $("#modalPrecioEstimado").value = computer.precioEstimado ?? "";
         $("#modalNotas").value = computer.notas || "";
+        modalExistingPhotos = Array.isArray(computer.fotos) ? [...computer.fotos] : [];
+        modalSelectedPhotos = [];
+        $("#modalFotosEquipo").value = "";
+        renderModalPhotoPreview();
       } else {
         $("#modalTitle").textContent = "Nueva computadora";
         $("#modalSubtitle").textContent = "Completa la información del equipo.";
         $("#computerForm").reset();
         $("#editId").value = "";
         $("#modalFecha").value = new Date().toISOString().split("T")[0];
+        modalExistingPhotos = [];
+        modalSelectedPhotos = [];
+        $("#modalFotosEquipo").value = "";
+        renderModalPhotoPreview();
       }
 
       refreshIcons();
@@ -1301,6 +1438,11 @@
     function closeComputerModal() {
       $("#computerModal").classList.add("hidden");
       $("#computerModal").classList.remove("flex");
+      modalExistingPhotos = [];
+      modalSelectedPhotos = [];
+      const modalInput = $("#modalFotosEquipo");
+      if (modalInput) modalInput.value = "";
+      renderModalPhotoPreview();
     }
 
     async function editComputer(id) {
@@ -1374,6 +1516,7 @@
           fecha: "",
           precioEstimado: 0,
           notas: "",
+          fotos: [],
           createdAt: null,
           createdBy: "",
           updatedAt: null,
@@ -1836,7 +1979,7 @@
           hidePageLoader();
         }, error => {
           console.error(error);
-          $("#results").innerHTML = `<tr><td colspan="12" class="px-4 py-10 text-center text-red-500">Error al cargar registros: ${escapeHTML(error.message)}</td></tr>`;
+          $("#results").innerHTML = `<tr><td colspan="13" class="px-4 py-10 text-center text-red-500">Error al cargar registros: ${escapeHTML(error.message)}</td></tr>`;
           hidePageLoader();
         });
     }
@@ -1898,7 +2041,7 @@
       if (total === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="12" class="px-4 py-14 text-center">
+            <td colspan="13" class="px-4 py-14 text-center">
               <div class="mx-auto max-w-sm">
                 <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-3xl bg-slate-100 text-slate-500 dark:bg-white/10">
                   <i data-lucide="search-x" class="h-7 w-7"></i>
@@ -1937,6 +2080,7 @@
           <td class="px-4 py-4">${formatDate(item.fecha)}</td>
           <td class="px-4 py-4 font-extrabold text-emerald-600 dark:text-emerald-300">${formatMoney(item.precioEstimado)}</td>
           <td class="max-w-[220px] truncate px-4 py-4 text-slate-500 dark:text-slate-400" title="${escapeAttr(item.notas || "")}">${escapeHTML(item.notas || "")}</td>
+          <td class="px-4 py-4">${photosBadge(item.fotos || [])}</td>
           <td class="px-4 py-4">
             <div class="flex justify-end gap-2">
               <button onclick="editComputer('${item.id}')" class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-300 dark:hover:bg-blue-500/20" title="Editar">
@@ -2022,6 +2166,279 @@
       return Boolean($("#searchInput").value || $("#filterTipo").value || $("#filterEstado").value || $("#filterUbicacion").value);
     }
 
+
+    /************************************************************
+     * FOTOS DEL EQUIPO
+     ************************************************************/
+    function createUniqueId() {
+      if (window.crypto && typeof window.crypto.randomUUID === "function") {
+        return window.crypto.randomUUID();
+      }
+
+      return `${Date.now()}_${Math.random().toString(36).slice(2, 12)}`;
+    }
+
+    function validatePhotoFiles(files) {
+      const validFiles = [];
+      const maxSize = 5 * 1024 * 1024;
+
+      for (const file of files) {
+        if (!file.type.startsWith("image/")) {
+          showToast("warning", "Archivo no válido", `${file.name} no es una imagen.`);
+          continue;
+        }
+
+        if (file.size > maxSize) {
+          showToast("warning", "Imagen demasiado grande", `${file.name} supera los 5 MB.`);
+          continue;
+        }
+
+        validFiles.push(file);
+      }
+
+      return validFiles;
+    }
+
+    async function uploadComputerPhotos(files, computerId) {
+      if (!files || !files.length) return [];
+
+      const uploadedPhotos = [];
+
+      for (const file of files) {
+        const extension = file.name.split(".").pop() || "jpg";
+        const safeName = file.name
+          .replace(/\.[^/.]+$/, "")
+          .replace(/[^a-zA-Z0-9_-]/g, "_")
+          .slice(0, 60);
+
+        const path = `computadoras/${computerId}/${Date.now()}_${crypto.randomUUID()}_${safeName}.${extension}`;
+        const ref = storage.ref(path);
+        const snapshot = await ref.put(file);
+        const url = await snapshot.ref.getDownloadURL();
+
+        uploadedPhotos.push({
+          url,
+          path,
+          nombre: file.name,
+          tipo: file.type,
+          tamanio: file.size,
+          uploadedAt: new Date().toISOString(),
+          uploadedBy: getCurrentUser()?.userEmail || "",
+        });
+      }
+
+      return uploadedPhotos;
+    }
+
+    function renderSelectedPhotoPreview(containerId, files, source = "quick") {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+
+      if (!files.length) {
+        container.innerHTML = "";
+        return;
+      }
+
+      container.innerHTML = files.map((file, index) => {
+        const url = URL.createObjectURL(file);
+
+        return `
+          <div class="photo-preview-card">
+            <img src="${url}" alt="${escapeAttr(file.name)}" onload="URL.revokeObjectURL(this.src)">
+            <button type="button" class="photo-remove-btn" onclick="removeSelectedPhoto('${source}', ${index})" title="Quitar foto">
+              <i data-lucide="x" class="h-4 w-4"></i>
+            </button>
+            <div class="p-2">
+              <p class="truncate text-xs font-bold" title="${escapeAttr(file.name)}">${escapeHTML(file.name)}</p>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      refreshIcons();
+    }
+
+    function renderModalPhotoPreview() {
+      const container = $("#modalPhotoPreview");
+      if (!container) return;
+
+      const existingHTML = modalExistingPhotos.map((photo, index) => `
+        <div class="photo-preview-card">
+          <a href="${escapeAttr(photo.url || "#")}" target="_blank" rel="noopener">
+            <img src="${escapeAttr(photo.url || "")}" alt="${escapeAttr(photo.nombre || "Foto del equipo")}">
+          </a>
+          <button type="button" class="photo-remove-btn" onclick="removeExistingPhoto(${index})" title="Eliminar foto">
+            <i data-lucide="x" class="h-4 w-4"></i>
+          </button>
+          <div class="p-2">
+            <p class="truncate text-xs font-bold" title="${escapeAttr(photo.nombre || "Foto guardada")}">${escapeHTML(photo.nombre || "Foto guardada")}</p>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400">Guardada</p>
+          </div>
+        </div>
+      `).join("");
+
+      const selectedHTML = modalSelectedPhotos.map((file, index) => {
+        const url = URL.createObjectURL(file);
+
+        return `
+          <div class="photo-preview-card">
+            <img src="${url}" alt="${escapeAttr(file.name)}" onload="URL.revokeObjectURL(this.src)">
+            <button type="button" class="photo-remove-btn" onclick="removeSelectedPhoto('modal', ${index})" title="Quitar foto">
+              <i data-lucide="x" class="h-4 w-4"></i>
+            </button>
+            <div class="p-2">
+              <p class="truncate text-xs font-bold" title="${escapeAttr(file.name)}">${escapeHTML(file.name)}</p>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400">Nueva</p>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      container.innerHTML = existingHTML + selectedHTML;
+      refreshIcons();
+    }
+
+    function removeSelectedPhoto(source, index) {
+      if (source === "quick") {
+        quickSelectedPhotos.splice(index, 1);
+        $("#fotosEquipo").value = "";
+        renderSelectedPhotoPreview("quickPhotoPreview", quickSelectedPhotos, "quick");
+        return;
+      }
+
+      modalSelectedPhotos.splice(index, 1);
+      $("#modalFotosEquipo").value = "";
+      renderModalPhotoPreview();
+    }
+
+    function removeExistingPhoto(index) {
+      modalExistingPhotos.splice(index, 1);
+      renderModalPhotoPreview();
+    }
+
+
+    async function openCamera(target = "quick") {
+      cameraTarget = target;
+
+      const modal = $("#cameraModal");
+      const video = $("#cameraVideo");
+      const status = $("#cameraStatus");
+      const captureBtn = $("#capturePhotoBtn");
+
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        showToast("warning", "Cámara no disponible", "Tu navegador no permite abrir la cámara desde este sitio.");
+        return;
+      }
+
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+      status.classList.add("hidden");
+      status.textContent = "";
+      captureBtn.disabled = true;
+      captureBtn.classList.add("cursor-not-allowed", "opacity-70");
+
+      try {
+        closeCameraStream();
+
+        cameraStream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: "environment" },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
+          audio: false,
+        });
+
+        video.srcObject = cameraStream;
+        await video.play();
+
+        captureBtn.disabled = false;
+        captureBtn.classList.remove("cursor-not-allowed", "opacity-70");
+        refreshIcons();
+      } catch (error) {
+        console.error(error);
+        status.textContent = "No se pudo abrir la cámara. Revisa los permisos del navegador. La cámara normalmente requiere HTTPS o localhost.";
+        status.classList.remove("hidden");
+        showToast("error", "Permiso de cámara", "No se pudo acceder a la cámara del dispositivo.");
+      }
+    }
+
+    function capturePhotoFromCamera() {
+      const video = $("#cameraVideo");
+      const canvas = $("#cameraCanvas");
+
+      if (!video || !video.videoWidth || !video.videoHeight) {
+        showToast("warning", "Cámara no lista", "Espera un momento a que la cámara cargue.");
+        return;
+      }
+
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const context = canvas.getContext("2d");
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          showToast("error", "Error", "No se pudo capturar la foto.");
+          return;
+        }
+
+        const fileName = `foto_equipo_${new Date().toISOString().replace(/[:.]/g, "-")}.jpg`;
+        const file = new File([blob], fileName, { type: "image/jpeg" });
+        const validFiles = validatePhotoFiles([file]);
+
+        if (!validFiles.length) return;
+
+        if (cameraTarget === "modal") {
+          modalSelectedPhotos.push(...validFiles);
+          $("#modalFotosEquipo").value = "";
+          renderModalPhotoPreview();
+        } else {
+          quickSelectedPhotos.push(...validFiles);
+          $("#fotosEquipo").value = "";
+          renderSelectedPhotoPreview("quickPhotoPreview", quickSelectedPhotos, "quick");
+        }
+
+        showToast("success", "Foto agregada", "La foto fue agregada al equipo. Puedes capturar otra o cerrar la cámara.");
+      }, "image/jpeg", 0.9);
+    }
+
+    function closeCamera() {
+      closeCameraStream();
+      const modal = $("#cameraModal");
+      if (modal) {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+      }
+    }
+
+    function closeCameraStream() {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+      }
+
+      const video = $("#cameraVideo");
+      if (video) video.srcObject = null;
+    }
+
+    function photosBadge(photos) {
+      const total = Array.isArray(photos) ? photos.length : 0;
+
+      if (!total) {
+        return `<span class="text-xs font-bold text-slate-400">Sin fotos</span>`;
+      }
+
+      const firstPhoto = photos[0]?.url || "#";
+
+      return `
+        <a href="${escapeAttr(firstPhoto)}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-extrabold text-blue-700 transition hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-300 dark:hover:bg-blue-500/20">
+          <i data-lucide="image" class="h-3.5 w-3.5"></i>
+          ${total} foto${total === 1 ? "" : "s"}
+        </a>
+      `;
+    }
+
     /************************************************************
      * IMPORTAR / EXPORTAR
      ************************************************************/
@@ -2103,6 +2520,7 @@
               fecha: item.fecha || new Date().toISOString().split("T")[0],
               precioEstimado: Number(item.precioEstimado || 0),
               notas: item.notas || "",
+              fotos: Array.isArray(item.fotos) ? item.fotos : [],
               createdAt: firebase.firestore.FieldValue.serverTimestamp(),
               createdBy: getCurrentUser()?.userEmail || "",
             };
@@ -2197,6 +2615,7 @@
         "Fecha": formatDate(item.fecha),
         "Precio estimado": Number(item.precioEstimado || 0),
         "Notas": item.notas || "",
+        "Fotos": Array.isArray(item.fotos) ? item.fotos.length : 0,
       }));
     }
 
@@ -2228,6 +2647,7 @@
         { wch: 14 },
         { wch: 18 },
         { wch: 35 },
+        { wch: 10 },
       ];
 
       const workbook = XLSX.utils.book_new();
@@ -2282,6 +2702,7 @@
         "Fecha",
         "Precio",
         "Notas",
+        "Fotos",
       ]];
 
       const body = data.map(item => [
@@ -2297,6 +2718,7 @@
         item["Fecha"],
         formatMoney(item["Precio estimado"]),
         item["Notas"],
+        item["Fotos"],
       ]);
 
       doc.autoTable({
@@ -2328,7 +2750,8 @@
           8: { cellWidth: 28 },
           9: { cellWidth: 16 },
           10: { cellWidth: 18 },
-          11: { cellWidth: 42 },
+          11: { cellWidth: 36 },
+          12: { cellWidth: 12 },
         },
         didDrawPage: function () {
           const pageSize = doc.internal.pageSize;
@@ -2482,6 +2905,8 @@
     window.closeComputerModal = closeComputerModal;
     window.editComputer = editComputer;
     window.deleteComputer = deleteComputer;
+    window.removeSelectedPhoto = removeSelectedPhoto;
+    window.removeExistingPhoto = removeExistingPhoto;
     window.openAddLocationModal = openAddLocationModal;
     window.openAddStateModal = openAddStateModal;
     window.openAddTypeModal = openAddTypeModal;
@@ -2491,6 +2916,9 @@
     window.exportExcel = exportExcel;
     window.exportPDF = exportPDF;
     window.resetFilters = resetFilters;
+    window.openCamera = openCamera;
+    window.closeCamera = closeCamera;
+    window.capturePhotoFromCamera = capturePhotoFromCamera;
   </script>
 </body>
 
