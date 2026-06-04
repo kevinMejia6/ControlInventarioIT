@@ -259,6 +259,153 @@
 
 
 
+
+
+    /* ================================
+       TABLA RESPONSIVA PROFESIONAL
+       En móvil convierte la tabla en tarjetas para que no se monten las columnas.
+       ================================ */
+    @media (max-width: 767px) {
+      .inventory-table-wrapper {
+        overflow-x: visible;
+      }
+
+      #inventoryTable {
+        display: block;
+        width: 100%;
+      }
+
+      #inventoryTable thead {
+        display: none;
+      }
+
+      #inventoryTable tbody {
+        display: block;
+        padding: .85rem;
+      }
+
+      #inventoryTable tbody tr {
+        display: block;
+        margin-bottom: 1rem;
+        overflow: hidden;
+        border: 1px solid rgb(226 232 240);
+        border-radius: 1.5rem;
+        background: #ffffff;
+        box-shadow: 0 12px 30px rgba(15, 23, 42, .08);
+      }
+
+      .dark #inventoryTable tbody tr {
+        border-color: rgba(255, 255, 255, .10);
+        background: rgb(15 23 42);
+      }
+
+      #inventoryTable tbody td {
+        display: flex;
+        width: 100%;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        border-bottom: 1px solid rgb(241 245 249);
+        padding: .8rem 1rem;
+        text-align: right;
+      }
+
+      .dark #inventoryTable tbody td {
+        border-bottom-color: rgba(255, 255, 255, .08);
+      }
+
+      #inventoryTable tbody td::before {
+        content: attr(data-label);
+        flex: 0 0 42%;
+        text-align: left;
+        font-size: .68rem;
+        font-weight: 900;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: rgb(100 116 139);
+      }
+
+      .dark #inventoryTable tbody td::before {
+        color: rgb(148 163 184);
+      }
+
+      #inventoryTable tbody td > * {
+        max-width: 58%;
+      }
+
+      #inventoryTable tbody td .truncate {
+        max-width: 100%;
+        white-space: normal;
+        word-break: break-word;
+      }
+
+      #inventoryTable tbody td .line-clamp-2 {
+        display: block;
+        overflow: visible;
+        -webkit-line-clamp: unset;
+        -webkit-box-orient: unset;
+      }
+
+      #inventoryTable tbody td[data-label="Acciones"] {
+        justify-content: flex-end;
+        border-bottom: 0;
+        background: rgb(248 250 252);
+      }
+
+      .dark #inventoryTable tbody td[data-label="Acciones"] {
+        background: rgba(255, 255, 255, .04);
+      }
+
+      #inventoryTable tbody td[data-label="Acciones"]::before {
+        display: none;
+      }
+
+      #inventoryTable tbody td[data-label="Acciones"] > div {
+        width: 100%;
+        max-width: 100%;
+        justify-content: flex-end;
+      }
+
+      #inventoryTable tfoot {
+        display: block;
+        padding: .85rem;
+      }
+
+      #inventoryTable tfoot tr {
+        display: block;
+        border-radius: 1.5rem;
+        border: 1px solid rgb(226 232 240);
+        background: rgb(248 250 252);
+        padding: 1rem;
+      }
+
+      .dark #inventoryTable tfoot tr {
+        border-color: rgba(255, 255, 255, .10);
+        background: rgba(255, 255, 255, .05);
+      }
+
+      #inventoryTable tfoot td {
+        display: block;
+        width: 100%;
+        padding: .35rem 0;
+        text-align: left !important;
+      }
+
+      #inventoryTable tfoot td[colspan] {
+        display: block;
+      }
+    }
+
+    @media (min-width: 768px) {
+      .inventory-table-wrapper {
+        overflow-x: auto;
+      }
+
+      #inventoryTable {
+        min-width: 1150px;
+      }
+    }
+
     @media (min-width: 1024px) {
       .sidebar-collapsed #sidebar {
         width: 5.75rem;
@@ -853,8 +1000,8 @@
             </div>
           </div>
 
-          <div class="overflow-x-auto">
-            <table class="min-w-full w-full table-fixed text-left text-sm">
+          <div class="inventory-table-wrapper overflow-x-auto">
+            <table id="inventoryTable" class="w-full text-left text-sm md:min-w-[1150px] md:table-fixed">
               <thead
                 class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500 dark:bg-white/5 dark:text-slate-400">
                 <tr>
@@ -3092,28 +3239,28 @@
 
       tbody.innerHTML = pageItems.map(item => `
         <tr class="transition hover:bg-slate-50 dark:hover:bg-white/[.03]">
-          <td class="px-3 py-4 align-top">
+          <td data-label="Código" class="px-3 py-4 align-top">
             <div class="truncate font-extrabold text-slate-900 dark:text-white" title="${escapeAttr(item.codigo || "")}">${escapeHTML(item.codigo || "")}</div>
             <div class="truncate text-xs text-slate-500 dark:text-slate-400" title="${escapeAttr(item.id || "")}">${escapeHTML(item.id || "")}</div>
           </td>
-          <td class="px-3 py-4 align-top">${badge(item.tipoEquipo || "Sin tipo", "slate")}</td>
-          <td class="px-3 py-4 align-top">
+          <td data-label="Tipo" class="px-3 py-4 align-top">${badge(item.tipoEquipo || "Sin tipo", "slate")}</td>
+          <td data-label="Marca / Modelo" class="px-3 py-4 align-top">
             <div class="truncate font-bold" title="${escapeAttr(item.marca || "")}">${escapeHTML(item.marca || "")}</div>
             <div class="truncate text-sm text-slate-500 dark:text-slate-400" title="${escapeAttr(item.modelo || "")}">${escapeHTML(item.modelo || "")}</div>
           </td>
-          <td class="px-3 py-4 align-top">
+          <td data-label="Procesador" class="px-3 py-4 align-top">
             <div class="truncate" title="${escapeAttr(item.procesador || "")}">${escapeHTML(item.procesador || "")}</div>
           </td>
-          <td class="px-3 py-4 align-top">${statusBadge(item.estado || "")}</td>
-          <td class="px-3 py-4 align-top">
+          <td data-label="Estado" class="px-3 py-4 align-top">${statusBadge(item.estado || "")}</td>
+          <td data-label="Ubicación" class="px-3 py-4 align-top">
             <div class="line-clamp-2" title="${escapeAttr(item.ubicacion || "")}">${escapeHTML(item.ubicacion || "")}</div>
           </td>
-          <td class="px-3 py-4 align-top font-extrabold text-emerald-600 dark:text-emerald-300">${formatMoney(item.precioEstimado)}</td>
-          <td class="px-3 py-4 align-top text-slate-500 dark:text-slate-400">
+          <td data-label="Precio" class="px-3 py-4 align-top font-extrabold text-emerald-600 dark:text-emerald-300">${formatMoney(item.precioEstimado)}</td>
+          <td data-label="Notas" class="px-3 py-4 align-top text-slate-500 dark:text-slate-400">
             <div class="truncate" title="${escapeAttr(item.notas || "")}">${escapeHTML(item.notas || "")}</div>
           </td>
-          <td class="px-3 py-4 align-top">${photosBadge(item)}</td>
-          <td class="px-3 py-4 align-top">
+          <td data-label="Fotos" class="px-3 py-4 align-top">${photosBadge(item)}</td>
+          <td data-label="Acciones" class="px-3 py-4 align-top">
             <div class="flex justify-end gap-2">
               <button onclick="viewComputerDetail('${item.id}')" class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-700 transition hover:bg-slate-200 dark:bg-white/10 dark:text-white dark:hover:bg-white/15" title="Ver detalle">
                 <i data-lucide="eye" class="h-4 w-4"></i>
