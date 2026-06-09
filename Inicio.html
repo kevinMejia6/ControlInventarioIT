@@ -402,7 +402,7 @@
       }
 
       #inventoryTable {
-        min-width: 1150px;
+        min-width: 1280px;
       }
     }
 
@@ -1001,7 +1001,7 @@
           </div>
 
           <div class="inventory-table-wrapper overflow-x-auto">
-            <table id="inventoryTable" class="w-full text-left text-sm md:min-w-[1150px] md:table-fixed">
+            <table id="inventoryTable" class="w-full text-left text-sm md:min-w-[1280px] md:table-fixed">
               <thead
                 class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500 dark:bg-white/5 dark:text-slate-400">
                 <tr>
@@ -1012,6 +1012,7 @@
                   <th class="w-[10%] px-3 py-3">Estado</th>
                   <th class="w-[10%] px-3 py-3">Ubicación</th>
                   <th class="w-[10%] px-3 py-3">Precio</th>
+                  <th class="w-[12%] px-3 py-3">Actualizado Gil</th>
                   <th class="w-[10%] px-3 py-3">Notas</th>
                   <th class="w-[7%] px-3 py-3">Fotos</th>
                   <th class="w-[12%] px-3 py-3 text-right">Acciones</th>
@@ -1019,7 +1020,7 @@
               </thead>
               <tbody id="results" class="divide-y divide-slate-100 dark:divide-white/10">
                 <tr>
-                  <td colspan="10" class="px-3 py-10 text-center text-slate-500">Cargando registros...</td>
+                  <td colspan="11" class="px-3 py-10 text-center text-slate-500">Cargando registros...</td>
                 </tr>
               </tbody>
               <tfoot class="border-t border-slate-200 bg-slate-50 text-sm dark:border-white/10 dark:bg-white/5">
@@ -1030,7 +1031,7 @@
                   <td id="estimatedPriceTotal" class="px-3 py-4 font-extrabold text-emerald-600 dark:text-emerald-300">
                     $0.00
                   </td>
-                  <td colspan="3" class="px-3 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                  <td colspan="4" class="px-3 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400">
                     Sumatoria de registros filtrados
                   </td>
                 </tr>
@@ -1390,6 +1391,7 @@
     // Firestore descarga el documento completo en cada snapshot; si el campo fotos tiene Base64,
     // la tabla siempre sera lenta. Ahora las fotos se guardan en subcoleccion: computadoras/{id}/fotos.
     const PHOTO_SUBCOLLECTION = "fotos";
+    const ALEXANDER_EMAIL = "alexander.gil@como.com.sv";
     const AUTO_PHOTO_MIGRATION_KEY_PREFIX = "inventoryAutoPhotoMigrationDone";
     let autoPhotoMigrationRunning = false;
 
@@ -2242,22 +2244,49 @@
           return false;
         }
 
+        const currentUserEmail = String(getCurrentUser()?.userEmail || "").toLowerCase();
+        const isAlexander = currentUserEmail === ALEXANDER_EMAIL.toLowerCase();
+
         if (id) {
           const docRef = activeCollection.doc(id);
+          const currentDoc = await docRef.get();
+          const currentData = currentDoc.exists ? currentDoc.data() : {};
+
+          const previousPrice = Number(currentData.precioEstimado || 0);
+          const newPrice = Number(computer.precioEstimado || 0);
+          const priceWasChanged = previousPrice !== newPrice;
+
           const base64Photos = await convertPhotoFilesToBase64(photoFiles, id, existingPhotos || []);
           const finalPhotos = [...(existingPhotos || []), ...base64Photos];
 
           // Guardamos fotos fuera del documento principal para que la tabla cargue rapido.
           await replacePhotoSubcollection(docRef, finalPhotos);
 
-          await docRef.update({
+          const updatePayload = {
             ...computer,
             fotos: [],
             fotoCount: finalPhotos.length,
             hasExternalPhotos: finalPhotos.length > 0,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
             updatedBy: getCurrentUser()?.userEmail || "",
-          });
+          };
+
+          // Marca especial: si Alexander Gil actualiza cualquier parte del registro, queda registrado.
+          updatePayload.actualizadoPorGil = isAlexander;
+
+          if (isAlexander) {
+            updatePayload.actualizadoPorGilAt = firebase.firestore.FieldValue.serverTimestamp();
+          }
+
+          // Compatibilidad: si Gil tambien cambia el precio, conserva el historial de precio.
+          if (priceWasChanged && isAlexander) {
+            updatePayload.precioEditadoPorAlexander = true;
+            updatePayload.precioEditadoPorAlexanderAt = firebase.firestore.FieldValue.serverTimestamp();
+            updatePayload.precioAnteriorAlexander = previousPrice;
+            updatePayload.precioNuevoAlexander = newPrice;
+          }
+
+          await docRef.update(updatePayload);
 
           showToast("success", "Actualizado", "El registro fue actualizado correctamente.");
         } else {
@@ -2266,6 +2295,12 @@
             fotos: [],
             fotoCount: 0,
             hasExternalPhotos: false,
+            precioEditadoPorAlexander: false,
+            precioEditadoPorAlexanderAt: null,
+            precioAnteriorAlexander: null,
+            precioNuevoAlexander: null,
+            actualizadoPorGil: false,
+            actualizadoPorGilAt: null,
             activo: true,
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
             createdBy: getCurrentUser()?.userEmail || "",
@@ -2519,6 +2554,12 @@
           createdBy: "",
           updatedAt: null,
           updatedBy: "",
+          precioEditadoPorAlexander: false,
+          precioEditadoPorAlexanderAt: null,
+          precioAnteriorAlexander: null,
+          precioNuevoAlexander: null,
+          actualizadoPorGil: false,
+          actualizadoPorGilAt: null,
         }),
         ensureCollectionSchema("mobiliario", {
           codigo: "",
@@ -2538,6 +2579,12 @@
           createdBy: "",
           updatedAt: null,
           updatedBy: "",
+          precioEditadoPorAlexander: false,
+          precioEditadoPorAlexanderAt: null,
+          precioAnteriorAlexander: null,
+          precioNuevoAlexander: null,
+          actualizadoPorGil: false,
+          actualizadoPorGilAt: null,
         }),
         ensureCollectionSchema("ubicaciones", {
           nombre: "",
@@ -3068,7 +3115,7 @@
           lastInventorySnapshotSize = snapshot.size;
         }, error => {
           console.error(error);
-          $("#results").innerHTML = `<tr><td colspan="10" class="px-3 py-10 text-center text-red-500">Error al cargar registros en tiempo real: ${escapeHTML(error.message)}</td></tr>`;
+          $("#results").innerHTML = `<tr><td colspan="11" class="px-3 py-10 text-center text-red-500">Error al cargar registros en tiempo real: ${escapeHTML(error.message)}</td></tr>`;
           updateLiveSyncStatus(null, true);
           hidePageLoader();
           hideRecordsLoader();
@@ -3217,7 +3264,7 @@
       if (total === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="10" class="px-3 py-14 text-center">
+            <td colspan="11" class="px-3 py-14 text-center">
               <div class="mx-auto max-w-sm">
                 <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-3xl bg-slate-100 text-slate-500 dark:bg-white/10">
                   <i data-lucide="search-x" class="h-7 w-7"></i>
@@ -3256,6 +3303,9 @@
             <div class="line-clamp-2" title="${escapeAttr(item.ubicacion || "")}">${escapeHTML(item.ubicacion || "")}</div>
           </td>
           <td data-label="Precio" class="px-3 py-4 align-top font-extrabold text-emerald-600 dark:text-emerald-300">${formatMoney(item.precioEstimado)}</td>
+          <td data-label="Actualizado Gil" class="px-3 py-4 align-top">
+            ${gilUpdatedBadge(item)}
+          </td>
           <td data-label="Notas" class="px-3 py-4 align-top text-slate-500 dark:text-slate-400">
             <div class="truncate" title="${escapeAttr(item.notas || "")}">${escapeHTML(item.notas || "")}</div>
           </td>
@@ -3325,6 +3375,11 @@
               ${detailField("Ubicación", computer.ubicacion, "map-pin")}
               ${detailField("Fecha ingreso", formatDate(computer.fecha), "calendar")}
               ${detailField("Precio estimado", formatMoney(computer.precioEstimado), "dollar-sign")}
+              ${detailField("Actualizado por Gil", wasUpdatedByGil(computer) ? "Sí" : "No", "badge-check")}
+              ${detailField("Fecha actualización Gil", wasUpdatedByGil(computer) ? formatFirestoreDateTime(computer.actualizadoPorGilAt || computer.updatedAt) : "No disponible", "clock")}
+              ${detailField("Precio editado por Gil", computer.precioEditadoPorAlexander ? "Sí" : "No", "dollar-sign")}
+              ${detailField("Precio anterior Gil", computer.precioEditadoPorAlexander ? formatMoney(computer.precioAnteriorAlexander) : "No disponible", "history")}
+              ${detailField("Precio nuevo Gil", computer.precioEditadoPorAlexander ? formatMoney(computer.precioNuevoAlexander) : "No disponible", "dollar-sign")}
             </div>
           </section>
 
@@ -3335,6 +3390,7 @@
               ${detailMiniStat("Estado", computer.estado || "Sin estado", "activity")}
               ${detailMiniStat("Creado por", computer.createdBy || "No disponible", "user")}
               ${detailMiniStat("Actualizado por", computer.updatedBy || "No disponible", "user-check")}
+              ${detailMiniStat("Actualizado por Gil", wasUpdatedByGil(computer) ? "Sí" : "No", "badge-check")}
             </div>
           </section>
         </div>
@@ -4058,6 +4114,34 @@
       if (video) video.srcObject = null;
     }
 
+    function wasUpdatedByGil(item = {}) {
+      const updatedBy = normalizeText(item.updatedBy || "");
+      const gilEmail = normalizeText(ALEXANDER_EMAIL);
+
+      return Boolean(
+        item.actualizadoPorGil === true ||
+        updatedBy === gilEmail
+      );
+    }
+
+    function gilUpdatedBadge(item = {}) {
+      if (!wasUpdatedByGil(item)) {
+        return `
+          <span class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-extrabold text-slate-500 dark:bg-white/10 dark:text-slate-300">
+            <i data-lucide="minus-circle" class="h-3.5 w-3.5"></i>
+            No
+          </span>
+        `;
+      }
+
+      return `
+        <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-extrabold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300" title="Última actualización: ${escapeAttr(formatFirestoreDateTime(item.actualizadoPorGilAt || item.updatedAt) || 'No disponible')}">
+          <i data-lucide="badge-check" class="h-3.5 w-3.5"></i>
+          Precio Actualizado
+        </span>
+      `;
+    }
+
     function photosBadge(itemOrPhotos) {
       const photos = Array.isArray(itemOrPhotos) ? itemOrPhotos : itemOrPhotos?.fotos;
       const total = Array.isArray(photos) && photos.length
@@ -4377,7 +4461,7 @@
         return;
       }
 
-      const headers = ["codigo", "tipoEquipo", "marca", "modelo", "procesador", "ram", "almacenamiento", "estado", "ubicacion", "fecha", "precioEstimado", "notas", "marcaUps", "especificacionesUps", "marcaTeclado", "especificacionesTeclado", "marcaMouse", "especificacionesMouse", "marcaMonitor", "especificacionesMonitor"];
+      const headers = ["codigo", "tipoEquipo", "marca", "modelo", "procesador", "ram", "almacenamiento", "estado", "ubicacion", "fecha", "precioEstimado", "updatedBy", "actualizadoPorGil", "actualizadoPorGilAt", "precioEditadoPorAlexander", "precioAnteriorAlexander", "precioNuevoAlexander", "notas", "marcaUps", "especificacionesUps", "marcaTeclado", "especificacionesTeclado", "marcaMouse", "especificacionesMouse", "marcaMonitor", "especificacionesMonitor"];
       const rows = data.map(item => headers.map(header => csvCell(item[header] ?? "")).join(","));
       const csv = [headers.join(","), ...rows].join("\n");
 
@@ -4393,8 +4477,8 @@
         return;
       }
 
-      const cleanData = data.map(({ id, codigo, tipoEquipo, marca, modelo, procesador, ram, almacenamiento, estado, ubicacion, fecha, precioEstimado, notas, marcaUps, especificacionesUps, marcaTeclado, especificacionesTeclado, marcaMouse, especificacionesMouse, marcaMonitor, especificacionesMonitor }) => ({
-        id, codigo, tipoEquipo, marca, modelo, procesador, ram, almacenamiento, estado, ubicacion, fecha, precioEstimado, notas, marcaUps, especificacionesUps, marcaTeclado, especificacionesTeclado, marcaMouse, especificacionesMouse, marcaMonitor, especificacionesMonitor
+      const cleanData = data.map(({ id, codigo, tipoEquipo, marca, modelo, procesador, ram, almacenamiento, estado, ubicacion, fecha, precioEstimado, updatedBy, actualizadoPorGil, actualizadoPorGilAt, precioEditadoPorAlexander, precioEditadoPorAlexanderAt, precioAnteriorAlexander, precioNuevoAlexander, notas, marcaUps, especificacionesUps, marcaTeclado, especificacionesTeclado, marcaMouse, especificacionesMouse, marcaMonitor, especificacionesMonitor }) => ({
+        id, codigo, tipoEquipo, marca, modelo, procesador, ram, almacenamiento, estado, ubicacion, fecha, precioEstimado, updatedBy, actualizadoPorGil, actualizadoPorGilAt, precioEditadoPorAlexander, precioEditadoPorAlexanderAt, precioAnteriorAlexander, precioNuevoAlexander, notas, marcaUps, especificacionesUps, marcaTeclado, especificacionesTeclado, marcaMouse, especificacionesMouse, marcaMonitor, especificacionesMonitor
       }));
 
       downloadFile(JSON.stringify(cleanData, null, 2), `inventario_${getModuleConfig().collectionName}_${todayFileName()}.json`, "application/json;charset=utf-8;");
@@ -4420,6 +4504,12 @@
         "Ubicación": item.ubicacion || "",
         "Fecha": formatDate(item.fecha),
         "Precio estimado": Number(item.precioEstimado || 0),
+        "Actualizado por Gil": wasUpdatedByGil(item) ? "Sí" : "No",
+        "Actualizado por": item.updatedBy || "",
+        "Actualizado por Gil el": wasUpdatedByGil(item) ? formatFirestoreDateTime(item.actualizadoPorGilAt || item.updatedAt) : "",
+        "Precio editado por Gil": item.precioEditadoPorAlexander ? "Sí" : "No",
+        "Precio anterior Gil": item.precioEditadoPorAlexander ? Number(item.precioAnteriorAlexander || 0) : "",
+        "Precio nuevo Gil": item.precioEditadoPorAlexander ? Number(item.precioNuevoAlexander || 0) : "",
         "Notas": item.notas || "",
         "Fotos": Array.isArray(item.fotos) && item.fotos.length ? item.fotos.length : Number(item.fotoCount || 0),
       }));
@@ -4452,6 +4542,10 @@
         { wch: 24 },
         { wch: 14 },
         { wch: 18 },
+        { wch: 24 },
+        { wch: 22 },
+        { wch: 22 },
+        { wch: 24 },
         { wch: 35 },
         { wch: 10 },
       ];
@@ -4507,6 +4601,9 @@
         "Ubicación",
         "Fecha",
         "Precio",
+        "Actualizado Gil",
+        "Actualizado por",
+        "Fecha Gil",
         "Notas",
         "Fotos",
       ]];
@@ -4523,6 +4620,9 @@
         item["Ubicación"],
         item["Fecha"],
         formatMoney(item["Precio estimado"]),
+        item["Actualizado por Gil"],
+        item["Actualizado por"],
+        item["Actualizado por Gil el"],
         item["Notas"],
         item["Fotos"],
       ]);
@@ -4549,15 +4649,18 @@
           1: { cellWidth: 20 },
           2: { cellWidth: 20 },
           3: { cellWidth: 24 },
-          4: { cellWidth: 32 },
+          4: { cellWidth: 26 },
           5: { cellWidth: 14 },
           6: { cellWidth: 18 },
-          7: { cellWidth: 28 },
-          8: { cellWidth: 28 },
+          7: { cellWidth: 24 },
+          8: { cellWidth: 24 },
           9: { cellWidth: 16 },
           10: { cellWidth: 18 },
-          11: { cellWidth: 36 },
-          12: { cellWidth: 12 },
+          11: { cellWidth: 18 },
+          12: { cellWidth: 18 },
+          13: { cellWidth: 18 },
+          14: { cellWidth: 28 },
+          15: { cellWidth: 12 },
         },
         didDrawPage: function () {
           const pageSize = doc.internal.pageSize;
@@ -4734,6 +4837,8 @@
     window.capturePhotoFromCamera = capturePhotoFromCamera;
     window.openPhotoViewer = openPhotoViewer;
     window.closePhotoViewer = closePhotoViewer;
+    window.gilUpdatedBadge = gilUpdatedBadge;
+    window.wasUpdatedByGil = wasUpdatedByGil;
     window.optimizeEmbeddedPhotos = optimizeEmbeddedPhotos;
   </script>
 </body>
