@@ -983,7 +983,7 @@
               </div>
             </div>
 
-            <div class="mt-5 grid gap-3 lg:grid-cols-[1.2fr_.8fr_.8fr_.8fr_auto]">
+            <div class="mt-5 grid gap-3 lg:grid-cols-[1.2fr_.8fr_.8fr_.8fr_.8fr_auto]">
               <div class="relative">
                 <i data-lucide="search"
                   class="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"></i>
@@ -993,6 +993,11 @@
               <select id="filterTipo" class="input-base"></select>
               <select id="filterEstado" class="input-base"></select>
               <select id="filterUbicacion" class="input-base"></select>
+              <select id="filterGil" class="input-base">
+                <option value="">Actualizado Gil: Todos</option>
+                <option value="si">Sí, actualizado por Gil</option>
+                <option value="no">No actualizado por Gil</option>
+              </select>
               <button onclick="resetFilters()" class="btn-secondary">
                 <i data-lucide="eraser" class="h-4 w-4"></i>
                 Limpiar
@@ -1974,6 +1979,7 @@
       $("#filterTipo").addEventListener("change", applyFilters);
       $("#filterEstado").addEventListener("change", applyFilters);
       $("#filterUbicacion").addEventListener("change", applyFilters);
+      $("#filterGil").addEventListener("change", applyFilters);
 
       $("#itemsPerPage").addEventListener("change", (e) => {
         itemsPerPage = Number(e.target.value);
@@ -3197,6 +3203,7 @@
       const tipo = $("#filterTipo").value;
       const estado = $("#filterEstado").value;
       const ubicacion = $("#filterUbicacion").value;
+      const filtroGil = $("#filterGil")?.value || "";
 
       filteredComputers = allComputers.filter(item => {
         const matchesTerm = !term || [
@@ -3226,7 +3233,13 @@
         const matchesEstado = !estado || item.estado === estado;
         const matchesUbicacion = !ubicacion || item.ubicacion === ubicacion;
 
-        return matchesTerm && matchesTipo && matchesEstado && matchesUbicacion;
+        const gilActualizo = wasUpdatedByGil(item);
+        const matchesGil =
+          !filtroGil ||
+          (filtroGil === "si" && gilActualizo) ||
+          (filtroGil === "no" && !gilActualizo);
+
+        return matchesTerm && matchesTipo && matchesEstado && matchesUbicacion && matchesGil;
       });
 
       if (resetPage) currentPage = 1;
@@ -3661,11 +3674,21 @@
       $("#filterTipo").value = "";
       $("#filterEstado").value = "";
       $("#filterUbicacion").value = "";
+
+      const filterGil = $("#filterGil");
+      if (filterGil) filterGil.value = "";
+
       applyFilters();
     }
 
     function hasActiveFilters() {
-      return Boolean($("#searchInput").value || $("#filterTipo").value || $("#filterEstado").value || $("#filterUbicacion").value);
+      return Boolean(
+        $("#searchInput").value ||
+        $("#filterTipo").value ||
+        $("#filterEstado").value ||
+        $("#filterUbicacion").value ||
+        $("#filterGil")?.value
+      );
     }
 
 
