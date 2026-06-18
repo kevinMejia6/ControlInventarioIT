@@ -28,6 +28,8 @@
 
   <!-- Exportar Excel -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <!-- Exportar Excel con fotos -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 
   <!-- Exportar PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -512,6 +514,10 @@
             <i data-lucide="users" class="h-5 w-5"></i>
             <span class="sidebar-collapse-hide">Gestionar usuarios</span>
           </button>
+          <button onclick="openLocationVisibilityModal()" class="sidebar-link w-full">
+            <i data-lucide="map-pin" class="h-5 w-5"></i>
+            <span class="sidebar-collapse-hide">Ubicaciones visibles</span>
+          </button>
         </div>
       </nav>
 
@@ -602,6 +608,11 @@
                     class="flex w-full items-center gap-2 px-4 py-2 text-sm font-bold text-blue-600 hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-500/10">
                     <i data-lucide="users" class="h-4 w-4"></i>
                     Gestionar usuarios
+                  </button>
+                  <button onclick="openLocationVisibilityModal()"
+                    class="flex w-full items-center gap-2 px-4 py-2 text-sm font-bold text-indigo-600 hover:bg-indigo-50 dark:text-indigo-300 dark:hover:bg-indigo-500/10">
+                    <i data-lucide="map-pin" class="h-4 w-4"></i>
+                    Ubicaciones visibles
                   </button>
                 </div>
 
@@ -1077,11 +1088,18 @@
         </section>
 
         <!-- Footer -->
-        <footer
-          class="rounded-[2rem] border border-slate-200 bg-white px-5 py-5 text-center shadow-soft dark:border-white/10 dark:bg-slate-900 sm:px-6">
-          <p class="text-sm font-bold text-slate-600 dark:text-slate-300">
-            © <span class="currentYear"></span> Creado por Kevin Eduardo
-          </p>
+        <footer class="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-soft dark:border-white/10 dark:bg-slate-900">
+          <div class="flex flex-col gap-4 px-5 py-5 text-center sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:text-left">
+            <div>
+              <p class="text-xs font-extrabold uppercase tracking-[0.22em] text-slate-400">Sistema de Inventario IT</p>
+              <p class="mt-1 text-sm font-bold text-slate-600 dark:text-slate-300">
+                Creado por <span class="font-extrabold text-slate-900 dark:text-white">Kevin Eduardo</span>
+              </p>
+            </div>
+            <div class="inline-flex items-center justify-center rounded-2xl bg-blue-50 px-4 py-2 text-sm font-extrabold text-blue-700 dark:bg-blue-500/10 dark:text-blue-300">
+              © <span class="currentYear"></span>
+            </div>
+          </div>
         </footer>
       </section>
     </main>
@@ -1423,6 +1441,19 @@
     ];
 
     let LOCATIONS = [...DEFAULT_LOCATIONS];
+    let LOCATION_CATALOG = DEFAULT_LOCATIONS.map(name => ({
+      id: "",
+      nombre: name,
+      nombreNormalizado: normalizeText(name),
+      esBase: true,
+      activo: true,
+      visibleParaUsuarios: true,
+      isFallback: true,
+    }));
+    let HIDDEN_LOCATION_KEYS = new Set();
+    let locationVisibilityReady = false;
+    let locationVisibilityNoticeTimer = null;
+    let rawInventoryRecords = [];
 
     /************************************************************
  * ESTADO GLOBAL
@@ -1668,6 +1699,7 @@
       localStorage.setItem(MODULE_KEY, currentModule);
       activeCollection = getCurrentCollection();
 
+      rawInventoryRecords = [];
       allComputers = [];
       filteredComputers = [];
       currentPage = 1;
@@ -1918,9 +1950,9 @@
     }
 
     function displayUserInfo(user) {
-      const name = user.userName || "Usuario";
-      const email = user.userEmail || "Sin correo";
-      const role = user.userRole || "Usuario";
+      const name = user.userName || user.nombre || user.name || "Usuario";
+      const email = user.userEmail || user.email || user.correo || "Sin correo";
+      const role = getUserRole(user) || "Usuario";
 
       $("#headerUserName").textContent = name;
       $("#headerUserRole").textContent = role;
@@ -1940,16 +1972,41 @@
       $("#userInitials").textContent = initials;
     }
 
+    function getUserRole(user = {}) {
+      return String(
+        user.userRole ||
+        user.rol ||
+        user.role ||
+        user.tipoUsuario ||
+        user.tipo ||
+        "Usuario"
+      ).trim();
+    }
+
+    function isAdminUser(user = {}) {
+      const role = normalizeText(getUserRole(user));
+
+      return Boolean(
+        role === "administrador" ||
+        role === "admin" ||
+        user.hasAdminPermission === true ||
+        user.isAdmin === true ||
+        user.admin === true
+      );
+    }
+
     function configureAdminElements(user) {
-      const isAdmin = user.userRole === "Administrador" || user.hasAdminPermission === true;
-      $$("[data-admin-only='true']").forEach(el => {
+      const isAdmin = isAdminUser(user);
+
+      $$('[data-admin-only="true"]').forEach(el => {
         el.classList.toggle("hidden", !isAdmin);
       });
+
+      renderLocationVisibilityPanel();
     }
 
     function isCurrentUserAdmin() {
-      const user = getCurrentUser();
-      return Boolean(user && (user.userRole === "Administrador" || user.hasAdminPermission === true));
+      return isAdminUser(getCurrentUser());
     }
 
     function redirectToCreateUser() {
@@ -1980,6 +2037,17 @@
       $("#filterEstado").addEventListener("change", applyFilters);
       $("#filterUbicacion").addEventListener("change", applyFilters);
       $("#filterGil").addEventListener("change", applyFilters);
+
+      document.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-location-visibility-toggle]");
+        if (!button) return;
+
+        toggleLocationUserVisibility(
+          button.dataset.locationId || "",
+          button.dataset.locationName || "",
+          button.dataset.visible === "true"
+        );
+      });
 
       $("#itemsPerPage").addEventListener("change", (e) => {
         itemsPerPage = Number(e.target.value);
@@ -2597,8 +2665,11 @@
           nombreNormalizado: "",
           esBase: true,
           activo: true,
+          visibleParaUsuarios: true,
           createdAt: null,
           createdBy: "",
+          updatedAt: null,
+          updatedBy: "",
         }),
         ensureCollectionSchema("estados", {
           nombre: "",
@@ -2686,6 +2757,7 @@
           nombreNormalizado: normalizedName,
           esBase: true,
           activo: true,
+          visibleParaUsuarios: true,
           createdAt: firebase.firestore.FieldValue.serverTimestamp(),
           createdBy: "sistema",
         });
@@ -2718,6 +2790,167 @@
       return Array.from(map.values()).sort((a, b) => a.localeCompare(b, "es"));
     }
 
+    function createFallbackLocationCatalog() {
+      return DEFAULT_LOCATIONS.map(name => ({
+        id: "",
+        nombre: name,
+        nombreNormalizado: normalizeText(name),
+        esBase: true,
+        activo: true,
+        visibleParaUsuarios: true,
+        isFallback: true,
+      }));
+    }
+
+    function normalizeLocationDoc(doc) {
+      const data = doc.data() || {};
+      const cleanName = String(data.nombre || "").trim();
+      if (!cleanName || data.activo === false) return null;
+
+      return {
+        id: doc.id,
+        ...data,
+        nombre: cleanName,
+        nombreNormalizado: data.nombreNormalizado || normalizeText(cleanName),
+        visibleParaUsuarios: data.visibleParaUsuarios !== false,
+      };
+    }
+
+    function mergeLocationCatalog(items = []) {
+      const map = new Map();
+
+      items.forEach(item => {
+        const cleanName = String(item?.nombre || "").trim();
+        if (!cleanName) return;
+
+        const key = normalizeText(item.nombreNormalizado || cleanName);
+        if (!map.has(key)) {
+          map.set(key, {
+            ...item,
+            nombre: cleanName,
+            nombreNormalizado: key,
+            visibleParaUsuarios: item.visibleParaUsuarios !== false,
+          });
+          return;
+        }
+
+        const current = map.get(key);
+        map.set(key, {
+          ...current,
+          ...item,
+          nombre: current.nombre || cleanName,
+          nombreNormalizado: key,
+          visibleParaUsuarios: current.visibleParaUsuarios !== false && item.visibleParaUsuarios !== false,
+        });
+      });
+
+      return Array.from(map.values()).sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+    }
+
+    function updateLocationVisibilityState(catalog = []) {
+      LOCATION_CATALOG = mergeLocationCatalog([
+        ...createFallbackLocationCatalog(),
+        ...catalog,
+      ]);
+      HIDDEN_LOCATION_KEYS = new Set(
+        LOCATION_CATALOG
+          .filter(location => location.visibleParaUsuarios === false)
+          .map(location => normalizeText(location.nombreNormalizado || location.nombre))
+      );
+
+      const selectableLocations = LOCATION_CATALOG
+        .filter(location => isCurrentUserAdmin() || location.visibleParaUsuarios !== false)
+        .map(location => location.nombre);
+
+      LOCATIONS = selectableLocations.length
+        ? mergeUniqueLocations([], selectableLocations)
+        : [];
+    }
+
+    function isLocationVisibleToCurrentUser(locationName) {
+      if (isCurrentUserAdmin()) return true;
+      if (!locationVisibilityReady) return false;
+
+      const key = normalizeText(locationName);
+      if (!key) return false;
+
+      return !HIDDEN_LOCATION_KEYS.has(key);
+    }
+
+    function getVisibleInventoryRecords(records = rawInventoryRecords) {
+      if (isCurrentUserAdmin()) return [...records];
+
+      return records.filter(item => isLocationVisibleToCurrentUser(item.ubicacion));
+    }
+
+    function syncVisibleInventoryFromRaw(resetPage = false) {
+      allComputers = getVisibleInventoryRecords();
+      scheduleApplyFilters(resetPage);
+    }
+
+    function renderLocationVisibilityPanel() {
+      const list = $("#locationVisibilityModalList");
+      const summary = $("#locationVisibilityModalSummary");
+      if (!list || !summary) return;
+
+      if (!isCurrentUserAdmin()) {
+        list.innerHTML = "";
+        summary.textContent = "";
+        return;
+      }
+
+      const catalog = LOCATION_CATALOG.length ? LOCATION_CATALOG : createFallbackLocationCatalog();
+      const visibleCount = catalog.filter(location => location.visibleParaUsuarios !== false).length;
+      const hiddenCount = catalog.length - visibleCount;
+
+      summary.textContent = `${visibleCount} visibles para usuarios / ${hiddenCount} ocultas`;
+
+      if (!catalog.length) {
+        list.innerHTML = `
+          <div class="rounded-2xl border border-dashed border-slate-300 p-5 text-center text-sm font-bold text-slate-500 dark:border-white/10 dark:text-slate-400">
+            No hay ubicaciones registradas.
+          </div>
+        `;
+        refreshIcons();
+        return;
+      }
+
+      list.innerHTML = catalog.map(location => {
+        const isVisible = location.visibleParaUsuarios !== false;
+        const statusClass = isVisible
+          ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
+          : "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300";
+        const buttonClass = isVisible
+          ? "bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-500/10 dark:text-red-300 dark:hover:bg-red-500/20"
+          : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/20";
+
+        return `
+          <article class="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/5">
+            <div class="min-w-0">
+              <p class="truncate text-sm font-extrabold text-slate-900 dark:text-white" title="${escapeAttr(location.nombre)}">${escapeHTML(location.nombre)}</p>
+              <span class="mt-2 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-extrabold ${statusClass}">
+                <i data-lucide="${isVisible ? "eye" : "eye-off"}" class="h-3.5 w-3.5"></i>
+                ${isVisible ? "Visible para usuarios" : "Oculta para usuarios"}
+              </span>
+            </div>
+            <button
+              type="button"
+              data-location-visibility-toggle="true"
+              data-location-id="${escapeAttr(location.id || "")}"
+              data-location-name="${escapeAttr(location.nombre)}"
+              data-visible="${isVisible ? "false" : "true"}"
+              class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition ${buttonClass}"
+              title="${isVisible ? "Ocultar a usuarios" : "Mostrar a usuarios"}"
+            >
+              <i data-lucide="${isVisible ? "eye-off" : "eye"}" class="h-4 w-4"></i>
+            </button>
+          </article>
+        `;
+      }).join("");
+
+      refreshIcons();
+    }
+
     function loadLocationsRealtime() {
       if (unsubscribeLocations) unsubscribeLocations();
 
@@ -2725,21 +2958,22 @@
         .orderBy("nombre", "asc")
         .onSnapshot(snapshot => {
           const customLocations = snapshot.docs
-            .map(doc => doc.data())
-            .filter(item => item.activo !== false)
-            .map(item => item.nombre)
+            .map(normalizeLocationDoc)
             .filter(Boolean);
 
-          LOCATIONS = customLocations.length
-            ? mergeUniqueLocations([], customLocations)
-            : [...DEFAULT_LOCATIONS];
+          locationVisibilityReady = true;
+          updateLocationVisibilityState(customLocations);
           fillSelects();
-          scheduleApplyFilters(false);
+          syncVisibleInventoryFromRaw(false);
+          renderLocationVisibilityPanel();
           refreshIcons();
         }, error => {
           console.error(error);
-          LOCATIONS = [...DEFAULT_LOCATIONS];
+          locationVisibilityReady = true;
+          updateLocationVisibilityState(createFallbackLocationCatalog());
           fillSelects();
+          syncVisibleInventoryFromRaw(false);
+          renderLocationVisibilityPanel();
           showToast("warning", "Ubicaciones", "No se pudieron cargar las ubicaciones personalizadas.");
         });
     }
@@ -2765,7 +2999,9 @@
             return "La ubicación debe tener al menos 3 caracteres.";
           }
 
-          const exists = LOCATIONS.some(location => normalizeText(location) === normalizeText(locationName));
+          const normalizedLocationName = normalizeText(locationName);
+          const exists = LOCATION_CATALOG.some(location => normalizeText(location.nombre) === normalizedLocationName) ||
+            LOCATIONS.some(location => normalizeText(location) === normalizedLocationName);
           if (exists) {
             return "Esa ubicación ya existe.";
           }
@@ -2796,6 +3032,7 @@
           nombreNormalizado: normalizeText(locationName),
           esBase: false,
           activo: true,
+          visibleParaUsuarios: true,
           createdAt: firebase.firestore.FieldValue.serverTimestamp(),
           createdBy: getCurrentUser()?.userEmail || "",
         });
@@ -2816,6 +3053,162 @@
         Swal.close();
         showToast("error", "Error", error.message || "No se pudo guardar la ubicación.");
       }
+    }
+
+    function openLocationVisibilityModal() {
+      if (!isCurrentUserAdmin()) {
+        showToast("warning", "Sin permisos", "Solo los administradores pueden cambiar la visibilidad.");
+        return;
+      }
+
+      Swal.fire({
+        title: "Ubicaciones visibles",
+        html: `
+          <div class="text-left">
+            <div class="mb-4 flex flex-col justify-between gap-3 rounded-2xl bg-slate-50 p-4 dark:bg-slate-800 sm:flex-row sm:items-center">
+              <p id="locationVisibilityModalSummary" class="text-sm font-bold text-slate-600 dark:text-slate-300">Cargando ubicaciones...</p>
+              <button type="button" onclick="showLocationVisibilityHelp()"
+                class="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-50 px-3 py-2 text-xs font-extrabold text-blue-700 transition hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-300 dark:hover:bg-blue-500/20">
+                <i data-lucide="shield-check" class="h-4 w-4"></i>
+                Control usuarios
+              </button>
+            </div>
+            <div id="locationVisibilityModalNotice" class="mb-4 hidden rounded-2xl px-4 py-3 text-sm font-bold"></div>
+            <div id="locationVisibilityModalList" class="grid max-h-[60vh] gap-3 overflow-y-auto pr-1 sm:grid-cols-2">
+              <div class="rounded-2xl border border-dashed border-slate-300 p-5 text-center text-sm font-bold text-slate-500 dark:border-white/10 dark:text-slate-400">
+                Cargando ubicaciones...
+              </div>
+            </div>
+          </div>
+        `,
+        width: "64rem",
+        confirmButtonText: "Cerrar",
+        confirmButtonColor: "#2563eb",
+        didOpen: () => {
+          renderLocationVisibilityPanel();
+          refreshIcons();
+        },
+      });
+    }
+
+    function showLocationVisibilityNotice(type, message) {
+      const notice = $("#locationVisibilityModalNotice");
+      if (!notice) return false;
+
+      const styles = {
+        success: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300",
+        error: "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300",
+        warning: "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300",
+        info: "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300",
+      };
+      const icons = {
+        success: "check-circle-2",
+        error: "x-circle",
+        warning: "alert-triangle",
+        info: "info",
+      };
+
+      notice.className = `mb-4 rounded-2xl px-4 py-3 text-sm font-bold ${styles[type] || styles.info}`;
+      notice.innerHTML = `
+        <div class="flex items-start gap-2">
+          <i data-lucide="${icons[type] || icons.info}" class="mt-0.5 h-4 w-4 shrink-0"></i>
+          <span>${escapeHTML(message)}</span>
+        </div>
+      `;
+      notice.classList.remove("hidden");
+      refreshIcons();
+
+      if (locationVisibilityNoticeTimer) clearTimeout(locationVisibilityNoticeTimer);
+      locationVisibilityNoticeTimer = setTimeout(() => {
+        if (notice) notice.classList.add("hidden");
+      }, 3500);
+
+      return true;
+    }
+
+    function showLocationVisibilityHelp() {
+      const helpText = "El administrador siempre ve todas las ubicaciones. Los usuarios solo veran registros de ubicaciones marcadas como visibles.";
+      if (showLocationVisibilityNotice("info", helpText)) return;
+
+      Swal.fire({
+        icon: "info",
+        title: "Visibilidad para usuarios",
+        text: helpText,
+        confirmButtonText: "Entendido",
+        confirmButtonColor: "#2563eb",
+      });
+    }
+
+    async function toggleLocationUserVisibility(locationId, locationName, visibleForUsers) {
+      if (!isCurrentUserAdmin()) {
+        if (!showLocationVisibilityNotice("warning", "Solo los administradores pueden cambiar la visibilidad.")) {
+          showToast("warning", "Sin permisos", "Solo los administradores pueden cambiar la visibilidad.");
+        }
+        return;
+      }
+
+      const cleanName = String(locationName || "").trim();
+      if (!cleanName) {
+        if (!showLocationVisibilityNotice("warning", "No se encontro la ubicacion seleccionada.")) {
+          showToast("warning", "Ubicacion", "No se encontro la ubicacion seleccionada.");
+        }
+        return;
+      }
+
+      try {
+        await saveLocationVisibility(locationId, cleanName, visibleForUsers);
+        const message = visibleForUsers
+          ? "Los usuarios podran ver esos registros."
+          : "Los usuarios ya no veran esos registros.";
+
+        if (!showLocationVisibilityNotice("success", message)) {
+          showToast("success", "Ubicacion actualizada", message);
+        }
+      } catch (error) {
+        console.error(error);
+        const message = error.message || "No se pudo actualizar la visibilidad.";
+        if (!showLocationVisibilityNotice("error", message)) {
+          showToast("error", "Error", message);
+        }
+      }
+    }
+
+    async function saveLocationVisibility(locationId, locationName, visibleForUsers) {
+      const userEmail = getCurrentUser()?.userEmail || "";
+      const payload = {
+        visibleParaUsuarios: Boolean(visibleForUsers),
+        activo: true,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        updatedBy: userEmail,
+      };
+
+      if (locationId) {
+        await ubicacionesCollection.doc(locationId).set(payload, { merge: true });
+        return;
+      }
+
+      const normalizedName = normalizeText(locationName);
+      const existing = await ubicacionesCollection
+        .where("nombreNormalizado", "==", normalizedName)
+        .limit(1)
+        .get();
+
+      if (!existing.empty) {
+        await ubicacionesCollection.doc(existing.docs[0].id).set(payload, { merge: true });
+        return;
+      }
+
+      await ubicacionesCollection.add({
+        nombre: locationName,
+        nombreNormalizado: normalizedName,
+        esBase: DEFAULT_LOCATIONS.some(location => normalizeText(location) === normalizedName),
+        activo: true,
+        visibleParaUsuarios: Boolean(visibleForUsers),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        createdBy: userEmail || "sistema",
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        updatedBy: userEmail,
+      });
     }
 
 
@@ -3095,7 +3488,8 @@
           const changes = snapshot.docChanges();
 
           // Mapeo simple y una sola actualización visual por frame.
-          allComputers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          rawInventoryRecords = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          allComputers = getVisibleInventoryRecords(rawInventoryRecords);
 
           // Migración automática de fotos viejas en segundo plano.
           // Nota: la primera carga todavía puede sentirse pesada si los documentos antiguos
@@ -4538,52 +4932,359 @@
       }));
     }
 
-    function exportExcel() {
-      const data = getCleanExportData();
+    async function askExportWithPhotos(fileType = "archivo") {
+      const result = await Swal.fire({
+        title: `¿Descargar ${fileType} con fotos?`,
+        html: `
+          <div class="text-left text-sm leading-6 text-slate-600">
+            <p>Elige cómo deseas generar el documento:</p>
+            <div class="mt-3 rounded-2xl bg-blue-50 p-3 text-blue-800">
+              <b>Con fotos:</b> incluirá imágenes del equipo en el reporte.
+            </div>
+            <div class="mt-2 rounded-2xl bg-slate-50 p-3 text-slate-700">
+              <b>Sin fotos:</b> generará el archivo más rápido y liviano.
+            </div>
+          </div>
+        `,
+        icon: "question",
+        showCancelButton: true,
+        showDenyButton: true,
+        confirmButtonText: "Con fotos",
+        denyButtonText: "Sin fotos",
+        cancelButtonText: "Cancelar",
+        confirmButtonColor: "#2563eb",
+        denyButtonColor: "#475569",
+      });
 
-      if (!data.length) {
+      if (result.isConfirmed) return true;
+      if (result.isDenied) return false;
+      return null;
+    }
+
+    async function getExportDataWithPhotos(includePhotos = false) {
+      const data = getExportData();
+
+      if (!includePhotos) return data;
+
+      showRecordsLoader("Cargando fotos para exportar...");
+
+      try {
+        const dataWithPhotos = await Promise.all(
+          data.map(async item => {
+            const photos = await getStoredPhotos(item);
+            return {
+              ...item,
+              __exportPhotos: photos,
+            };
+          })
+        );
+
+        return dataWithPhotos;
+      } finally {
+        hideRecordsLoader();
+      }
+    }
+
+    function getImageExtension(photo = {}) {
+      const value = String(photo.tipo || photo.url || photo.base64 || "").toLowerCase();
+
+      if (value.includes("png")) return "png";
+      if (value.includes("webp")) return "webp";
+
+      return "jpeg";
+    }
+
+    function getImageFormatForPDF(photo = {}) {
+      const extension = getImageExtension(photo);
+
+      if (extension === "png") return "PNG";
+      if (extension === "webp") return "WEBP";
+
+      return "JPEG";
+    }
+
+    function getImageBase64(photo = {}) {
+      return photo.url || photo.base64 || "";
+    }
+
+    async function exportExcel() {
+      const includePhotos = await askExportWithPhotos("Excel");
+
+      if (includePhotos === null) return;
+
+      const rawData = await getExportDataWithPhotos(includePhotos);
+
+      if (!rawData.length) {
         showToast("info", "Sin datos", "No hay registros para exportar.");
         return;
       }
 
-      if (!window.XLSX) {
-        showToast("error", "Librería no cargada", "No se pudo cargar la librería de Excel.");
+      if (!includePhotos) {
+        const data = getCleanExportData();
+
+        if (!window.XLSX) {
+          showToast("error", "Librería no cargada", "No se pudo cargar la librería de Excel.");
+          return;
+        }
+
+        const worksheet = XLSX.utils.json_to_sheet(data);
+
+        worksheet["!cols"] = [
+          { wch: 16 },
+          { wch: 18 },
+          { wch: 18 },
+          { wch: 22 },
+          { wch: 28 },
+          { wch: 12 },
+          { wch: 18 },
+          { wch: 24 },
+          { wch: 24 },
+          { wch: 14 },
+          { wch: 18 },
+          { wch: 24 },
+          { wch: 22 },
+          { wch: 22 },
+          { wch: 24 },
+          { wch: 35 },
+          { wch: 10 },
+        ];
+
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Inventario");
+        XLSX.writeFile(workbook, `inventario_${getModuleConfig().collectionName}_${todayFileName()}.xlsx`);
+
+        showToast("success", "Exportado", "El archivo Excel fue generado correctamente.");
         return;
       }
 
-      const worksheet = XLSX.utils.json_to_sheet(data);
+      if (!window.ExcelJS) {
+        showToast("error", "Librería no cargada", "No se pudo cargar ExcelJS para exportar con fotos.");
+        return;
+      }
 
-      worksheet["!cols"] = [
-        { wch: 16 },
-        { wch: 18 },
-        { wch: 18 },
-        { wch: 22 },
-        { wch: 28 },
-        { wch: 12 },
-        { wch: 18 },
-        { wch: 24 },
-        { wch: 24 },
-        { wch: 14 },
-        { wch: 18 },
-        { wch: 24 },
-        { wch: 22 },
-        { wch: 22 },
-        { wch: 24 },
-        { wch: 35 },
-        { wch: 10 },
-      ];
+      showRecordsLoader("Generando Excel con fotos...");
 
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Inventario");
-      XLSX.writeFile(workbook, `inventario_${getModuleConfig().collectionName}_${todayFileName()}.xlsx`);
+      try {
+        const workbook = new ExcelJS.Workbook();
+        workbook.creator = "Inventario IT";
+        workbook.created = new Date();
 
-      showToast("success", "Exportado", "El archivo Excel fue generado correctamente.");
+        const worksheet = workbook.addWorksheet("Inventario");
+
+        worksheet.columns = [
+          { header: "Código", key: "codigo", width: 18 },
+          { header: "Tipo", key: "tipoEquipo", width: 22 },
+          { header: "Marca", key: "marca", width: 20 },
+          { header: "Modelo", key: "modelo", width: 24 },
+          { header: "Procesador", key: "procesador", width: 28 },
+          { header: "RAM", key: "ram", width: 12 },
+          { header: "Almacenamiento", key: "almacenamiento", width: 18 },
+          { header: "Estado", key: "estado", width: 24 },
+          { header: "Ubicación", key: "ubicacion", width: 26 },
+          { header: "Fecha", key: "fecha", width: 16 },
+          { header: "Precio estimado", key: "precioEstimado", width: 18 },
+          { header: "Actualizado por Gil", key: "actualizadoPorGil", width: 22 },
+          { header: "Actualizado por", key: "updatedBy", width: 28 },
+          { header: "Notas", key: "notas", width: 35 },
+          { header: "Cantidad fotos", key: "fotoCount", width: 16 },
+          { header: "Foto 1", key: "foto1", width: 18 },
+          { header: "Foto 2", key: "foto2", width: 18 },
+          { header: "Foto 3", key: "foto3", width: 18 },
+        ];
+
+        worksheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
+        worksheet.getRow(1).height = 24;
+        worksheet.getRow(1).eachCell(cell => {
+          cell.fill = {
+            type: "pattern",
+            pattern: "solid",
+            fgColor: { argb: "FF2563EB" },
+          };
+          cell.alignment = { vertical: "middle", horizontal: "center", wrapText: true };
+        });
+
+        rawData.forEach((item) => {
+          const photos = Array.isArray(item.__exportPhotos) ? item.__exportPhotos : [];
+
+          const row = worksheet.addRow({
+            codigo: item.codigo || "",
+            tipoEquipo: item.tipoEquipo || "",
+            marca: item.marca || "",
+            modelo: item.modelo || "",
+            procesador: item.procesador || "",
+            ram: `${Number(item.ram || 0)} GB`,
+            almacenamiento: `${Number(item.almacenamiento || 0)} GB`,
+            estado: item.estado || "",
+            ubicacion: item.ubicacion || "",
+            fecha: formatDate(item.fecha),
+            precioEstimado: Number(item.precioEstimado || 0),
+            actualizadoPorGil: wasUpdatedByGil(item) ? "Sí" : "No",
+            updatedBy: item.updatedBy || "",
+            notas: item.notas || "",
+            fotoCount: photos.length,
+            foto1: photos[0] ? "Foto incluida" : "",
+            foto2: photos[1] ? "Foto incluida" : "",
+            foto3: photos[2] ? "Foto incluida" : "",
+          });
+
+          row.height = photos.length ? 72 : 22;
+
+          photos.slice(0, 3).forEach((photo, photoIndex) => {
+            const base64 = getImageBase64(photo);
+            if (!base64) return;
+
+            try {
+              const imageId = workbook.addImage({
+                base64,
+                extension: getImageExtension(photo),
+              });
+
+              const columnIndex = 15 + photoIndex;
+
+              worksheet.addImage(imageId, {
+                tl: {
+                  col: columnIndex,
+                  row: row.number - 1,
+                },
+                ext: {
+                  width: 86,
+                  height: 62,
+                },
+              });
+            } catch (error) {
+              console.warn("No se pudo agregar una foto al Excel:", error);
+            }
+          });
+        });
+
+        worksheet.eachRow((row) => {
+          row.eachCell((cell) => {
+            cell.alignment = {
+              vertical: "middle",
+              wrapText: true,
+            };
+          });
+        });
+
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], {
+          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        });
+
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `inventario_${getModuleConfig().collectionName}_con_fotos_${todayFileName()}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+
+        showToast("success", "Exportado", "El archivo Excel con fotos fue generado correctamente.");
+      } catch (error) {
+        console.error(error);
+        showToast("error", "Error", error.message || "No se pudo generar el Excel con fotos.");
+      } finally {
+        hideRecordsLoader();
+      }
     }
 
-    function exportPDF() {
-      const data = getCleanExportData();
+    function normalizePdfImageFormat(photo = {}) {
+      const value = String(photo.tipo || photo.url || photo.base64 || "").toLowerCase();
+      if (value.includes("png")) return "PNG";
+      return "JPEG";
+    }
 
-      if (!data.length) {
+    function getValidPhotoDataUrl(photo = {}) {
+      const img = String(photo.url || photo.base64 || "").trim();
+      if (!img) return "";
+
+      // jsPDF trabaja mejor con DataURL base64.
+      if (img.startsWith("data:image/")) return img;
+
+      // Compatibilidad por si en algún registro quedó solo el base64 sin encabezado.
+      if (img.length > 200 && !img.startsWith("http")) {
+        return `data:image/jpeg;base64,${img}`;
+      }
+
+      return "";
+    }
+
+    function getPdfImageDimensions(dataUrl) {
+      return new Promise((resolve) => {
+        if (!dataUrl) {
+          resolve(null);
+          return;
+        }
+
+        const image = new Image();
+        image.onload = () => {
+          resolve({
+            width: image.naturalWidth || image.width || 1,
+            height: image.naturalHeight || image.height || 1,
+          });
+        };
+        image.onerror = () => resolve(null);
+        image.src = dataUrl;
+      });
+    }
+
+    async function addPdfImageContainSafe(doc, photo, x, y, boxWidth, boxHeight) {
+      const img = getValidPhotoDataUrl(photo);
+      if (!img) return false;
+
+      try {
+        const dimensions = await getPdfImageDimensions(img);
+        let drawWidth = boxWidth;
+        let drawHeight = boxHeight;
+
+        if (dimensions?.width && dimensions?.height) {
+          const imageRatio = dimensions.width / dimensions.height;
+          const boxRatio = boxWidth / boxHeight;
+
+          if (imageRatio > boxRatio) {
+            drawWidth = boxWidth;
+            drawHeight = boxWidth / imageRatio;
+          } else {
+            drawHeight = boxHeight;
+            drawWidth = boxHeight * imageRatio;
+          }
+        }
+
+        const drawX = x + (boxWidth - drawWidth) / 2;
+        const drawY = y + (boxHeight - drawHeight) / 2;
+
+        // Fondo blanco + borde del marco. La foto queda centrada sin deformarse.
+        doc.setDrawColor(203, 213, 225);
+        doc.setFillColor(255, 255, 255);
+        doc.roundedRect(x, y, boxWidth, boxHeight, 1.5, 1.5, "FD");
+
+        doc.addImage(img, normalizePdfImageFormat(photo), drawX, drawY, drawWidth, drawHeight, undefined, "FAST");
+        return true;
+      } catch (error) {
+        console.warn("No se pudo agregar foto al PDF:", error);
+        return false;
+      }
+    }
+
+    function addPdfFooter(doc) {
+      const pageSize = doc.internal.pageSize;
+      const pageHeight = pageSize.height || pageSize.getHeight();
+      const pageWidth = pageSize.width || pageSize.getWidth();
+
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Página ${doc.internal.getNumberOfPages()}`, pageWidth - 25, pageHeight - 8);
+    }
+
+    async function exportPDF() {
+      const includePhotos = await askExportWithPhotos("PDF");
+
+      if (includePhotos === null) return;
+
+      const rawData = await getExportDataWithPhotos(includePhotos);
+
+      if (!rawData.length) {
         showToast("info", "Sin datos", "No hay registros para exportar.");
         return;
       }
@@ -4593,114 +5294,227 @@
         return;
       }
 
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF({
-        orientation: "landscape",
-        unit: "mm",
-        format: "a4",
-      });
+      showRecordsLoader(includePhotos ? "Generando PDF con fotos..." : "Generando PDF...");
 
-      const title = getModuleConfig().title;
-      const exportDate = new Date().toLocaleDateString("es-SV");
+      try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({
+          orientation: "landscape",
+          unit: "mm",
+          format: "a4",
+        });
 
-      doc.setFontSize(16);
-      doc.setFont("helvetica", "bold");
-      doc.text(title, 14, 15);
+        const title = getModuleConfig().title;
+        const exportDate = new Date().toLocaleDateString("es-SV");
 
-      doc.setFontSize(9);
-      doc.setFont("helvetica", "normal");
-      doc.text(`Fecha de exportación: ${exportDate}`, 14, 21);
-      doc.text(`Total registros: ${data.length}`, 14, 26);
+        doc.setFontSize(16);
+        doc.setFont("helvetica", "bold");
+        doc.text(title, 14, 15);
 
-      const headers = [[
-        "Código",
-        "Tipo",
-        "Marca",
-        "Modelo",
-        "Procesador",
-        "RAM",
-        "Almacen.",
-        "Estado",
-        "Ubicación",
-        "Fecha",
-        "Precio",
-        "Actualizado Gil",
-        "Actualizado por",
-        "Fecha Gil",
-        "Notas",
-        "Fotos",
-      ]];
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        doc.text(`Fecha de exportación: ${exportDate}`, 14, 21);
+        doc.text(`Total registros: ${rawData.length}`, 14, 26);
+        doc.text(`Fotos: ${includePhotos ? "Incluidas" : "No incluidas"}`, 14, 31);
 
-      const body = data.map(item => [
-        item["Código"],
-        item["Tipo"],
-        item["Marca"],
-        item["Modelo"],
-        item["Procesador"],
-        item["RAM"],
-        item["Almacenamiento"],
-        item["Estado"],
-        item["Ubicación"],
-        item["Fecha"],
-        formatMoney(item["Precio estimado"]),
-        item["Actualizado por Gil"],
-        item["Actualizado por"],
-        item["Actualizado por Gil el"],
-        item["Notas"],
-        item["Fotos"],
-      ]);
+        if (!includePhotos) {
+          const headers = [[
+            "Código",
+            "Tipo",
+            "Marca",
+            "Modelo",
+            "Procesador",
+            "RAM",
+            "Almacen.",
+            "Estado",
+            "Ubicación",
+            "Fecha",
+            "Precio",
+            "Actualizado Gil",
+            "Actualizado por",
+            "Fecha Gil",
+            "Notas",
+            "Fotos",
+          ]];
 
-      doc.autoTable({
-        head: headers,
-        body,
-        startY: 32,
-        styles: {
-          fontSize: 7,
-          cellPadding: 2,
-          overflow: "linebreak",
-        },
-        headStyles: {
-          fillColor: [37, 99, 235],
-          textColor: 255,
-          fontStyle: "bold",
-        },
-        alternateRowStyles: {
-          fillColor: [245, 247, 250],
-        },
-        columnStyles: {
-          0: { cellWidth: 18 },
-          1: { cellWidth: 20 },
-          2: { cellWidth: 20 },
-          3: { cellWidth: 24 },
-          4: { cellWidth: 26 },
-          5: { cellWidth: 14 },
-          6: { cellWidth: 18 },
-          7: { cellWidth: 24 },
-          8: { cellWidth: 24 },
-          9: { cellWidth: 16 },
-          10: { cellWidth: 18 },
-          11: { cellWidth: 18 },
-          12: { cellWidth: 18 },
-          13: { cellWidth: 18 },
-          14: { cellWidth: 28 },
-          15: { cellWidth: 12 },
-        },
-        didDrawPage: function () {
-          const pageSize = doc.internal.pageSize;
-          const pageHeight = pageSize.height || pageSize.getHeight();
-          const pageWidth = pageSize.width || pageSize.getWidth();
+          const body = rawData.map(item => {
+            const photoCount = Array.isArray(item.fotos) && item.fotos.length ? item.fotos.length : Number(item.fotoCount || 0);
 
-          doc.setFontSize(8);
-          doc.text(
-            `Página ${doc.internal.getNumberOfPages()}`,
-            pageWidth - 25,
-            pageHeight - 8
-          );
-        },
-      });
+            return [
+              item.codigo || "",
+              item.tipoEquipo || "",
+              item.marca || "",
+              item.modelo || "",
+              item.procesador || "",
+              `${Number(item.ram || 0)} GB`,
+              `${Number(item.almacenamiento || 0)} GB`,
+              item.estado || "",
+              item.ubicacion || "",
+              formatDate(item.fecha),
+              formatMoney(item.precioEstimado),
+              wasUpdatedByGil(item) ? "Sí" : "No",
+              item.updatedBy || "",
+              wasUpdatedByGil(item) ? formatFirestoreDateTime(item.actualizadoPorGilAt || item.updatedAt) : "",
+              item.notas || "",
+              photoCount,
+            ];
+          });
 
-      doc.save(`inventario_${getModuleConfig().collectionName}_${todayFileName()}.pdf`);
-      showToast("success", "Exportado", "El archivo PDF fue generado correctamente.");
+          doc.autoTable({
+            head: headers,
+            body,
+            startY: 37,
+            styles: {
+              fontSize: 6.5,
+              cellPadding: 2,
+              overflow: "linebreak",
+              valign: "middle",
+            },
+            headStyles: {
+              fillColor: [37, 99, 235],
+              textColor: 255,
+              fontStyle: "bold",
+            },
+            alternateRowStyles: {
+              fillColor: [245, 247, 250],
+            },
+            columnStyles: {
+              0: { cellWidth: 18 },
+              1: { cellWidth: 20 },
+              2: { cellWidth: 20 },
+              3: { cellWidth: 24 },
+              4: { cellWidth: 26 },
+              5: { cellWidth: 14 },
+              6: { cellWidth: 18 },
+              7: { cellWidth: 24 },
+              8: { cellWidth: 24 },
+              9: { cellWidth: 16 },
+              10: { cellWidth: 18 },
+              11: { cellWidth: 18 },
+              12: { cellWidth: 18 },
+              13: { cellWidth: 18 },
+              14: { cellWidth: 28 },
+              15: { cellWidth: 12 },
+            },
+            didDrawPage: function () {
+              addPdfFooter(doc);
+            },
+          });
+        } else {
+          // Reporte con fotos visibles: cada registro se imprime como ficha.
+          // Corrección: las fotos se acomodan máximo 4 por fila para que no se salgan de la hoja A4 horizontal.
+          let y = 39;
+          const pageWidth = doc.internal.pageSize.getWidth();
+          const pageHeight = doc.internal.pageSize.getHeight();
+          const marginX = 14;
+          const cardWidth = pageWidth - 28;
+          const innerPadding = 4;
+          const photosPerRow = 4;
+          const imageGap = 7;
+          const imageWidth = (cardWidth - (innerPadding * 2) - (imageGap * (photosPerRow - 1))) / photosPerRow;
+          const imageHeight = 38;
+          const rowHeight = imageHeight + 12;
+          const maxPhotosPerItem = 8;
+
+          function ensureSpace(requiredHeight = 55) {
+            if (y + requiredHeight > pageHeight - 15) {
+              addPdfFooter(doc);
+              doc.addPage("a4", "landscape");
+              y = 16;
+            }
+          }
+
+          for (const [index, item] of rawData.entries()) {
+            const photos = Array.isArray(item.__exportPhotos) ? item.__exportPhotos : [];
+            const validPhotos = photos.filter(photo => getValidPhotoDataUrl(photo));
+            const visiblePhotos = validPhotos.slice(0, maxPhotosPerItem);
+            const notes = String(item.notas || "Sin notas");
+            const notesLines = doc.splitTextToSize(notes, 110);
+            const headerHeight = Math.max(28, 18 + Math.min(notesLines.length, 3) * 4);
+            const rowsCount = visiblePhotos.length ? Math.ceil(visiblePhotos.length / photosPerRow) : 1;
+            const photosHeight = visiblePhotos.length ? rowsCount * rowHeight : 10;
+            const extraTextHeight = validPhotos.length > maxPhotosPerItem ? 6 : 0;
+            const cardHeight = headerHeight + photosHeight + extraTextHeight + 8;
+
+            ensureSpace(cardHeight);
+
+            doc.setDrawColor(226, 232, 240);
+            doc.setFillColor(index % 2 === 0 ? 248 : 255, index % 2 === 0 ? 250 : 255, index % 2 === 0 ? 252 : 255);
+            doc.roundedRect(marginX, y, cardWidth, cardHeight, 3, 3, "FD");
+
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(15, 23, 42);
+            doc.text(`${item.codigo || "Sin código"} - ${item.marca || ""} ${item.modelo || ""}`.trim(), marginX + 4, y + 7);
+
+            doc.setFontSize(7.5);
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(71, 85, 105);
+            doc.text(`Tipo: ${item.tipoEquipo || "N/D"}`, marginX + 4, y + 13);
+            doc.text(`Estado: ${item.estado || "N/D"}`, marginX + 58, y + 13);
+            doc.text(`Ubicación: ${item.ubicacion || "N/D"}`, marginX + 112, y + 13);
+            doc.text(`Precio: ${formatMoney(item.precioEstimado)}`, marginX + 190, y + 13);
+            doc.text(`Fotos: ${validPhotos.length}`, marginX + 240, y + 13);
+
+            doc.setFont("helvetica", "bold");
+            doc.text("Notas:", marginX + 4, y + 20);
+            doc.setFont("helvetica", "normal");
+            doc.text(notesLines.slice(0, 3), marginX + 18, y + 20);
+
+            const imgStartY = y + headerHeight;
+
+            if (!visiblePhotos.length) {
+              doc.setFontSize(8);
+              doc.setTextColor(100, 116, 139);
+              doc.text("Sin fotos guardadas para este registro", marginX + 4, imgStartY + 5);
+            } else {
+              for (const [photoIndex, photo] of visiblePhotos.entries()) {
+                const row = Math.floor(photoIndex / photosPerRow);
+                const col = photoIndex % photosPerRow;
+                const imgX = marginX + innerPadding + col * (imageWidth + imageGap);
+                const imgY = imgStartY + row * rowHeight;
+                const added = await addPdfImageContainSafe(doc, photo, imgX, imgY, imageWidth, imageHeight);
+
+                doc.setFontSize(6);
+                doc.setTextColor(71, 85, 105);
+                const photoName = added ? (photo.nombre || `Foto ${photoIndex + 1}`) : `Foto ${photoIndex + 1} no compatible`;
+                const cleanPhotoName = String(photoName).length > 42 ? `${String(photoName).slice(0, 39)}...` : String(photoName);
+                doc.text(cleanPhotoName, imgX, imgY + imageHeight + 4, { maxWidth: imageWidth });
+              }
+
+              if (validPhotos.length > maxPhotosPerItem) {
+                const moreTextY = imgStartY + rowsCount * rowHeight + 1;
+                doc.setFontSize(7);
+                doc.setTextColor(71, 85, 105);
+                doc.text(`+${validPhotos.length - maxPhotosPerItem} foto(s) adicional(es)`, marginX + 4, moreTextY);
+              }
+            }
+
+            y += cardHeight + 5;
+          }
+
+          addPdfFooter(doc);
+        }
+
+        const fileName = includePhotos
+          ? `inventario_${getModuleConfig().collectionName}_con_fotos_${todayFileName()}.pdf`
+          : `inventario_${getModuleConfig().collectionName}_${todayFileName()}.pdf`;
+
+        doc.save(fileName);
+
+        showToast(
+          "success",
+          "Exportado",
+          includePhotos
+            ? "El archivo PDF con fotos fue generado correctamente."
+            : "El archivo PDF fue generado correctamente."
+        );
+      } catch (error) {
+        console.error(error);
+        showToast("error", "Error", error.message || "No se pudo generar el PDF.");
+      } finally {
+        hideRecordsLoader();
+      }
     }
 
     function downloadFile(content, filename, mimeType) {
