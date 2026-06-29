@@ -4985,6 +4985,207 @@
       }
     }
 
+    async function askCombinedExportOptions(fileType = "archivo") {
+      const locationOptions = [
+        `<option value="">Todas las ubicaciones</option>`,
+        ...LOCATIONS.map(location => `
+          <option value="${escapeAttr(location)}">${escapeHTML(location)}</option>
+        `)
+      ].join("");
+
+      const result = await Swal.fire({
+        title: `Exportar ${fileType}`,
+        html: `
+          <div class="text-left text-sm leading-6 text-slate-600">
+            <label class="mb-2 block font-extrabold text-slate-700">Selecciona la ubicación</label>
+            <select id="exportLocationSelect" class="swal2-input" style="width:100%;margin:0 0 14px 0;">
+              ${locationOptions}
+            </select>
+
+            <label class="mb-2 block font-extrabold text-slate-700">Fotos</label>
+            <div class="rounded-2xl bg-blue-50 p-3 text-blue-800">
+              <label style="display:flex;gap:8px;align-items:center;cursor:pointer;">
+                <input type="radio" name="exportPhotosOption" value="yes">
+                <span><b>Con fotos</b> - incluirá imágenes en el reporte.</span>
+              </label>
+            </div>
+            <div class="mt-2 rounded-2xl bg-slate-50 p-3 text-slate-700">
+              <label style="display:flex;gap:8px;align-items:center;cursor:pointer;">
+                <input type="radio" name="exportPhotosOption" value="no" checked>
+                <span><b>Sin fotos</b> - generará el archivo más rápido.</span>
+              </label>
+            </div>
+            <div class="mt-3 rounded-2xl bg-emerald-50 p-3 text-emerald-800">
+              El reporte incluirá <b>Equipos informáticos</b> y <b>Mobiliario / Inmobiliaria</b>, con totales separados y total general.
+            </div>
+          </div>
+        `,
+        icon: "question",
+        showCancelButton: true,
+        confirmButtonText: "Exportar",
+        cancelButtonText: "Cancelar",
+        confirmButtonColor: "#2563eb",
+        preConfirm: () => {
+          const ubicacion = document.getElementById("exportLocationSelect")?.value || "";
+          const includePhotos = document.querySelector('input[name="exportPhotosOption"]:checked')?.value === "yes";
+          return { ubicacion, includePhotos };
+        },
+      });
+
+      if (!result.isConfirmed) return null;
+      return result.value;
+    }
+
+    async function getExportRecordsFromCollection(collectionRef, moduleKey, moduleName) {
+      const snapshot = await collectionRef.orderBy("createdAt", "desc").get();
+
+      return snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        __moduleKey: moduleKey,
+        __moduleName: moduleName,
+        __collectionRef: collectionRef,
+      }));
+    }
+
+    function filterCombinedExportByLocation(records = [], selectedLocation = "") {
+      return records.filter(item => {
+        const userCanSeeLocation = isCurrentUserAdmin() || isLocationVisibleToCurrentUser(item.ubicacion);
+        const matchesLocation = !selectedLocation || item.ubicacion === selectedLocation;
+        return userCanSeeLocation && matchesLocation;
+      });
+    }
+
+    async function getStoredPhotosFromCollection(collectionRef, item) {
+      if (!collectionRef || !item?.id) return [];
+
+      if (Array.isArray(item.fotos) && item.fotos.length) {
+        return item.fotos;
+      }
+
+      try {
+        const snapshot = await collectionRef
+          .doc(item.id)
+          .collection(PHOTO_SUBCOLLECTION)
+          .orderBy("orden", "asc")
+          .get();
+
+        return snapshot.docs.map(doc => ({
+          __photoDocId: doc.id,
+          ...doc.data(),
+        }));
+      } catch (error) {
+        console.error("No se pudieron cargar fotos para exportar:", error);
+        return [];
+      }
+    }
+
+    async function getCombinedExportData(selectedLocation = "", includePhotos = false) {
+      showRecordsLoader("Preparando datos para exportar...");
+
+      try {
+        const [itRecords, furnitureRecords] = await Promise.all([
+          getExportRecordsFromCollection(computadorasCollection, "it", "Equipos informáticos"),
+          getExportRecordsFromCollection(mobiliarioCollection, "mobiliario", "Mobiliario / Inmobiliaria"),
+        ]);
+
+        let records = [...itRecords, ...furnitureRecords];
+        records = filterCombinedExportByLocation(records, selectedLocation);
+
+        if (!includePhotos) return records;
+
+        showRecordsLoader("Cargando fotos para exportar...");
+
+        return await Promise.all(
+          records.map(async item => {
+            const photos = await getStoredPhotosFromCollection(item.__collectionRef, item);
+            return {
+              ...item,
+              __exportPhotos: photos,
+            };
+          })
+        );
+      } finally {
+        hideRecordsLoader();
+      }
+    }
+
+    function getCombinedExportTotals(records = []) {
+      const totalEquipos = records
+        .filter(item => item.__moduleKey === "it")
+        .reduce((sum, item) => sum + Number(item.precioEstimado || 0), 0);
+
+      const totalMobiliario = records
+        .filter(item => item.__moduleKey === "mobiliario")
+        .reduce((sum, item) => sum + Number(item.precioEstimado || 0), 0);
+
+      const cantidadEquipos = records.filter(item => item.__moduleKey === "it").length;
+      const cantidadMobiliario = records.filter(item => item.__moduleKey === "mobiliario").length;
+
+      return {
+        cantidadEquipos,
+        cantidadMobiliario,
+        totalEquipos,
+        totalMobiliario,
+        totalGeneral: totalEquipos + totalMobiliario,
+      };
+    }
+
+    function getCombinedCleanExportData(records = []) {
+      return records.map(item => ({
+        "Categoría": item.__moduleName || "",
+        "Código": item.codigo || "",
+        "Tipo": item.tipoEquipo || "",
+        "Marca": item.marca || "",
+        "Modelo": item.modelo || "",
+        "Procesador": item.__moduleKey === "it" ? item.procesador || "" : "",
+        "RAM": item.__moduleKey === "it" ? `${Number(item.ram || 0)} GB` : "",
+        "Almacenamiento": item.__moduleKey === "it" ? `${Number(item.almacenamiento || 0)} GB` : "",
+        "Estado": item.estado || "",
+        "Ubicación": item.ubicacion || "",
+        "Fecha": formatDate(item.fecha),
+        "Precio estimado": formatMoney(item.precioEstimado),
+        "Marca UPS": item.__moduleKey === "it" ? item.marcaUps || "" : "",
+        "Especificaciones UPS": item.__moduleKey === "it" ? item.especificacionesUps || "" : "",
+        "Marca Teclado": item.__moduleKey === "it" ? item.marcaTeclado || "" : "",
+        "Especificaciones Teclado": item.__moduleKey === "it" ? item.especificacionesTeclado || "" : "",
+        "Marca Mouse": item.__moduleKey === "it" ? item.marcaMouse || "" : "",
+        "Especificaciones Mouse": item.__moduleKey === "it" ? item.especificacionesMouse || "" : "",
+        "Marca Monitor": item.__moduleKey === "it" ? item.marcaMonitor || "" : "",
+        "Especificaciones Monitor": item.__moduleKey === "it" ? item.especificacionesMonitor || "" : "",
+        "Notas": item.notas || "",
+      }));
+    }
+
+    function appendTotalsRowsToXlsxData(data = [], totals = {}) {
+      data.push({});
+      data.push({
+        "Categoría": "TOTAL EQUIPOS INFORMÁTICOS",
+        "Código": totals.cantidadEquipos,
+        "Precio estimado": totals.totalEquipos,
+      });
+      data.push({
+        "Categoría": "TOTAL MOBILIARIO / INMOBILIARIA",
+        "Código": totals.cantidadMobiliario,
+        "Precio estimado": totals.totalMobiliario,
+      });
+      data.push({
+        "Categoría": "TOTAL GENERAL",
+        "Código": totals.cantidadEquipos + totals.cantidadMobiliario,
+        "Precio estimado": totals.totalGeneral,
+      });
+
+      return data;
+    }
+
+    function addPdfTotalsSummary(doc, totals, x = 14, y = 31) {
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "bold");
+      doc.text(`Total equipos informáticos: ${totals.cantidadEquipos} registros - ${formatMoney(totals.totalEquipos)}`, x, y);
+      doc.text(`Total mobiliario / inmobiliaria: ${totals.cantidadMobiliario} registros - ${formatMoney(totals.totalMobiliario)}`, x, y + 5);
+      doc.text(`Suma total de ambos montos: ${formatMoney(totals.totalGeneral)}`, x, y + 10);
+    }
+
     function getImageExtension(photo = {}) {
       const value = String(photo.tipo || photo.url || photo.base64 || "").toLowerCase();
 
@@ -5008,52 +5209,74 @@
     }
 
     async function exportExcel() {
-      const includePhotos = await askExportWithPhotos("Excel");
+      const options = await askCombinedExportOptions("Excel");
+      if (!options) return;
 
-      if (includePhotos === null) return;
-
-      const rawData = await getExportDataWithPhotos(includePhotos);
+      const { ubicacion, includePhotos } = options;
+      const rawData = await getCombinedExportData(ubicacion, includePhotos);
 
       if (!rawData.length) {
-        showToast("info", "Sin datos", "No hay registros para exportar.");
+        showToast("info", "Sin datos", "No hay registros para exportar en esa ubicación.");
         return;
       }
 
-      if (!includePhotos) {
-        const data = getCleanExportData();
+      const equiposData = rawData.filter(item => item.__moduleKey === "it");
+      const mobiliarioData = rawData.filter(item => item.__moduleKey === "mobiliario");
+      const totals = getCombinedExportTotals(rawData);
+      const fileLocationName = ubicacion ? normalizeText(ubicacion).replace(/\s+/g, "_") : "todas_las_ubicaciones";
 
+      if (!includePhotos) {
         if (!window.XLSX) {
           showToast("error", "Librería no cargada", "No se pudo cargar la librería de Excel.");
           return;
         }
 
-        const worksheet = XLSX.utils.json_to_sheet(data);
+        const workbook = XLSX.utils.book_new();
 
-        worksheet["!cols"] = [
-          { wch: 16 },
-          { wch: 18 },
-          { wch: 18 },
-          { wch: 22 },
-          { wch: 28 },
-          { wch: 12 },
-          { wch: 18 },
-          { wch: 24 },
-          { wch: 24 },
-          { wch: 14 },
-          { wch: 18 },
-          { wch: 24 },
-          { wch: 22 },
-          { wch: 22 },
-          { wch: 24 },
+        const equiposWorksheet = XLSX.utils.json_to_sheet(getCombinedCleanExportData(equiposData));
+        const mobiliarioWorksheet = XLSX.utils.json_to_sheet(getCombinedCleanExportData(mobiliarioData));
+        const totalesWorksheet = XLSX.utils.json_to_sheet([
+          {
+            "Detalle": "Total equipos informáticos",
+            "Cantidad": totals.cantidadEquipos,
+            "Monto total": formatMoney(totals.totalEquipos),
+          },
+          {
+            "Detalle": "Total mobiliario / inmobiliaria",
+            "Cantidad": totals.cantidadMobiliario,
+            "Monto total": formatMoney(totals.totalMobiliario),
+          },
+          {
+            "Detalle": "Sumatoria general",
+            "Cantidad": totals.cantidadEquipos + totals.cantidadMobiliario,
+            "Monto total": formatMoney(totals.totalGeneral),
+          },
+        ]);
+
+        const detailCols = [
+          { wch: 28 }, { wch: 16 }, { wch: 22 }, { wch: 18 }, { wch: 22 },
+          { wch: 28 }, { wch: 12 }, { wch: 18 }, { wch: 24 }, { wch: 28 },
+          { wch: 14 }, { wch: 18 },
+          { wch: 18 }, { wch: 28 }, { wch: 18 }, { wch: 28 },
+          { wch: 18 }, { wch: 28 }, { wch: 18 }, { wch: 28 },
           { wch: 35 },
-          { wch: 10 },
         ];
 
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Inventario");
-        XLSX.writeFile(workbook, `inventario_${getModuleConfig().collectionName}_${todayFileName()}.xlsx`);
+        equiposWorksheet["!cols"] = detailCols;
+        mobiliarioWorksheet["!cols"] = detailCols;
+        totalesWorksheet["!cols"] = [
+          { wch: 34 },
+          { wch: 14 },
+          { wch: 18 },
+        ];
 
-        showToast("success", "Exportado", "El archivo Excel fue generado correctamente.");
+        XLSX.utils.book_append_sheet(workbook, equiposWorksheet, "Equipos Informaticos");
+        XLSX.utils.book_append_sheet(workbook, mobiliarioWorksheet, "Inmobiliaria");
+        XLSX.utils.book_append_sheet(workbook, totalesWorksheet, "Totales");
+
+        XLSX.writeFile(workbook, `inventario_general_${fileLocationName}_${todayFileName()}.xlsx`);
+
+        showToast("success", "Exportado", "El Excel fue generado en 3 hojas: equipos, inmobiliaria y totales.");
         return;
       }
 
@@ -5069,118 +5292,159 @@
         workbook.creator = "Inventario IT";
         workbook.created = new Date();
 
-        const worksheet = workbook.addWorksheet("Inventario");
+        const addInventorySheet = (sheetName, records) => {
+          const worksheet = workbook.addWorksheet(sheetName);
 
-        worksheet.columns = [
-          { header: "Código", key: "codigo", width: 18 },
-          { header: "Tipo", key: "tipoEquipo", width: 22 },
-          { header: "Marca", key: "marca", width: 20 },
-          { header: "Modelo", key: "modelo", width: 24 },
-          { header: "Procesador", key: "procesador", width: 28 },
-          { header: "RAM", key: "ram", width: 12 },
-          { header: "Almacenamiento", key: "almacenamiento", width: 18 },
-          { header: "Estado", key: "estado", width: 24 },
-          { header: "Ubicación", key: "ubicacion", width: 26 },
-          { header: "Fecha", key: "fecha", width: 16 },
-          { header: "Precio estimado", key: "precioEstimado", width: 18 },
-          { header: "Actualizado por Gil", key: "actualizadoPorGil", width: 22 },
-          { header: "Actualizado por", key: "updatedBy", width: 28 },
-          { header: "Notas", key: "notas", width: 35 },
-          { header: "Cantidad fotos", key: "fotoCount", width: 16 },
-          { header: "Foto 1", key: "foto1", width: 18 },
-          { header: "Foto 2", key: "foto2", width: 18 },
-          { header: "Foto 3", key: "foto3", width: 18 },
+          worksheet.columns = [
+            { header: "Categoría", key: "categoria", width: 28 },
+            { header: "Código", key: "codigo", width: 18 },
+            { header: "Tipo", key: "tipoEquipo", width: 22 },
+            { header: "Marca", key: "marca", width: 20 },
+            { header: "Modelo", key: "modelo", width: 24 },
+            { header: "Procesador", key: "procesador", width: 28 },
+            { header: "RAM", key: "ram", width: 12 },
+            { header: "Almacenamiento", key: "almacenamiento", width: 18 },
+            { header: "Estado", key: "estado", width: 24 },
+            { header: "Ubicación", key: "ubicacion", width: 28 },
+            { header: "Fecha", key: "fecha", width: 16 },
+            { header: "Precio estimado", key: "precioEstimado", width: 18 },
+            { header: "Marca UPS", key: "marcaUps", width: 18 },
+            { header: "Especificaciones UPS", key: "especificacionesUps", width: 28 },
+            { header: "Marca Teclado", key: "marcaTeclado", width: 18 },
+            { header: "Especificaciones Teclado", key: "especificacionesTeclado", width: 28 },
+            { header: "Marca Mouse", key: "marcaMouse", width: 18 },
+            { header: "Especificaciones Mouse", key: "especificacionesMouse", width: 28 },
+            { header: "Marca Monitor", key: "marcaMonitor", width: 18 },
+            { header: "Especificaciones Monitor", key: "especificacionesMonitor", width: 28 },
+            { header: "Notas", key: "notas", width: 35 },
+            { header: "Foto 1", key: "foto1", width: 18 },
+            { header: "Foto 2", key: "foto2", width: 18 },
+            { header: "Foto 3", key: "foto3", width: 18 },
+          ];
+
+          worksheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
+          worksheet.getRow(1).height = 24;
+          worksheet.getRow(1).eachCell(cell => {
+            cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF2563EB" } };
+            cell.alignment = { vertical: "middle", horizontal: "center", wrapText: true };
+          });
+
+          records.forEach(item => {
+            const photos = Array.isArray(item.__exportPhotos) ? item.__exportPhotos : [];
+            const row = worksheet.addRow({
+              categoria: item.__moduleName || "",
+              codigo: item.codigo || "",
+              tipoEquipo: item.tipoEquipo || "",
+              marca: item.marca || "",
+              modelo: item.modelo || "",
+              procesador: item.__moduleKey === "it" ? item.procesador || "" : "",
+              ram: item.__moduleKey === "it" ? `${Number(item.ram || 0)} GB` : "",
+              almacenamiento: item.__moduleKey === "it" ? `${Number(item.almacenamiento || 0)} GB` : "",
+              estado: item.estado || "",
+              ubicacion: item.ubicacion || "",
+              fecha: formatDate(item.fecha),
+              precioEstimado: Number(item.precioEstimado || 0),
+              marcaUps: item.__moduleKey === "it" ? item.marcaUps || "" : "",
+              especificacionesUps: item.__moduleKey === "it" ? item.especificacionesUps || "" : "",
+              marcaTeclado: item.__moduleKey === "it" ? item.marcaTeclado || "" : "",
+              especificacionesTeclado: item.__moduleKey === "it" ? item.especificacionesTeclado || "" : "",
+              marcaMouse: item.__moduleKey === "it" ? item.marcaMouse || "" : "",
+              especificacionesMouse: item.__moduleKey === "it" ? item.especificacionesMouse || "" : "",
+              marcaMonitor: item.__moduleKey === "it" ? item.marcaMonitor || "" : "",
+              especificacionesMonitor: item.__moduleKey === "it" ? item.especificacionesMonitor || "" : "",
+              notas: item.notas || "",
+              foto1: photos[0] ? "Foto incluida" : "",
+              foto2: photos[1] ? "Foto incluida" : "",
+              foto3: photos[2] ? "Foto incluida" : "",
+            });
+
+            row.height = photos.length ? 72 : 22;
+
+            photos.slice(0, 3).forEach((photo, photoIndex) => {
+              const base64 = getImageBase64(photo);
+              if (!base64) return;
+
+              try {
+                const imageId = workbook.addImage({
+                  base64,
+                  extension: getImageExtension(photo),
+                });
+
+                const columnIndex = 21 + photoIndex;
+
+                worksheet.addImage(imageId, {
+                  tl: { col: columnIndex, row: row.number - 1 },
+                  ext: { width: 86, height: 62 },
+                });
+              } catch (error) {
+                console.warn("No se pudo agregar una foto al Excel:", error);
+              }
+            });
+          });
+
+          worksheet.getColumn("precioEstimado").numFmt = '"$"#,##0.00';
+
+          worksheet.eachRow(row => {
+            row.eachCell(cell => {
+              cell.alignment = { vertical: "middle", wrapText: true };
+            });
+          });
+
+          return worksheet;
+        };
+
+        addInventorySheet("Equipos Informaticos", equiposData);
+        addInventorySheet("Inmobiliaria", mobiliarioData);
+
+        const totalsWorksheet = workbook.addWorksheet("Totales");
+        totalsWorksheet.columns = [
+          { header: "Detalle", key: "detalle", width: 36 },
+          { header: "Cantidad", key: "cantidad", width: 14 },
+          { header: "Monto total", key: "monto", width: 18 },
         ];
 
-        worksheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
-        worksheet.getRow(1).height = 24;
-        worksheet.getRow(1).eachCell(cell => {
-          cell.fill = {
-            type: "pattern",
-            pattern: "solid",
-            fgColor: { argb: "FF2563EB" },
-          };
+        totalsWorksheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
+        totalsWorksheet.getRow(1).eachCell(cell => {
+          cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF059669" } };
           cell.alignment = { vertical: "middle", horizontal: "center", wrapText: true };
         });
 
-        rawData.forEach((item) => {
-          const photos = Array.isArray(item.__exportPhotos) ? item.__exportPhotos : [];
-
-          const row = worksheet.addRow({
-            codigo: item.codigo || "",
-            tipoEquipo: item.tipoEquipo || "",
-            marca: item.marca || "",
-            modelo: item.modelo || "",
-            procesador: item.procesador || "",
-            ram: `${Number(item.ram || 0)} GB`,
-            almacenamiento: `${Number(item.almacenamiento || 0)} GB`,
-            estado: item.estado || "",
-            ubicacion: item.ubicacion || "",
-            fecha: formatDate(item.fecha),
-            precioEstimado: Number(item.precioEstimado || 0),
-            actualizadoPorGil: wasUpdatedByGil(item) ? "Sí" : "No",
-            updatedBy: item.updatedBy || "",
-            notas: item.notas || "",
-            fotoCount: photos.length,
-            foto1: photos[0] ? "Foto incluida" : "",
-            foto2: photos[1] ? "Foto incluida" : "",
-            foto3: photos[2] ? "Foto incluida" : "",
-          });
-
-          row.height = photos.length ? 72 : 22;
-
-          photos.slice(0, 3).forEach((photo, photoIndex) => {
-            const base64 = getImageBase64(photo);
-            if (!base64) return;
-
-            try {
-              const imageId = workbook.addImage({
-                base64,
-                extension: getImageExtension(photo),
-              });
-
-              const columnIndex = 15 + photoIndex;
-
-              worksheet.addImage(imageId, {
-                tl: {
-                  col: columnIndex,
-                  row: row.number - 1,
-                },
-                ext: {
-                  width: 86,
-                  height: 62,
-                },
-              });
-            } catch (error) {
-              console.warn("No se pudo agregar una foto al Excel:", error);
-            }
-          });
+        totalsWorksheet.addRow({
+          detalle: "Total equipos informáticos",
+          cantidad: totals.cantidadEquipos,
+          monto: totals.totalEquipos,
+        });
+        totalsWorksheet.addRow({
+          detalle: "Total mobiliario / inmobiliaria",
+          cantidad: totals.cantidadMobiliario,
+          monto: totals.totalMobiliario,
+        });
+        totalsWorksheet.addRow({
+          detalle: "Sumatoria general",
+          cantidad: totals.cantidadEquipos + totals.cantidadMobiliario,
+          monto: totals.totalGeneral,
         });
 
-        worksheet.eachRow((row) => {
-          row.eachCell((cell) => {
-            cell.alignment = {
-              vertical: "middle",
-              wrapText: true,
-            };
+        totalsWorksheet.getColumn("monto").numFmt = '"$"#,##0.00';
+
+        totalsWorksheet.eachRow(row => {
+          row.eachCell(cell => {
+            cell.alignment = { vertical: "middle", wrapText: true };
           });
         });
 
         const buffer = await workbook.xlsx.writeBuffer();
-        const blob = new Blob([buffer], {
-          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        });
-
+        const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `inventario_${getModuleConfig().collectionName}_con_fotos_${todayFileName()}.xlsx`;
+        a.download = `inventario_general_${fileLocationName}_con_fotos_${todayFileName()}.xlsx`;
         document.body.appendChild(a);
         a.click();
         a.remove();
         URL.revokeObjectURL(url);
 
-        showToast("success", "Exportado", "El archivo Excel con fotos fue generado correctamente.");
+        showToast("success", "Exportado", "El Excel con fotos fue generado en 3 hojas: equipos, inmobiliaria y totales.");
       } catch (error) {
         console.error(error);
         showToast("error", "Error", error.message || "No se pudo generar el Excel con fotos.");
@@ -5278,14 +5542,14 @@
     }
 
     async function exportPDF() {
-      const includePhotos = await askExportWithPhotos("PDF");
+      const options = await askCombinedExportOptions("PDF");
+      if (!options) return;
 
-      if (includePhotos === null) return;
-
-      const rawData = await getExportDataWithPhotos(includePhotos);
+      const { ubicacion, includePhotos } = options;
+      const rawData = await getCombinedExportData(ubicacion, includePhotos);
 
       if (!rawData.length) {
-        showToast("info", "Sin datos", "No hay registros para exportar.");
+        showToast("info", "Sin datos", "No hay registros para exportar en esa ubicación.");
         return;
       }
 
@@ -5293,6 +5557,9 @@
         showToast("error", "Librería no cargada", "No se pudo cargar la librería de PDF.");
         return;
       }
+
+      const totals = getCombinedExportTotals(rawData);
+      const fileLocationName = ubicacion ? normalizeText(ubicacion).replace(/\s+/g, "_") : "todas_las_ubicaciones";
 
       showRecordsLoader(includePhotos ? "Generando PDF con fotos..." : "Generando PDF...");
 
@@ -5304,7 +5571,7 @@
           format: "a4",
         });
 
-        const title = getModuleConfig().title;
+        const title = "Inventario General";
         const exportDate = new Date().toLocaleDateString("es-SV");
 
         doc.setFontSize(16);
@@ -5316,9 +5583,12 @@
         doc.text(`Fecha de exportación: ${exportDate}`, 14, 21);
         doc.text(`Total registros: ${rawData.length}`, 14, 26);
         doc.text(`Fotos: ${includePhotos ? "Incluidas" : "No incluidas"}`, 14, 31);
+        doc.text(`Ubicación: ${ubicacion || "Todas las ubicaciones"}`, 14, 36);
+        addPdfTotalsSummary(doc, totals, 14, 43);
 
         if (!includePhotos) {
           const headers = [[
+            "Categoría",
             "Código",
             "Tipo",
             "Marca",
@@ -5332,41 +5602,64 @@
             "Precio",
             "Actualizado Gil",
             "Actualizado por",
-            "Fecha Gil",
             "Notas",
             "Fotos",
           ]];
 
           const body = rawData.map(item => {
-            const photoCount = Array.isArray(item.fotos) && item.fotos.length ? item.fotos.length : Number(item.fotoCount || 0);
+            const photoCount = Array.isArray(item.__exportPhotos)
+              ? item.__exportPhotos.length
+              : Number(item.fotoCount || 0);
 
             return [
+              item.__moduleName || "",
               item.codigo || "",
               item.tipoEquipo || "",
               item.marca || "",
               item.modelo || "",
-              item.procesador || "",
-              `${Number(item.ram || 0)} GB`,
-              `${Number(item.almacenamiento || 0)} GB`,
+              item.__moduleKey === "it" ? item.procesador || "" : "",
+              item.__moduleKey === "it" ? `${Number(item.ram || 0)} GB` : "",
+              item.__moduleKey === "it" ? `${Number(item.almacenamiento || 0)} GB` : "",
               item.estado || "",
               item.ubicacion || "",
               formatDate(item.fecha),
               formatMoney(item.precioEstimado),
               wasUpdatedByGil(item) ? "Sí" : "No",
               item.updatedBy || "",
-              wasUpdatedByGil(item) ? formatFirestoreDateTime(item.actualizadoPorGilAt || item.updatedAt) : "",
               item.notas || "",
               photoCount,
             ];
           });
 
+          body.push([
+            "TOTAL EQUIPOS INFORMÁTICOS",
+            String(totals.cantidadEquipos),
+            "", "", "", "", "", "", "", "", "",
+            formatMoney(totals.totalEquipos),
+            "", "", "", "",
+          ]);
+          body.push([
+            "TOTAL MOBILIARIO / INMOBILIARIA",
+            String(totals.cantidadMobiliario),
+            "", "", "", "", "", "", "", "", "",
+            formatMoney(totals.totalMobiliario),
+            "", "", "", "",
+          ]);
+          body.push([
+            "TOTAL GENERAL",
+            String(totals.cantidadEquipos + totals.cantidadMobiliario),
+            "", "", "", "", "", "", "", "", "",
+            formatMoney(totals.totalGeneral),
+            "", "", "", "",
+          ]);
+
           doc.autoTable({
             head: headers,
             body,
-            startY: 37,
+            startY: 58,
             styles: {
-              fontSize: 6.5,
-              cellPadding: 2,
+              fontSize: 6.2,
+              cellPadding: 1.7,
               overflow: "linebreak",
               valign: "middle",
             },
@@ -5379,22 +5672,22 @@
               fillColor: [245, 247, 250],
             },
             columnStyles: {
-              0: { cellWidth: 18 },
-              1: { cellWidth: 20 },
-              2: { cellWidth: 20 },
-              3: { cellWidth: 24 },
-              4: { cellWidth: 26 },
-              5: { cellWidth: 14 },
-              6: { cellWidth: 18 },
-              7: { cellWidth: 24 },
-              8: { cellWidth: 24 },
-              9: { cellWidth: 16 },
-              10: { cellWidth: 18 },
-              11: { cellWidth: 18 },
-              12: { cellWidth: 18 },
+              0: { cellWidth: 23 },
+              1: { cellWidth: 16 },
+              2: { cellWidth: 18 },
+              3: { cellWidth: 18 },
+              4: { cellWidth: 20 },
+              5: { cellWidth: 22 },
+              6: { cellWidth: 12 },
+              7: { cellWidth: 16 },
+              8: { cellWidth: 20 },
+              9: { cellWidth: 22 },
+              10: { cellWidth: 14 },
+              11: { cellWidth: 16 },
+              12: { cellWidth: 16 },
               13: { cellWidth: 18 },
-              14: { cellWidth: 28 },
-              15: { cellWidth: 12 },
+              14: { cellWidth: 26 },
+              15: { cellWidth: 10 },
             },
             didDrawPage: function () {
               addPdfFooter(doc);
@@ -5402,8 +5695,7 @@
           });
         } else {
           // Reporte con fotos visibles: cada registro se imprime como ficha.
-          // Corrección: las fotos se acomodan máximo 4 por fila para que no se salgan de la hoja A4 horizontal.
-          let y = 39;
+          let y = 58;
           const pageWidth = doc.internal.pageSize.getWidth();
           const pageHeight = doc.internal.pageSize.getHeight();
           const marginX = 14;
@@ -5430,7 +5722,7 @@
             const visiblePhotos = validPhotos.slice(0, maxPhotosPerItem);
             const notes = String(item.notas || "Sin notas");
             const notesLines = doc.splitTextToSize(notes, 110);
-            const headerHeight = Math.max(28, 18 + Math.min(notesLines.length, 3) * 4);
+            const headerHeight = Math.max(32, 22 + Math.min(notesLines.length, 3) * 4);
             const rowsCount = visiblePhotos.length ? Math.ceil(visiblePhotos.length / photosPerRow) : 1;
             const photosHeight = visiblePhotos.length ? rowsCount * rowHeight : 10;
             const extraTextHeight = validPhotos.length > maxPhotosPerItem ? 6 : 0;
@@ -5445,7 +5737,7 @@
             doc.setFontSize(10);
             doc.setFont("helvetica", "bold");
             doc.setTextColor(15, 23, 42);
-            doc.text(`${item.codigo || "Sin código"} - ${item.marca || ""} ${item.modelo || ""}`.trim(), marginX + 4, y + 7);
+            doc.text(`${item.__moduleName || ""} | ${item.codigo || "Sin código"} - ${item.marca || ""} ${item.modelo || ""}`.trim(), marginX + 4, y + 7);
 
             doc.setFontSize(7.5);
             doc.setFont("helvetica", "normal");
@@ -5456,10 +5748,16 @@
             doc.text(`Precio: ${formatMoney(item.precioEstimado)}`, marginX + 190, y + 13);
             doc.text(`Fotos: ${validPhotos.length}`, marginX + 240, y + 13);
 
+            if (item.__moduleKey === "it") {
+              doc.text(`Procesador: ${item.procesador || "N/D"}`, marginX + 4, y + 18);
+              doc.text(`RAM: ${Number(item.ram || 0)} GB`, marginX + 90, y + 18);
+              doc.text(`Almacenamiento: ${Number(item.almacenamiento || 0)} GB`, marginX + 125, y + 18);
+            }
+
             doc.setFont("helvetica", "bold");
-            doc.text("Notas:", marginX + 4, y + 20);
+            doc.text("Notas:", marginX + 4, y + 25);
             doc.setFont("helvetica", "normal");
-            doc.text(notesLines.slice(0, 3), marginX + 18, y + 20);
+            doc.text(notesLines.slice(0, 3), marginX + 18, y + 25);
 
             const imgStartY = y + headerHeight;
 
@@ -5497,17 +5795,14 @@
         }
 
         const fileName = includePhotos
-          ? `inventario_${getModuleConfig().collectionName}_con_fotos_${todayFileName()}.pdf`
-          : `inventario_${getModuleConfig().collectionName}_${todayFileName()}.pdf`;
+          ? `inventario_general_${fileLocationName}_con_fotos_${todayFileName()}.pdf`
+          : `inventario_general_${fileLocationName}_${todayFileName()}.pdf`;
 
         doc.save(fileName);
 
-        showToast(
-          "success",
-          "Exportado",
-          includePhotos
-            ? "El archivo PDF con fotos fue generado correctamente."
-            : "El archivo PDF fue generado correctamente."
+        showToast("success", "Exportado", includePhotos
+          ? "El PDF con fotos fue generado con equipos, mobiliario y totales."
+          : "El PDF fue generado con equipos, mobiliario y totales."
         );
       } catch (error) {
         console.error(error);
